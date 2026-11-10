@@ -20,5 +20,5 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src/lib/flyout-css.test.ts", "src/lib/decklist.test.ts", "src/lib/shipped-decklists.test.ts", "src/components/banner.test.tsx", "src/lib/faces.test.ts", "src/components/home-counts.test.tsx"]
+  "include": ["src/lib/flyout-css.test.ts", "src/lib/decklist.test.ts", "src/lib/shipped-decklists.test.ts", "src/components/banner.test.tsx", "src/lib/faces.test.ts", "src/components/home-counts.test.tsx", "src/lib/hydroelectric.test.ts", "src/lib/tone-backs.test.ts", "src/lib/card-backs.test.ts", "src/lib/v0127-golden.test.ts"]
 }

@@ -163,11 +163,12 @@ describe("SxF Color and Black and White", () => {
   const edition = shipped.editions[0]!;
   const mains = edition.cards.filter((card) => card.role === "main");
 
-  it("tags 53 option cards and the basics with both files, and leaves the 35 always-color cards untagged", () => {
+  // 52 since v0.1.28: Hydroelectric Specimen and Hydroelectric Laboratory are one double-faced card.
+  it("tags 52 option cards and the basics with both files, and leaves the 35 always-color cards untagged", () => {
     const both = mains.filter((card) => card.faces[0]!.defaultArt?.tone === "color" && card.faces[0]!.alternates[0]?.tone === "bw");
     const untagged = mains.filter((card) => !card.faces[0]!.defaultArt?.tone);
     const basic = (name: string) => /^(plains|island|swamp|mountain|forest)\b/i.test(name);
-    expect(both.filter((card) => !basic(card.name))).toHaveLength(53);
+    expect(both.filter((card) => !basic(card.name))).toHaveLength(52);
     expect(untagged.filter((card) => !basic(card.name))).toHaveLength(35);
     expect(hasToneChoice(edition)).toBe(true);
   });

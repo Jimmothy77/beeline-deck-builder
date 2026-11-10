@@ -47,6 +47,7 @@ Choosing a deck loads it as designed (one copy of each main-deck card on the art
 - swap any card for an alternate art
 - add tokens and other extras, with a quantity on every card
 - pick the card back
+- give one card its own back in the card editor (click the card's art): **Card Back** (one of the deck's card backs), **Alt Back** (any extra that is not a token) or **Token Backs** (a token). It prints on every copy of that card. Without a pick the card uses the deck back, and a double-faced card keeps its own back face. A pick on a double-faced card replaces that face, and the editor says so. In SxF a pick on a Color or Black and White token or extra moves to that card's other file when you switch the print set. A card with a pick shows a small "Back:" label on its tile and the desktop flyout turns to that back; cards without one look as before
 - **All cards**, which sets every card in that deck and section to 1 copy
 - **Random**, which picks a main-deck or alternate art for each main-deck card. Lock a card and Random leaves it alone
 - save the deck, keep several, and export each as its own XML
@@ -67,7 +68,7 @@ How a list sets counts:
 - Basic lands follow the list. Only the basics the list asks for are kept: the listed copies are spread over that basic's arts, one each in turn, so a leftover art can open at 0, and a basic the list leaves out opens at 0. Without a list, basic lands never open at 0.
 - Tokens in the main folder keep their folder count and stay in the main deck, even past 100.
 - `Flip N`, `Front N`, and `Mask N` have no card title, so they keep their folder count.
-- Double-faced prints are named `N_1_Front name` and `N_2_Back name` (a space after the face number also works, as in `1_2 Lost Vale`). `N_1` is the front and `N_2` the back, even when the two names differ, so the back is printed with its front and never counted as its own card. A back with no front is listed as an extra at 0. A deck saved before a pair was joined (for example a v0.1.11 save with The Ring Tempts You as its own token, or TMNT's old Lost Vale card) puts the back's copies on the paired card. If the deck already has that card, the back row is not counted again.
+- Double-faced prints are named `N_1_Front name` and `N_2_Back name` (a space after the face number also works, as in `1_2 Lost Vale`). `N_1` is the front and `N_2` the back, even when the two names differ, so the back is printed with its front and never counted as its own card. A back with no front is listed as an extra at 0. A deck saved before a pair was joined (for example a v0.1.11 save with The Ring Tempts You as its own token, or TMNT's old Lost Vale card) puts the back's copies on the paired card. If the deck already has that card, the back row is not counted again. A few known double-faced cards were once shared without the prefix (`KNOWN_UNPREFIXED_PAIRS` in `src/lib/faces.ts`: SxF's Hydroelectric Specimen and Hydroelectric Laboratory). Those files pair the same way when both faces are there, which covers a paid folder named before the rename and a pack unlocked before it. A folder that also has the renamed `1_1_`/`1_2_` files gets its card from those, and the old files join it as more arts of the same faces. Only this pair's old back row is folded in the deck's print set; other decks' saved back rows load exactly as before. In a Black and White SxF deck saved before the pair was joined, Specimen loads on the Black and White Laboratory (the saved Laboratory file when it is in that set), and new art rows always start on the back face in the deck's print set.
 - A list line whose file name is spelled a little differently (one or two letters, a shortened name, the same first two words) is matched only when exactly one leftover file fits. Every list line with no file is listed in a note. Nothing is invented.
 
 Shipped Standard lists live in `decklists/` and are copied into `public/decks/*.json` by `npx tsx scripts/attach-decklists.ts` (run it after `npm run catalogue`; `--check` verifies the JSON matches). Unlocked Deluxe and Partial Foil editions read the list files in their own folders through the Drive API. If a list there can't be read, the shipped copy with the same file name is used, and if there is none the deck opens on folder counts with a note.
@@ -84,7 +85,7 @@ TMNT and X-Men have no Partial Foil folder. There is no Dandan deck; Floating Wo
 
 ### Spy x Family Color and Black and White
 
-Spy x Family keeps 35 always-color cards in Full Deck and 53 cards (plus basic lands) twice under `IMPORTANT OPTIONS/Color` and `IMPORTANT OPTIONS/Black and White` (`Black & White` in Deluxe). Those become one card each with a Color file and a Black and White file, and the builder shows a **Print set** switch. Switching moves the 53 option cards and the basics to that set and leaves the 35 alone. All cards and Random stay in the chosen set. Partial Foil never shows the switch.
+Spy x Family keeps 35 always-color cards in Full Deck and 53 files (plus basic lands) twice under `IMPORTANT OPTIONS/Color` and `IMPORTANT OPTIONS/Black and White` (`Black & White` in Deluxe). Those become one card each with a Color file and a Black and White file, and the builder shows a **Print set** switch. Hydroelectric Laboratory is one of the 53, and it is the back face of Hydroelectric Specimen (`1_1_`/`1_2_` in the source since v0.1.28), so there are 52 option cards. Switching moves the option cards, Laboratory and the basics to that set and leaves the 35 alone. All cards and Random stay in the chosen set. Partial Foil never shows the switch.
 
 ## Silksong standard
 
@@ -185,6 +186,8 @@ Vitest covers:
 - deck lists: file names and labels, both line formats, the shipped lists, list counts and every never-zero rule, folder fallbacks, Spy x Family Color and Black and White
 - the banner copy, the shop link, the stacking rules, and the bee's flight path
 
+Which extras are tokens comes from a one-time cross-reference of every extra and token name in the shipped decks against Scryfall's public API, committed as `src/data/token-lookup.ts`. The app never calls Scryfall. A name is a token when Scryfall's card has the layout token, double_faced_token or emblem, or "Token" in its type line. Names Scryfall has no card for, names that are both a token and a game card, and names whose only match is an art card or vanguard use the old rule (a Tokens folder, or a name starting with "Token"). `npx tsx scripts/token-lookup.ts` asks Scryfall again (about 165 requests, 8 a second) and rewrites the lookup; `--report <file>` writes the report from the committed lookup; `--check` fails when a shipped name has no entry or when a hand override matches no card. A few cards are decided by hand in `src/data/token-overrides.ts` (deck id and exact card name; the script never rewrites it), and those win over Scryfall and the old rule: Persona 5's Raphael, Thor and Titania, Silksong's Blood (Infection) and Vader's Shapeshifter 1-9 are tokens, and Persona 5's Lands (the Forest 3 art) is not. Nothing else uses the lookup: the Tokens and Extras lists still follow the folders.
+
 `npx tsx scripts/mutate.ts` breaks the code on purpose, one rule at a time, and fails if any test still passes.
 
 ## Layout
@@ -198,7 +201,11 @@ src/data/treatments.ts
 src/lib/group.ts          folder tree → cards
 src/lib/xml.ts            MPCFill XML
 src/lib/drive.ts          paid folder listing
-src/lib/selection.ts      quantities, All cards, Random, print set
+src/lib/selection.ts      quantities, All cards, Random, print set, per-card backs
+src/lib/tokens.ts         which extras are tokens
+src/data/token-lookup.ts  static Scryfall token lookup (generated)
+src/data/token-overrides.ts  hand token decisions (wins over the lookup)
+scripts/token-lookup.ts
 src/lib/decklist.ts       deck list parsing and counts
 src/lib/flight.ts         banner bee path
 decklists/                shipped deck list text files

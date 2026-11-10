@@ -1,5 +1,6 @@
 import type { ArtFile, ArtTone, CardFace, DeckCard, Edition } from "@/lib/types";
 import { queryFor } from "@/lib/names";
+import { isTokenCard } from "@/lib/tokens";
 import type { XmlSlot } from "@/lib/xml";
 
 /** One chosen print of a card. A card can hold several, and they are not merged by hand. */
@@ -40,6 +41,21 @@ export function defaultBackId(card: DeckCard): string {
   return card.faces[1]?.defaultArt?.id ?? card.faces[1]?.alternates[0]?.id ?? "";
 }
 
+/**
+ * The back face file a new pair starts on: the back face's first file in the
+ * deck's tone (SxF Color or Black and White), or its default file when the
+ * deck has no tone or the face has no file in it. Every new row uses this, so
+ * a Black and White deck never starts a double-faced card on a Color back.
+ */
+export function toneBackId(card: DeckCard, tone: ArtTone | null | undefined): string {
+  return toneArtId(card.faces[1], tone) ?? defaultBackId(card);
+}
+
+/** A new pair for a card the user adds a copy or an art row to: its default front, on its back face in the deck's tone. */
+export function newPair(card: DeckCard, qty: number, tone: ArtTone | null | undefined): ArtQty {
+  return onePair(card, qty, defaultArtId(card), toneBackId(card, tone))[0]!;
+}
+
 function onePair(card: DeckCard, qty: number, art = defaultArtId(card), back = defaultBackId(card)): ArtQty[] {
   return [{ art, qty, ...(back ? { back } : {}) }];
 }
@@ -75,7 +91,7 @@ export function selectAllCards(edition: Edition, previous: SavedCard[], tone?: A
     return {
       cardId: card.id,
       locked: existing?.locked ?? false,
-      pairs: keep ? existing!.pairs : onePair(card, card.bwOnly ? 0 : 1, toneArtId(card.faces[0], tone) ?? defaultArtId(card)),
+      pairs: keep ? existing!.pairs : onePair(card, card.bwOnly ? 0 : 1, toneArtId(card.faces[0], tone) ?? defaultArtId(card), toneBackId(card, tone)),
     };
   });
 }
@@ -134,7 +150,7 @@ export function applyTone(edition: Edition, selected: SavedCard[], tone: ArtTone
  * art, or taken from its last art first, so a second art keeps its own count
  * while the total allows. Locked cards, tokens, and extras stay as they are.
  */
-export function applyListQuantities(listed: Edition, previous: SavedCard[]): SavedCard[] {
+export function applyListQuantities(listed: Edition, previous: SavedCard[], tone?: ArtTone | null): SavedCard[] {
   const mains = listed.cards.filter((card) => card.role === "main");
   const mainIds = new Set(mains.map((card) => card.id));
   const rows = new Map<string, SavedCard>();
@@ -147,7 +163,7 @@ export function applyListQuantities(listed: Edition, previous: SavedCard[]): Sav
     if (existing?.locked) return existing;
     const target = Math.max(0, card.defaultQty);
     const pairs = (existing?.pairs ?? []).filter((pair) => pair.qty > 0).map((pair) => ({ ...pair }));
-    if (!pairs.length) return { cardId: card.id, locked: false, pairs: onePair(card, target) };
+    if (!pairs.length) return { cardId: card.id, locked: false, pairs: onePair(card, target, defaultArtId(card), toneBackId(card, tone)) };
     let have = pairs.reduce((sum, pair) => sum + pair.qty, 0);
     if (target >= have) pairs[0]!.qty += target - have;
     for (let i = pairs.length - 1; i >= 0 && have > target; i--) {
@@ -174,7 +190,7 @@ export function randomizeUnlocked(edition: Edition, previous: SavedCard[], rng: 
       return { cardId: card.id, locked, pairs: onePair(card, 0) };
     }
     let art = defaultArtId(card);
-    let back = defaultBackId(card);
+    let back = toneBackId(card, tone);
     const front = card.faces[0];
     if (front) {
       const options = inTone(artsForRandom(front), tone);
@@ -230,7 +246,13 @@ function combinedPairs(rows: SavedCard[]): ArtQty[] {
 export function selectionToSlots(
   edition: Edition,
   selected: SavedCard[],
-  options?: { printFlipBacksAsFronts?: boolean },
+  options?: {
+    printFlipBacksAsFronts?: boolean;
+    /** Per-card back overrides (card id to file id). A card without one prints as before. */
+    cardBacks?: Readonly<Record<string, string>>;
+    /** The deck-wide back. A one-faced card whose override is this same file prints exactly as without it. */
+    cardback?: string | null;
+  },
 ): XmlSlot[] {
   const byId = new Map<string, ArtQty[]>();
   for (const row of selected) {
@@ -241,16 +263,29 @@ export function selectionToSlots(
   }
   const slots: XmlSlot[] = [];
   const promoteBacks = edition.printType === "partial_foil" && options?.printFlipBacksAsFronts === true;
+  const overrides = activeBackOverrides(edition, options?.cardBacks);
   for (const card of edition.cards) {
     const pairs = byId.get(card.id);
     if (!pairs) continue;
     const front = card.faces[0];
     if (!front) continue;
     const backFace = card.faces[1];
+    const override = overrides.get(card.id);
     for (const pair of pairs) {
     if (pair.qty <= 0) continue;
     const frontArt = chosenArt(front, pair.art);
     if (!frontArt) continue;
+    if (override) {
+      // A picked back replaces the deck back and, on a double-faced card, its own back face. It is never promoted to a front.
+      const same = !backFace && override.kind === "cardback" && override.id === options?.cardback;
+      for (let i = 0; i < Math.max(0, Math.floor(pair.qty)); i++) {
+        slots.push({
+          front: { id: frontArt.id, name: frontArt.name, query: queryFor(front.name) },
+          back: same ? null : { id: override.id, name: override.name, query: override.query },
+        });
+      }
+      continue;
+    }
     const backArt = backFace ? chosenArt(backFace, pair.back) : null;
     const backIsPdf = Boolean(backArt && /\.pdf$/i.test(backArt.name));
     const asFront = promoteBacks && backIsPdf && backArt;
@@ -272,6 +307,106 @@ export function selectionToSlots(
     }
   }
   return slots;
+}
+
+/** Which list a per-card back came from in the card editor. */
+export type BackKind = "cardback" | "alt" | "token";
+
+/** A file that can be printed on the back of one card instead of the deck-wide back. */
+export type BackOption = { kind: BackKind; id: string; name: string; thumbId: string; label: string; query: string; cardId?: string };
+
+export const BACK_KINDS: readonly BackKind[] = ["cardback", "alt", "token"];
+
+/**
+ * What the card editor offers as a back for `cardId`: the edition's card
+ * backs, the front art of every extra that is not a token, and the front art
+ * of every token. Extras and tokens are the edition's non-main cards; which
+ * of them are tokens comes from the static Scryfall lookup, with the folder
+ * and name rule for names it has no clear answer for. A card is never offered
+ * as its own back. With a tone (SxF Color or Black and White), files of the
+ * other tone are left out.
+ */
+export function backOptions(
+  edition: Pick<Edition, "cards" | "backs">,
+  cardId: string,
+  tone?: ArtTone | null,
+  tokenTest: (card: DeckCard) => boolean = isTokenCard,
+): Record<BackKind, BackOption[]> {
+  const out: Record<BackKind, BackOption[]> = { cardback: [], alt: [], token: [] };
+  for (const back of edition.backs) out.cardback.push({ kind: "cardback", id: back.id, name: back.name, thumbId: back.thumbId, label: back.name, query: queryFor(back.name) });
+  for (const card of edition.cards) {
+    if (card.role === "main" || card.id === cardId) continue;
+    const face = card.faces[0];
+    if (!face) continue;
+    const kind: BackKind = tokenTest(card) ? "token" : "alt";
+    for (const art of inTone(artsOf(face), tone)) {
+      out[kind].push({ kind, id: art.id, name: art.name, thumbId: art.thumbId, label: art.label || card.name, query: queryFor(face.name), cardId: card.id });
+    }
+  }
+  return out;
+}
+
+/** The back a card's override points at, or null when there is none or it is not in this edition (then the card prints as if unset). */
+export function resolveBackOverride(
+  edition: Pick<Edition, "cards" | "backs">,
+  cardId: string,
+  fileId: string | undefined,
+  tokenTest: (card: DeckCard) => boolean = isTokenCard,
+): BackOption | null {
+  if (!fileId) return null;
+  const options = backOptions(edition, cardId, null, tokenTest);
+  for (const kind of BACK_KINDS) {
+    const hit = options[kind].find((option) => option.id === fileId);
+    if (hit) return hit;
+  }
+  return null;
+}
+
+/** Overrides for cards in this edition that resolve, keyed by card id. */
+export function activeBackOverrides(
+  edition: Pick<Edition, "cards" | "backs">,
+  cardBacks: Readonly<Record<string, string>> | undefined,
+  tokenTest: (card: DeckCard) => boolean = isTokenCard,
+): Map<string, BackOption> {
+  const out = new Map<string, BackOption>();
+  if (!cardBacks) return out;
+  for (const card of edition.cards) {
+    const hit = resolveBackOverride(edition, card.id, cardBacks[card.id], tokenTest);
+    if (hit) out.set(card.id, hit);
+  }
+  return out;
+}
+
+/**
+ * Per-card back picks after a tone switch. A pick on a Color or Black and
+ * White file of an extra or token moves to that card's file in the new tone,
+ * the way applyTone moves fronts and back faces. Card backs, untagged files,
+ * and files with no version in the new tone stay put. Without picks, or when
+ * nothing moves, the same object comes back, so a deck without picks is
+ * saved exactly as before.
+ */
+export function toneCardBacks(
+  edition: Pick<Edition, "cards">,
+  cardBacks: Readonly<Record<string, string>> | undefined,
+  tone: ArtTone,
+): Readonly<Record<string, string>> | undefined {
+  if (!cardBacks) return cardBacks;
+  const owners = new Map<string, CardFace>();
+  for (const card of edition.cards) {
+    if (card.role === "main") continue;
+    const face = card.faces[0];
+    if (face) for (const art of artsOf(face)) if (!owners.has(art.id)) owners.set(art.id, face);
+  }
+  let moved = false;
+  const next: Record<string, string> = {};
+  for (const [cardId, fileId] of Object.entries(cardBacks)) {
+    const face = owners.get(fileId);
+    const art = face ? artsOf(face).find((item) => item.id === fileId) : undefined;
+    const other = face && art?.tone && art.tone !== tone ? toneArtId(face, tone) : null;
+    next[cardId] = other ?? fileId;
+    if (other) moved = true;
+  }
+  return moved ? next : cardBacks;
 }
 
 export function countCopies(selected: SavedCard[]): number {

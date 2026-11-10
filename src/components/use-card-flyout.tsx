@@ -47,7 +47,7 @@ export function useCardFlyout(cardback: string | null | undefined) {
       const anchor = target.closest<HTMLElement>("[data-flyout-anchor]") ?? target;
       const rect = anchor.getBoundingClientRect();
       const placement = flyoutPlacement(rect, { width: window.innerWidth, height: window.innerHeight });
-      const plan = flipPlan({ dfcBack: card.dfcBack, cardback, reducedMotion: matches(REDUCED_MOTION_MEDIA) });
+      const plan = flipPlan({ customBack: card.customBack, dfcBack: card.dfcBack, cardback, reducedMotion: matches(REDUCED_MOTION_MEDIA) });
       targetRef.current = target;
       setShown({ card, placement, plan });
     },

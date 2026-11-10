@@ -1,0 +1,379 @@
+{
+ "recordedWith": "BeeLine v0.1.27 (82825f7), scratch/golden_cases.mts run in the v0.1.27 source tree on 2026-11-10",
+ "cases": [
+  {
+   "name": "X-Men Joshua: 2 front copies plus a back row on an alternate back (qty 1)",
+   "deck": "x-men",
+   "save": {
+    "id": "golden-X-Men Joshua: 2 front copies plus a back row on an alternate back (qty 1)",
+    "name": "X-Men Joshua: 2 front copies plus a back row on an alternate back (qty 1)",
+    "deckId": "x-men",
+    "deckName": "X-Men",
+    "editionId": "standard",
+    "editionName": "Standard",
+    "printType": "standard",
+    "treatment": null,
+    "cardbackId": "14HxQ3iLS1VcJ9hYHEIxEiECqhy-nFisX",
+    "printFlipBacksAsFronts": false,
+    "cards": [
+     {
+      "cardId": "main-1-joshua-phoenix-dominant-marvel-girl",
+      "locked": false,
+      "pairs": [
+       {
+        "art": "1-kLs8J-crqPBetcUWDYtxwH5eZI66gQt",
+        "qty": 2
+       }
+      ]
+     },
+     {
+      "cardId": "main-joshua-old-back",
+      "locked": false,
+      "pairs": [
+       {
+        "art": "1FZlslYozi6uma49CwQQShPgcetyikPGv",
+        "qty": 1
+       }
+      ]
+     }
+    ],
+    "updatedAt": "2026-11-09T12:00:00.000Z"
+   },
+   "loaded": [
+    {
+     "cardId": "main-1-joshua-phoenix-dominant-marvel-girl",
+     "locked": false,
+     "pairs": [
+      {
+       "art": "1-kLs8J-crqPBetcUWDYtxwH5eZI66gQt",
+       "qty": 2
+      }
+     ]
+    }
+   ],
+   "note": "Some saved art picks were updated to this edition's files.",
+   "xml": "<order>\r\n    <details>\r\n        <quantity>2</quantity>\r\n        <bracket>18</bracket>\r\n        <stock>(S30) Standard Smooth</stock>\r\n        <foil>false</foil>\r\n    </details>\r\n    <fronts>\r\n        <card>\r\n            <id>1-kLs8J-crqPBetcUWDYtxwH5eZI66gQt</id>\r\n            <slots>0,1</slots>\r\n            <name>1_1_Joshua, Phoenix's Dominant (Marvel Girl).jpg</name>\r\n            <query>joshua phoenix dominant</query>\r\n        </card>\r\n    </fronts>\r\n    <backs>\r\n        <card>\r\n            <id>1x1AMLanXkQr7lhrr0jZvMKNiuKlPFcYi</id>\r\n            <slots>0,1</slots>\r\n            <name>1_2_Phoenix, Warden of Fire (Phoenix).jpg</name>\r\n            <query>phoenix warden of fire</query>\r\n        </card>\r\n    </backs>\r\n    <cardback>14HxQ3iLS1VcJ9hYHEIxEiECqhy-nFisX</cardback>\r\n    <printabee>\r\n        <deck>X-Men Joshua: 2 front copies plus a back row on an alternate back (qty 1)</deck>\r\n        <printType>standard</printType>\r\n    </printabee>\r\n</order>"
+  },
+  {
+   "name": "X-Men Joshua: a back row on an alternate back and no front copies",
+   "deck": "x-men",
+   "save": {
+    "id": "golden-X-Men Joshua: a back row on an alternate back and no front copies",
+    "name": "X-Men Joshua: a back row on an alternate back and no front copies",
+    "deckId": "x-men",
+    "deckName": "X-Men",
+    "editionId": "standard",
+    "editionName": "Standard",
+    "printType": "standard",
+    "treatment": null,
+    "cardbackId": "14HxQ3iLS1VcJ9hYHEIxEiECqhy-nFisX",
+    "printFlipBacksAsFronts": false,
+    "cards": [
+     {
+      "cardId": "main-joshua-old-back",
+      "locked": true,
+      "pairs": [
+       {
+        "art": "1ygIxPf9hNXG8QtmdkTUhaq5_DS4bWOfG",
+        "qty": 1
+       }
+      ]
+     }
+    ],
+    "updatedAt": "2026-11-09T12:00:00.000Z"
+   },
+   "loaded": [
+    {
+     "cardId": "main-1-joshua-phoenix-dominant-marvel-girl",
+     "locked": true,
+     "pairs": [
+      {
+       "art": "1-kLs8J-crqPBetcUWDYtxwH5eZI66gQt",
+       "qty": 1,
+       "back": "1ygIxPf9hNXG8QtmdkTUhaq5_DS4bWOfG"
+      }
+     ]
+    }
+   ],
+   "note": "Some saved art picks were updated to this edition's files.",
+   "xml": "<order>\r\n    <details>\r\n        <quantity>1</quantity>\r\n        <bracket>18</bracket>\r\n        <stock>(S30) Standard Smooth</stock>\r\n        <foil>false</foil>\r\n    </details>\r\n    <fronts>\r\n        <card>\r\n            <id>1-kLs8J-crqPBetcUWDYtxwH5eZI66gQt</id>\r\n            <slots>0</slots>\r\n            <name>1_1_Joshua, Phoenix's Dominant (Marvel Girl).jpg</name>\r\n            <query>joshua phoenix dominant</query>\r\n        </card>\r\n    </fronts>\r\n    <backs>\r\n        <card>\r\n            <id>1ygIxPf9hNXG8QtmdkTUhaq5_DS4bWOfG</id>\r\n            <slots>0</slots>\r\n            <name>1_2_The Ring Tempts You (The Prophecy Advances).jpg</name>\r\n            <query>phoenix warden of fire</query>\r\n        </card>\r\n    </backs>\r\n    <cardback>14HxQ3iLS1VcJ9hYHEIxEiECqhy-nFisX</cardback>\r\n    <printabee>\r\n        <deck>X-Men Joshua: a back row on an alternate back and no front copies</deck>\r\n        <printType>standard</printType>\r\n    </printabee>\r\n</order>"
+  },
+  {
+   "name": "NieR Fio: a front copy on an alternate art plus a back row on the other back",
+   "deck": "nier",
+   "save": {
+    "id": "golden-NieR Fio: a front copy on an alternate art plus a back row on the other back",
+    "name": "NieR Fio: a front copy on an alternate art plus a back row on the other back",
+    "deckId": "nier",
+    "deckName": "Nier",
+    "editionId": "standard",
+    "editionName": "Standard",
+    "printType": "standard",
+    "treatment": null,
+    "cardbackId": "1VQAEAAC6o9bs-qJxWbOyArMWtsiUrVKK",
+    "printFlipBacksAsFronts": false,
+    "cards": [
+     {
+      "cardId": "main-1-wandering-archaic-fio-and-levania",
+      "locked": false,
+      "pairs": [
+       {
+        "art": "10_LXEVxmki_bHP5WktChfpBGRExP53CI",
+        "qty": 1
+       }
+      ]
+     },
+     {
+      "cardId": "main-fio-old-back",
+      "locked": false,
+      "pairs": [
+       {
+        "art": "18_ib5A7763EkQBrwNiJNxdu6-TQAqlzl",
+        "qty": 1
+       }
+      ]
+     }
+    ],
+    "updatedAt": "2026-11-09T12:00:00.000Z"
+   },
+   "loaded": [
+    {
+     "cardId": "main-1-wandering-archaic-fio-and-levania",
+     "locked": false,
+     "pairs": [
+      {
+       "art": "10_LXEVxmki_bHP5WktChfpBGRExP53CI",
+       "qty": 1
+      }
+     ]
+    }
+   ],
+   "note": "Some saved art picks were updated to this edition's files.",
+   "xml": "<order>\r\n    <details>\r\n        <quantity>1</quantity>\r\n        <bracket>18</bracket>\r\n        <stock>(S30) Standard Smooth</stock>\r\n        <foil>false</foil>\r\n    </details>\r\n    <fronts>\r\n        <card>\r\n            <id>10_LXEVxmki_bHP5WktChfpBGRExP53CI</id>\r\n            <slots>0</slots>\r\n            <name>Wandering Archaic (Fio and Levania) 4.jpg</name>\r\n            <query>wandering archaic</query>\r\n        </card>\r\n    </fronts>\r\n    <backs>\r\n        <card>\r\n            <id>1J9vcGWK_zI9N0WeFmZoiEzeHTjXLRf-K</id>\r\n            <slots>0</slots>\r\n            <name>1_2_Explore the Vastlands (Explore Memories).jpg</name>\r\n            <query>explore vastlands</query>\r\n        </card>\r\n    </backs>\r\n    <cardback>1VQAEAAC6o9bs-qJxWbOyArMWtsiUrVKK</cardback>\r\n    <printabee>\r\n        <deck>NieR Fio: a front copy on an alternate art plus a back row on the other back</deck>\r\n        <printType>standard</printType>\r\n    </printabee>\r\n</order>"
+  },
+  {
+   "name": "Persona 5 Terra: two front arts, one with its own back, plus a back row",
+   "deck": "persona-5",
+   "save": {
+    "id": "golden-Persona 5 Terra: two front arts, one with its own back, plus a back row",
+    "name": "Persona 5 Terra: two front arts, one with its own back, plus a back row",
+    "deckId": "persona-5",
+    "deckName": "Persona 5",
+    "editionId": "standard",
+    "editionName": "Standard",
+    "printType": "standard",
+    "treatment": null,
+    "cardbackId": "1Xqyk5bcdC0qCKNdPcOrdGDTteJvS8g6P",
+    "printFlipBacksAsFronts": false,
+    "cards": [
+     {
+      "cardId": "main-1-terra-magical-adept",
+      "locked": false,
+      "pairs": [
+       {
+        "art": "1tubXqQ6bdSf9XicPYzmG4SONVWYSizm3",
+        "qty": 1
+       },
+       {
+        "art": "1XDTR_u4yf5_23fWJERpYGcFNq_jqzSLQ",
+        "qty": 1,
+        "back": "1LS0SKBCHR0CYCbpHSogHA1PT814K3aUG"
+       }
+      ]
+     },
+     {
+      "cardId": "main-terra-old-back",
+      "locked": false,
+      "pairs": [
+       {
+        "art": "1gWNKLnQFwnZZvLYvupU9hd061epaWH64",
+        "qty": 1
+       }
+      ]
+     }
+    ],
+    "updatedAt": "2026-11-09T12:00:00.000Z"
+   },
+   "loaded": [
+    {
+     "cardId": "main-1-terra-magical-adept",
+     "locked": false,
+     "pairs": [
+      {
+       "art": "1tubXqQ6bdSf9XicPYzmG4SONVWYSizm3",
+       "qty": 1
+      },
+      {
+       "art": "1XDTR_u4yf5_23fWJERpYGcFNq_jqzSLQ",
+       "qty": 1,
+       "back": "1LS0SKBCHR0CYCbpHSogHA1PT814K3aUG"
+      }
+     ]
+    }
+   ],
+   "note": "Some saved art picks were updated to this edition's files.",
+   "xml": "<order>\r\n    <details>\r\n        <quantity>2</quantity>\r\n        <bracket>18</bracket>\r\n        <stock>(S30) Standard Smooth</stock>\r\n        <foil>false</foil>\r\n    </details>\r\n    <fronts>\r\n        <card>\r\n            <id>1tubXqQ6bdSf9XicPYzmG4SONVWYSizm3</id>\r\n            <slots>0</slots>\r\n            <name>1_1_Terra, Magical Adept.jpg</name>\r\n            <query>terra magical adept</query>\r\n        </card>\r\n        <card>\r\n            <id>1XDTR_u4yf5_23fWJERpYGcFNq_jqzSLQ</id>\r\n            <slots>1</slots>\r\n            <name>Terra, Magical Adept 2.jpg</name>\r\n            <query>terra magical adept</query>\r\n        </card>\r\n    </fronts>\r\n    <backs>\r\n        <card>\r\n            <id>1QpZNPpzEFfG6n0uOCmqzcxcDBEkbAScG</id>\r\n            <slots>0</slots>\r\n            <name>1_2_Esper Terra.jpg</name>\r\n            <query>esper terra</query>\r\n        </card>\r\n        <card>\r\n            <id>1LS0SKBCHR0CYCbpHSogHA1PT814K3aUG</id>\r\n            <slots>1</slots>\r\n            <name>Esper Terra 2.jpg</name>\r\n            <query>esper terra</query>\r\n        </card>\r\n    </backs>\r\n    <cardback>1Xqyk5bcdC0qCKNdPcOrdGDTteJvS8g6P</cardback>\r\n    <printabee>\r\n        <deck>Persona 5 Terra: two front arts, one with its own back, plus a back row</deck>\r\n        <printType>standard</printType>\r\n    </printabee>\r\n</order>"
+  },
+  {
+   "name": "Silksong Cecil: a front copy with its own back plus a back row of 2",
+   "deck": "silksong",
+   "save": {
+    "id": "golden-Silksong Cecil: a front copy with its own back plus a back row of 2",
+    "name": "Silksong Cecil: a front copy with its own back plus a back row of 2",
+    "deckId": "silksong",
+    "deckName": "Silksong",
+    "editionId": "standard",
+    "editionName": "Standard",
+    "printType": "standard",
+    "treatment": null,
+    "cardbackId": "1csg3-hUnfbdt_4UgI7emIILkk9-wnA0c",
+    "printFlipBacksAsFronts": false,
+    "cards": [
+     {
+      "cardId": "main-1-cecil-dark-knight-lost-lace",
+      "locked": false,
+      "pairs": [
+       {
+        "art": "1hUiefEitVJa63E3k12vtKWXylVtrfAIA",
+        "qty": 1,
+        "back": "1emGT89dVKLZp6ZzOhRHZZM3HCWP9wtB5"
+       }
+      ]
+     },
+     {
+      "cardId": "main-cecil-old-back",
+      "locked": false,
+      "pairs": [
+       {
+        "art": "1ZBFI0YQGz43CcpJbfoa84c5dLpNU3Lg5",
+        "qty": 2
+       }
+      ]
+     }
+    ],
+    "updatedAt": "2026-11-09T12:00:00.000Z"
+   },
+   "loaded": [
+    {
+     "cardId": "main-1-cecil-dark-knight-lost-lace",
+     "locked": false,
+     "pairs": [
+      {
+       "art": "1hUiefEitVJa63E3k12vtKWXylVtrfAIA",
+       "qty": 1,
+       "back": "1emGT89dVKLZp6ZzOhRHZZM3HCWP9wtB5"
+      }
+     ]
+    }
+   ],
+   "note": "Some saved art picks were updated to this edition's files.",
+   "xml": "<order>\r\n    <details>\r\n        <quantity>1</quantity>\r\n        <bracket>18</bracket>\r\n        <stock>(S30) Standard Smooth</stock>\r\n        <foil>false</foil>\r\n    </details>\r\n    <fronts>\r\n        <card>\r\n            <id>1hUiefEitVJa63E3k12vtKWXylVtrfAIA</id>\r\n            <slots>0</slots>\r\n            <name>1_1_Cecil, Dark Knight (Lost Lace) 1.jpg</name>\r\n            <query>cecil dark knight</query>\r\n        </card>\r\n    </fronts>\r\n    <backs>\r\n        <card>\r\n            <id>1emGT89dVKLZp6ZzOhRHZZM3HCWP9wtB5</id>\r\n            <slots>0</slots>\r\n            <name>1_2_Cecil, Redeemed Paladin (Lace) 2.jpg</name>\r\n            <query>cecil redeemed paladin</query>\r\n        </card>\r\n    </backs>\r\n    <cardback>1csg3-hUnfbdt_4UgI7emIILkk9-wnA0c</cardback>\r\n    <printabee>\r\n        <deck>Silksong Cecil: a front copy with its own back plus a back row of 2</deck>\r\n        <printType>standard</printType>\r\n    </printabee>\r\n</order>"
+  },
+  {
+   "name": "Silksong Cecil: front copies with no back plus a back row",
+   "deck": "silksong",
+   "save": {
+    "id": "golden-Silksong Cecil: front copies with no back plus a back row",
+    "name": "Silksong Cecil: front copies with no back plus a back row",
+    "deckId": "silksong",
+    "deckName": "Silksong",
+    "editionId": "standard",
+    "editionName": "Standard",
+    "printType": "standard",
+    "treatment": null,
+    "cardbackId": "1csg3-hUnfbdt_4UgI7emIILkk9-wnA0c",
+    "printFlipBacksAsFronts": false,
+    "cards": [
+     {
+      "cardId": "main-1-cecil-dark-knight-lost-lace",
+      "locked": false,
+      "pairs": [
+       {
+        "art": "1mwbDtSR82rjhqbE6Yc4BDfSHMaRBqM8n",
+        "qty": 2
+       }
+      ]
+     },
+     {
+      "cardId": "main-cecil-old-back",
+      "locked": false,
+      "pairs": [
+       {
+        "art": "1Bh3CrVyjRu3Q00QMYMSHqmnhwEFUocDh",
+        "qty": 1
+       }
+      ]
+     }
+    ],
+    "updatedAt": "2026-11-09T12:00:00.000Z"
+   },
+   "loaded": [
+    {
+     "cardId": "main-1-cecil-dark-knight-lost-lace",
+     "locked": false,
+     "pairs": [
+      {
+       "art": "1mwbDtSR82rjhqbE6Yc4BDfSHMaRBqM8n",
+       "qty": 2
+      }
+     ]
+    }
+   ],
+   "note": "Some saved art picks were updated to this edition's files.",
+   "xml": "<order>\r\n    <details>\r\n        <quantity>2</quantity>\r\n        <bracket>18</bracket>\r\n        <stock>(S30) Standard Smooth</stock>\r\n        <foil>false</foil>\r\n    </details>\r\n    <fronts>\r\n        <card>\r\n            <id>1mwbDtSR82rjhqbE6Yc4BDfSHMaRBqM8n</id>\r\n            <slots>0,1</slots>\r\n            <name>1_1_Cecil, Dark Knight (Lost Lace).jpg</name>\r\n            <query>cecil dark knight</query>\r\n        </card>\r\n    </fronts>\r\n    <backs>\r\n        <card>\r\n            <id>1PkGKJYt5PrEN0LApevz6B6CClV_0IkFQ</id>\r\n            <slots>0,1</slots>\r\n            <name>1_2_Cecil, Redeemed Paladin (Lace).jpg</name>\r\n            <query>cecil redeemed paladin</query>\r\n        </card>\r\n    </backs>\r\n    <cardback>1csg3-hUnfbdt_4UgI7emIILkk9-wnA0c</cardback>\r\n    <printabee>\r\n        <deck>Silksong Cecil: front copies with no back plus a back row</deck>\r\n        <printType>standard</printType>\r\n    </printabee>\r\n</order>"
+  },
+  {
+   "name": "TMNT: Dowsing Dagger plus the old Lost Vale row",
+   "deck": "tmnt",
+   "save": {
+    "id": "golden-TMNT: Dowsing Dagger plus the old Lost Vale row",
+    "name": "TMNT: Dowsing Dagger plus the old Lost Vale row",
+    "deckId": "tmnt",
+    "deckName": "TMNT",
+    "editionId": "standard",
+    "editionName": "Standard",
+    "printType": "standard",
+    "treatment": null,
+    "cardbackId": "1BDZDK6oi6KU2tv5_uW2MzuTeUZlKyI-a",
+    "printFlipBacksAsFronts": false,
+    "cards": [
+     {
+      "cardId": "main-dowsing-dagger-interdimensional-teleporter",
+      "locked": false,
+      "pairs": [
+       {
+        "art": "14jFiDaMmDpHI8RPDJChyj_T-ZOxDvWZX",
+        "qty": 1
+       }
+      ]
+     },
+     {
+      "cardId": "main-1-2-lost-vale-dimension-x",
+      "locked": false,
+      "pairs": [
+       {
+        "art": "1ak2jIah5qZ3KzeufOFC2zz4hZXnUfbc9",
+        "qty": 1
+       }
+      ]
+     }
+    ],
+    "updatedAt": "2026-11-09T12:00:00.000Z"
+   },
+   "loaded": [
+    {
+     "cardId": "main-dowsing-dagger-interdimensional-teleporter",
+     "locked": false,
+     "pairs": [
+      {
+       "art": "14jFiDaMmDpHI8RPDJChyj_T-ZOxDvWZX",
+       "qty": 1
+      }
+     ]
+    }
+   ],
+   "note": "Some saved art picks were updated to this edition's files.",
+   "xml": "<order>\r\n    <details>\r\n        <quantity>1</quantity>\r\n        <bracket>18</bracket>\r\n        <stock>(S30) Standard Smooth</stock>\r\n        <foil>false</foil>\r\n    </details>\r\n    <fronts>\r\n        <card>\r\n            <id>14jFiDaMmDpHI8RPDJChyj_T-ZOxDvWZX</id>\r\n            <slots>0</slots>\r\n            <name>1_1_Dowsing Dagger (Interdimensional Teleporter).png</name>\r\n            <query>dowsing dagger</query>\r\n        </card>\r\n    </fronts>\r\n    <backs>\r\n        <card>\r\n            <id>1ak2jIah5qZ3KzeufOFC2zz4hZXnUfbc9</id>\r\n            <slots>0</slots>\r\n            <name>1_2 Lost Vale (Dimension X).png</name>\r\n            <query>lost vale</query>\r\n        </card>\r\n    </backs>\r\n    <cardback>1BDZDK6oi6KU2tv5_uW2MzuTeUZlKyI-a</cardback>\r\n    <printabee>\r\n        <deck>TMNT: Dowsing Dagger plus the old Lost Vale row</deck>\r\n        <printType>standard</printType>\r\n    </printabee>\r\n</order>"
+  }
+ ]
+}

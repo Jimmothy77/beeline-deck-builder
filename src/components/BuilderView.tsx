@@ -1,4 +1,4 @@
-import { Component, type ReactNode, useMemo, useRef, useState } from "react";
+import { Component, type ReactNode, useCallback, useMemo, useRef, useState } from "react";
 import { ChevronLeft, Copy, Dices, Download, Lock, LockOpen, Save } from "lucide-react";
 import { BackToTop } from "@/components/BackToTop";
 import type { FlyoutCard } from "@/components/CardFlyout";
@@ -31,20 +31,39 @@ import {
   artsOf,
   chosenArt,
   copyCount,
-  defaultArtId,
-  defaultBackId,
   droppedSavedCardIds,
   hasToneChoice,
+  newPair,
   oversizedDeckWarning,
   randomizeUnlocked,
   selectAllCards,
   selectionToSlots,
+  activeBackOverrides,
+  backOptions,
+  BACK_KINDS,
+  toneCardBacks,
   type ArtQty,
+  type BackKind,
+  type BackOption,
   type SavedCard,
 } from "@/lib/selection";
 import type { SavedDeck } from "@/lib/storage";
-import type { DeckCard, Edition } from "@/lib/types";
+import { isTokenCard } from "@/lib/tokens";
+import type { CardBack, DeckCard, Edition } from "@/lib/types";
 import { assertIdsAllowed, bracketFor, splitExportByPrintType } from "@/lib/xml";
+
+/** Sets or clears the back printed on every copy of one card. The map is dropped when it empties, so the save looks like an older one. */
+function withCardBack(draft: SavedDeck, cardId: string, fileId: string | null): SavedDeck {
+  const next = { ...(draft.cardBacks ?? {}) };
+  if (fileId) next[cardId] = fileId;
+  else delete next[cardId];
+  const rest: SavedDeck = { ...draft };
+  delete rest.cardBacks;
+  return Object.keys(next).length ? { ...rest, cardBacks: next } : rest;
+}
+
+/** The three back lists in the card editor. */
+const BACK_LABELS: Record<BackKind, string> = { cardback: "Card Back", alt: "Alt Back", token: "Token Backs" };
 
 export class BuilderBoundary extends Component<{ onBack: () => void; children: ReactNode }, { error: Error | null }> {
   state = { error: null as Error | null };
@@ -89,6 +108,8 @@ export function BuilderView({
   const [query, setQuery] = useState("");
   const [artTarget, setArtTarget] = useState<{ cardId: string; pairIndex: number; side: "front" | "back" } | null>(null);
   const [backsOpen, setBacksOpen] = useState(false);
+  /** The back list shown in the card editor. Null opens on the list of the card's current pick, or Card Back. */
+  const [backTab, setBackTab] = useState<BackKind | null>(null);
   const [xml, setXml] = useState<string | null>(null);
   const [xmlError, setXmlError] = useState<string | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
@@ -102,6 +123,7 @@ export function BuilderView({
     const dropped = droppedSavedCardIds(edition, draft.cards);
     copies = selectionToSlots(edition, draft.cards, {
       printFlipBacksAsFronts: draft.printFlipBacksAsFronts === true,
+      cardBacks: draft.cardBacks,
     }).length;
     if (dropped.length && !resolveNote) resolveNote = "Some saved cards were dropped.";
   } catch (error) {
@@ -114,6 +136,10 @@ export function BuilderView({
     bracket = error instanceof Error ? error.message : "Too many cards";
   }
   const back = edition.backs.find((item) => item.id === draft.cardbackId) ?? edition.backs[0];
+  const deckId = draft.deckId;
+  // Hand token decisions (src/data/token-overrides.ts) are per deck, so the deck id goes with every token test.
+  const tokenTest = useCallback((card: DeckCard) => isTokenCard(card, deckId), [deckId]);
+  const overrides = useMemo(() => activeBackOverrides(edition, draft.cardBacks, tokenTest), [edition, draft.cardBacks, tokenTest]);
   const flyout = useCardFlyout(back?.thumbId);
   const topRef = useRef<HTMLButtonElement | null>(null);
   const q = query.trim().toLowerCase();
@@ -143,7 +169,7 @@ export function BuilderView({
   function changePair(card: DeckCard, index: number, qty: number) {
     const saved = byId.get(card.id);
     if (!saved?.pairs.length) {
-      if (qty > 0) writeCard(card, [{ art: defaultArtId(card), qty, ...(defaultBackId(card) ? { back: defaultBackId(card) } : {}) }]);
+      if (qty > 0) writeCard(card, [newPair(card, qty, tone)]);
       return;
     }
     const pairs = saved.pairs.map((pair, item) => (item === index ? { ...pair, qty } : pair)).filter((pair) => pair.qty > 0);
@@ -152,15 +178,24 @@ export function BuilderView({
 
   function addPair(card: DeckCard) {
     const saved = byId.get(card.id);
-    const pairs = [...(saved?.pairs ?? []), { art: defaultArtId(card), qty: 1, ...(defaultBackId(card) ? { back: defaultBackId(card) } : {}) }];
+    const pairs = [...(saved?.pairs ?? []), newPair(card, 1, tone)];
     writeCard(card, pairs, saved?.locked ?? false);
+  }
+
+  function closeEditor() {
+    setArtTarget(null);
+    setBackTab(null);
   }
 
   function chooseArt(card: DeckCard, pairIndex: number, side: "front" | "back", artId: string) {
     const saved = byId.get(card.id);
     const pairs = (saved?.pairs ?? []).map((pair, index) => (index === pairIndex ? { ...pair, [side === "back" ? "back" : "art"]: artId } : pair));
-    writeCard(card, pairs.length ? pairs : [{ art: side === "front" ? artId : defaultArtId(card), qty: 1, ...(side === "back" ? { back: artId } : {}) }], saved?.locked ?? false);
-    setArtTarget(null);
+    writeCard(card, pairs.length ? pairs : [{ ...newPair(card, 1, tone), ...(side === "back" ? { back: artId } : { art: artId }) }], saved?.locked ?? false);
+    closeEditor();
+  }
+
+  function pickCardBack(card: DeckCard, fileId: string | null) {
+    commit(withCardBack(draft, card.id, fileId));
   }
 
   function runAll() {
@@ -182,13 +217,14 @@ export function BuilderView({
   function chooseList(id: string) {
     const next = lists.find((item) => item.id === id);
     if (!next || next.id === list?.id) return;
-    commit({ ...draft, decklistId: next.id, cards: applyListQuantities(withDecklist(edition, next), draft.cards) });
+    commit({ ...draft, decklistId: next.id, cards: applyListQuantities(withDecklist(edition, next), draft.cards, tone) });
     onToast(`Opened the ${next.label} list. Locked cards kept their counts.`);
   }
 
   function chooseTone(next: "color" | "bw") {
     if (next === tone) return;
-    commit({ ...draft, tone: next, cards: applyTone(edition, draft.cards, next) });
+    const cardBacks = toneCardBacks(edition, draft.cardBacks, next);
+    commit({ ...draft, tone: next, cards: applyTone(edition, draft.cards, next), ...(cardBacks ? { cardBacks: { ...cardBacks } } : {}) });
     onToast(next === "bw" ? "Switched the option cards to Black and White." : "Switched the option cards to Color.");
   }
 
@@ -197,10 +233,12 @@ export function BuilderView({
     setXmlError(null);
     setExportOpen(true);
     try {
+      const cardback = draft.cardbackId || edition.backs[0]?.id || "";
       const slots = selectionToSlots(edition, draft.cards, {
         printFlipBacksAsFronts: draft.printFlipBacksAsFronts === true,
+        cardBacks: draft.cardBacks,
+        cardback,
       });
-      const cardback = draft.cardbackId || edition.backs[0]?.id || "";
       assertIdsAllowed(slots, cardback, artIdsOf(edition));
       const [xml] = splitExportByPrintType({
         slots: slots.map((slot) => ({ ...slot, printType: edition.printType })),
@@ -222,6 +260,10 @@ export function BuilderView({
   const artFace = artTarget?.side === "back" ? artCard?.faces[1] : artCard?.faces[0];
   const artOptions = artFace ? artsOf(artFace) : [];
   const artPair = artTarget ? byId.get(artTarget.cardId)?.pairs[artTarget.pairIndex] : undefined;
+  const artBacks = artCard ? backOptions(edition, artCard.id, tone, tokenTest) : null;
+  const artOverride = artCard ? overrides.get(artCard.id) : undefined;
+  const artBackTab: BackKind = backTab ?? artOverride?.kind ?? "cardback";
+  const artOwnBack = artCard?.faces[1];
   const sectionLabel = edition.printType === "partial_foil" ? "Partial Foil" : "Foil / Non-Foil";
 
   const deckPane = (
@@ -239,6 +281,7 @@ export function BuilderView({
               key={card.id}
               card={card}
               saved={byId.get(card.id)}
+              customBack={overrides.get(card.id)}
               showLock
               flyout={flyout.bind}
               onQty={(index, qty) => changePair(card, index, qty)}
@@ -254,8 +297,8 @@ export function BuilderView({
 
   const addPane = (
     <div className="flex flex-col gap-6">
-      <AddGroup title="Tokens" cards={tokens} empty="No tokens in this deck." byId={byId} flyout={flyout.bind} onQty={(card, index, qty) => changePair(card, index, qty)} onArt={(card, index, side) => setArtTarget({ cardId: card.id, pairIndex: index, side })} onAdd={(card) => addPair(card)} />
-      <AddGroup title="Extras" cards={extras} empty="No sideboard or extra cards in this deck." byId={byId} flyout={flyout.bind} onQty={(card, index, qty) => changePair(card, index, qty)} onArt={(card, index, side) => setArtTarget({ cardId: card.id, pairIndex: index, side })} onAdd={(card) => addPair(card)} />
+      <AddGroup title="Tokens" cards={tokens} empty="No tokens in this deck." byId={byId} overrides={overrides} flyout={flyout.bind} onQty={(card, index, qty) => changePair(card, index, qty)} onArt={(card, index, side) => setArtTarget({ cardId: card.id, pairIndex: index, side })} onAdd={(card) => addPair(card)} />
+      <AddGroup title="Extras" cards={extras} empty="No sideboard or extra cards in this deck." byId={byId} overrides={overrides} flyout={flyout.bind} onQty={(card, index, qty) => changePair(card, index, qty)} onArt={(card, index, side) => setArtTarget({ cardId: card.id, pairIndex: index, side })} onAdd={(card) => addPair(card)} />
     </div>
   );
 
@@ -274,6 +317,7 @@ export function BuilderView({
             key={card.id}
             card={card}
             saved={byId.get(card.id)}
+            customBack={overrides.get(card.id)}
             flyout={flyout.bind}
             onQty={(index, qty) => changePair(card, index, qty)}
             onArt={(index, side) => setArtTarget({ cardId: card.id, pairIndex: index, side })}
@@ -282,7 +326,7 @@ export function BuilderView({
         )}
       />
     ) : (
-      <AddGroup title={title} cards={cards} empty={empty} byId={byId} flyout={flyout.bind} onQty={(card, index, qty) => changePair(card, index, qty)} onArt={(card, index, side) => setArtTarget({ cardId: card.id, pairIndex: index, side })} onAdd={(card) => addPair(card)} />
+      <AddGroup title={title} cards={cards} empty={empty} byId={byId} overrides={overrides} flyout={flyout.bind} onQty={(card, index, qty) => changePair(card, index, qty)} onArt={(card, index, side) => setArtTarget({ cardId: card.id, pairIndex: index, side })} onAdd={(card) => addPair(card)} />
     );
 
   const desktopAddPane = (
@@ -459,7 +503,7 @@ export function BuilderView({
 
       <p className="pb-6 text-xs text-muted-foreground lg:pb-20">Card designs by Beespair. A deck list sets the opening counts, basic lands included. Without a list, basic lands never open at 0. Main-deck tokens never open at 0. Random rerolls unlocked main-deck cards to one print. All cards does the same, and leaves a black-and-white-only card at zero until you add it. Add another art when you want a second file of the same card.</p>
 
-      <Dialog open={Boolean(artFace)} onOpenChange={(open) => !open && setArtTarget(null)}>
+      <Dialog open={Boolean(artFace)} onOpenChange={(open) => !open && closeEditor()}>
         <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>{artFace?.name}</DialogTitle>
@@ -488,6 +532,9 @@ export function BuilderView({
               );
             })}
           </ul>
+          {artCard && artBacks ? (
+            <CardBackSection ownBack={artOwnBack?.name ?? null} deckBack={back ?? null} options={artBacks} override={artOverride} tab={artBackTab} onTab={setBackTab} onPick={(fileId) => pickCardBack(artCard, fileId)} />
+          ) : null}
         </DialogContent>
       </Dialog>
 
@@ -495,7 +542,7 @@ export function BuilderView({
         <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>Card back</DialogTitle>
-            <DialogDescription>Printed on every card in this order that doesn't have its own back face.</DialogDescription>
+            <DialogDescription>Printed on every card in this order that doesn't have its own back face or a back picked in its card editor.</DialogDescription>
           </DialogHeader>
           {edition.backs.length === 0 ? (
             <p className="text-sm text-muted-foreground">This deck didn't include any card backs.</p>
@@ -574,9 +621,107 @@ export function BuilderView({
   );
 }
 
+/**
+ * "Back for this card" in the card editor: Card Back, Alt Back and Token
+ * Backs, the current pick, and a way back to the default. A double-faced card
+ * says that a pick replaces its own back face.
+ */
+function CardBackSection({
+  ownBack,
+  deckBack,
+  options,
+  override,
+  tab,
+  onTab,
+  onPick,
+}: {
+  ownBack: string | null;
+  deckBack: CardBack | null;
+  options: Record<BackKind, BackOption[]>;
+  override?: BackOption;
+  tab: BackKind;
+  onTab: (kind: BackKind) => void;
+  onPick: (fileId: string | null) => void;
+}) {
+  const list = options[tab];
+  return (
+    <section aria-labelledby="card-back-heading" data-back-override="" className="mt-2 border-t border-border pt-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 id="card-back-heading" className="font-heading text-lg">
+          Back for this card
+        </h3>
+        {override ? (
+          <Button type="button" size="sm" variant="outline" onClick={() => onPick(null)}>
+            {ownBack ? "Use its own back face" : "Use the deck back"}
+          </Button>
+        ) : null}
+      </div>
+      <p className="mt-1 text-xs text-muted-foreground" data-back-status="">
+        {override
+          ? `Every copy prints with ${override.label} on the back.`
+          : ownBack
+            ? `Every copy prints with its own back face, ${ownBack}.`
+            : `Every copy prints with the deck back${deckBack ? `, ${deckBack.name}` : ""}.`}
+      </p>
+      {ownBack ? (
+        <p role="note" className="mt-2 rounded-lg border border-amber-300/40 bg-amber-200/10 px-3 py-2 text-xs text-amber-100">
+          This is a double-faced card. It keeps its own back face unless you pick a back here. A pick replaces {ownBack} on every copy, so that face isn't printed.
+        </p>
+      ) : null}
+      <div role="group" aria-label="Back type" className="mt-3 flex flex-wrap gap-1 rounded-lg border border-border p-0.5 sm:inline-flex">
+        {BACK_KINDS.map((kind) => (
+          <Button key={kind} type="button" size="sm" variant={tab === kind ? "default" : "ghost"} aria-pressed={tab === kind} disabled={options[kind].length === 0} onClick={() => onTab(kind)}>
+            {BACK_LABELS[kind]} <span className="tabular-nums opacity-70">{options[kind].length}</span>
+          </Button>
+        ))}
+      </div>
+      {list.length === 0 ? (
+        <p className="mt-3 text-sm text-muted-foreground">{tab === "token" ? "No tokens in this deck." : tab === "alt" ? "No extras other than tokens in this deck." : "This deck didn't include any card backs."}</p>
+      ) : (
+        <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label={BACK_LABELS[tab]}>
+          {list.map((option) => {
+            const selected = override?.id === option.id;
+            return (
+              <li key={`${option.kind}:${option.id}`}>
+                <button
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => onPick(option.id)}
+                  className={`w-full rounded-xl border p-2 text-left ${selected ? "border-primary ring-2 ring-primary" : "border-border"}`}
+                >
+                  <CardThumb id={option.thumbId} alt={option.label} />
+                  <span data-back-label="" className="mt-2 block text-xs leading-snug">
+                    {option.label}
+                  </span>
+                  {option.kind === "cardback" && option.id === deckBack?.id ? (
+                    <Badge variant="secondary" className="mt-1">
+                      Deck back
+                    </Badge>
+                  ) : null}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+/** A small line under the name, only when the card has its own back pick, so tiles without one look as before. */
+function CustomBackBadge({ option }: { option?: BackOption }) {
+  if (!option) return null;
+  return (
+    <Badge variant="outline" data-custom-back="" className="mt-1 max-w-full truncate border-primary/60 text-[0.7rem]" title={`Back: ${option.label}`}>
+      Back: {option.label}
+    </Badge>
+  );
+}
+
 function CardTile({
   card,
   saved,
+  customBack,
   showLock,
   flyout,
   onQty,
@@ -586,6 +731,7 @@ function CardTile({
 }: {
   card: DeckCard;
   saved?: SavedCard;
+  customBack?: BackOption;
   showLock: boolean;
   flyout?: (card: FlyoutCard) => FlyoutBinding;
   onQty: (index: number, qty: number) => void;
@@ -607,11 +753,12 @@ function CardTile({
           </Button>
         )}
       </div>
+      <CustomBackBadge option={customBack} />
       <ul className="mt-2 grid gap-2">
         {pairs.map((pair, index) => {
           const art = chosenArt(card.faces[0]!, pair.art);
           const backArt = back ? chosenArt(back, pair.back) : null;
-          const preview: FlyoutCard = { key: `${card.id}:${index}`, front: art?.thumbId, dfcBack: backArt?.thumbId, alt: card.name };
+          const preview: FlyoutCard = { key: `${card.id}:${index}`, front: art?.thumbId, dfcBack: backArt?.thumbId, customBack: customBack?.thumbId, alt: card.name };
           return (
             <li key={`${pair.art}:${index}`} className="flex items-center gap-2 lg:flex-wrap lg:justify-center lg:gap-y-1">
               <button type="button" {...flyout?.(preview)} onClick={() => saved && onArt(index, "front")} className="w-12 shrink-0 text-left lg:w-40" aria-label={`Choose front art ${index + 1} for ${card.name}`}>
@@ -619,7 +766,7 @@ function CardTile({
               </button>
               {back ? (
                 <button type="button" {...flyout?.(preview)} onClick={() => saved && onArt(index, "back")} className="w-12 shrink-0 text-left lg:w-[clamp(4rem,calc(100%_-_10.5rem),10rem)]" aria-label={`Choose back art ${index + 1} for ${card.name}`}>
-                  <CardThumb id={backArt?.thumbId} alt={back.name} />
+                  <CardThumb id={customBack?.thumbId ?? backArt?.thumbId} alt={customBack?.label ?? back.name} />
                 </button>
               ) : null}
               {/* Desktop: the count controls go on their own line under the art, so every tile lines up. */}
@@ -655,6 +802,7 @@ function AddGroup({
   cards,
   empty,
   byId,
+  overrides,
   flyout,
   onQty,
   onArt,
@@ -664,6 +812,7 @@ function AddGroup({
   cards: DeckCard[];
   empty: string;
   byId: Map<string, SavedCard>;
+  overrides?: Map<string, BackOption>;
   flyout?: (card: FlyoutCard) => FlyoutBinding;
   onQty: (card: DeckCard, index: number, qty: number) => void;
   onArt: (card: DeckCard, index: number, side: "front" | "back") => void;
@@ -681,6 +830,7 @@ function AddGroup({
               key={card.id}
               card={card}
               saved={byId.get(card.id)}
+              customBack={overrides?.get(card.id)}
               flyout={flyout}
               onQty={(index, qty) => onQty(card, index, qty)}
               onArt={(index, side) => onArt(card, index, side)}
@@ -697,6 +847,7 @@ function AddGroup({
 export function AddItem({
   card,
   saved,
+  customBack,
   flyout,
   onQty,
   onArt,
@@ -704,6 +855,7 @@ export function AddItem({
 }: {
   card: DeckCard;
   saved?: SavedCard;
+  customBack?: BackOption;
   flyout?: (card: FlyoutCard) => FlyoutBinding;
   onQty: (index: number, qty: number) => void;
   onArt: (index: number, side: "front" | "back") => void;
@@ -714,12 +866,13 @@ export function AddItem({
   return (
     <li data-flyout-anchor="" className="grid gap-2 rounded-xl border border-border bg-background/40 p-2">
       <p className="line-clamp-2 text-sm leading-snug">{card.name}</p>
+      <CustomBackBadge option={customBack} />
       {pairs.map((pair, index) => {
         const art = face ? chosenArt(face, pair.art) : null;
         const backArt = card.faces[1] ? chosenArt(card.faces[1], pair.back) : null;
         return (
           <div key={`${pair.art}:${index}`} className="flex items-center gap-2">
-            <button type="button" {...flyout?.({ key: `${card.id}:${index}`, front: art?.thumbId, dfcBack: backArt?.thumbId, alt: card.name })} className="w-12 shrink-0 lg:w-20" onClick={() => face && saved && onArt(index, "front")} aria-label={`Choose art ${index + 1} for ${card.name}`}>
+            <button type="button" {...flyout?.({ key: `${card.id}:${index}`, front: art?.thumbId, dfcBack: backArt?.thumbId, customBack: customBack?.thumbId, alt: card.name })} className="w-12 shrink-0 lg:w-20" onClick={() => face && saved && onArt(index, "front")} aria-label={`Choose art ${index + 1} for ${card.name}`}>
               <CardThumb id={art?.thumbId} alt={card.name} />
             </button>
             <Qty name={`${card.name} art ${index + 1}`} value={pair.qty} onChange={(qty) => onQty(index, qty)} />

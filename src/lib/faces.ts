@@ -15,10 +15,45 @@ import type { ArtFile, CardRole, CatalogueNote, DeckCard } from "@/lib/types";
  *   that card as another art of the same face.
  * - A main-deck back with no front is never its own main-deck card. It is
  *   kept as an extra at 0, and no front is invented for it.
+ * - A few known double-faced cards were once shared without the face prefix
+ *   (KNOWN_UNPREFIXED_PAIRS). Their unprefixed files pair the same way, but
+ *   only when the front and the back are both there, once each in the role,
+ *   and the role has no prefixed front of the same name (then the renamed
+ *   files already make the card); a known back on its own is left as it is.
  */
 export type FacePairing = { cards: DeckCard[]; notes: CatalogueNote[] };
 
-type Lone = { card: DeckCard; pair: string; face: 1 | 2; base: string };
+type Lone = { card: DeckCard; pair: string; face: 1 | 2; base: string; known?: boolean };
+
+/**
+ * Double-faced cards whose files were shared without "1_1_"/"1_2_" (front
+ * name key, back name key, as parsePrintName's cardNameKey). SxF's
+ * Hydroelectric Specimen // Hydroelectric Laboratory was named this way
+ * before the source folders were renamed; paid packs unlocked before the
+ * rename may still carry the old names.
+ */
+export const KNOWN_UNPREFIXED_PAIRS: readonly (readonly [front: string, back: string])[] = [["hydroelectric specimen", "hydroelectric laboratory"]];
+
+/** The card-name key of a face, from its first file ("1_1_Name (Theme).jpg" and "Name (Theme).png" give "name"). */
+function faceKey(card: DeckCard, index: number): string {
+  const face = card.faces[index];
+  if (!face) return "";
+  return parsePrintName(face.defaultArt?.name ?? `${face.name}.png`).cardNameKey;
+}
+
+/**
+ * True for a double-faced card that is one of KNOWN_UNPREFIXED_PAIRS (SxF's
+ * Hydroelectric Specimen // Hydroelectric Laboratory), whether its files are
+ * named 1_1_/1_2_ or not. Saved decks from before the pair was joined fold
+ * their old back-face row onto this card in the deck's print set; no other
+ * card's saved rows are touched that way.
+ */
+export function isKnownUnprefixedPair(card: DeckCard): boolean {
+  if (card.faces.length < 2) return false;
+  const front = faceKey(card, 0);
+  const back = faceKey(card, 1);
+  return KNOWN_UNPREFIXED_PAIRS.some(([knownFront, knownBack]) => knownFront === front && knownBack === back);
+}
 
 function artsOf(card: DeckCard): ArtFile[] {
   return card.faces.flatMap((face) => [face.defaultArt, ...face.alternates]).filter((art): art is ArtFile => Boolean(art));
@@ -31,6 +66,14 @@ function loneFace(card: DeckCard): Lone | null {
   if (!arts.length) return null;
   const parsed = arts.map((art) => parsePrintName(art.name));
   const first = parsed[0]!;
+  if (!first.facePair && !first.face) {
+    if (!parsed.every((item) => !item.facePair && item.cardNameKey === first.cardNameKey)) return null;
+    for (const [index, pair] of KNOWN_UNPREFIXED_PAIRS.entries()) {
+      const face = pair[0] === first.cardNameKey ? 1 : pair[1] === first.cardNameKey ? 2 : null;
+      if (face) return { card, pair: `known-${index}`, face, base: first.base, known: true };
+    }
+    return null;
+  }
   if (!first.facePair || !first.face) return null;
   if (!parsed.every((item) => item.facePair === first.facePair && item.face === first.face)) return null;
   return { card, pair: first.facePair, face: first.face, base: first.base };
@@ -69,7 +112,7 @@ function relabel(art: ArtFile): ArtFile {
 
 const ROLE_ORDER: CardRole[] = ["main", "token", "extra"];
 
-export function pairLooseFaces(input: DeckCard[]): FacePairing {
+export function pairLooseFaces(input: DeckCard[], depth = 0): FacePairing {
   const notes: CatalogueNote[] = [];
   const byGroup = new Map<string, Lone[]>();
   for (const card of input) {
@@ -83,13 +126,27 @@ export function pairLooseFaces(input: DeckCard[]): FacePairing {
   if (!byGroup.size) return { cards: input, notes };
 
   const used = new Set(input.map((card) => card.id));
+  let deferKnown = false;
+  // Front name keys of prefixed fronts ("1_1_Name"), per role, whether already paired or still loose.
+  const prefixedFronts = new Set<string>();
+  for (const card of input) {
+    for (const art of artsOf({ ...card, faces: card.faces.slice(0, 1) })) {
+      const parsed = parsePrintName(art.name);
+      if (parsed.facePair && parsed.face === 1) prefixedFronts.add(`${card.role}\u0000${parsed.cardNameKey}`);
+    }
+  }
   const replace = new Map<string, DeckCard | null>();
   const grow = new Map<string, DeckCard>();
   for (const [key, list] of byGroup) {
     const [role, pair] = key.split("\u0000") as [CardRole, string];
     const fronts = list.filter((item) => item.face === 1);
     const backs = list.filter((item) => item.face === 2);
-    const existing = input.filter((card) => card.role === role && pairOfDoubleFaced(card) === pair);
+    const known = list.some((item) => item.known);
+    // The old unprefixed Hydroelectric files fold into the renamed 1_1_/1_2_ card as more arts of the same faces.
+    const knownFront = known ? KNOWN_UNPREFIXED_PAIRS[Number(pair.slice("known-".length))]?.[0] : undefined;
+    const existing = known
+      ? input.filter((card) => card.role === role && card.faces.length >= 2 && faceKey(card, 0) === knownFront && !list.some((item) => item.card.id === card.id))
+      : input.filter((card) => card.role === role && pairOfDoubleFaced(card) === pair);
     if (existing.length === 1) {
       const target = grow.get(existing[0]!.id) ?? existing[0]!;
       const faces = target.faces.map((face, index) => {
@@ -98,9 +155,23 @@ export function pairLooseFaces(input: DeckCard[]): FacePairing {
       });
       grow.set(target.id, { ...target, faces });
       for (const item of [...fronts, ...backs]) replace.set(item.card.id, null);
+      if (known) {
+        notes.push({
+          level: "info",
+          name: target.name,
+          path: "",
+          reason: `Added the files without the 1_1_/1_2_ prefix (${[...fronts, ...backs].map((item) => item.card.name).join(", ")}) to ${target.name} as more arts of the same faces, so the card is listed once.`,
+        });
+      }
       continue;
     }
     if (existing.length > 1) continue;
+    if (known && (fronts.length !== 1 || backs.length !== 1)) continue;
+    // The renamed 1_1_/1_2_ files are still two loose faces: they pair in this pass, and the old files join them in the next.
+    if (known && prefixedFronts.has(`${role}\u0000${parsePrintName(fronts[0]!.card.faces[0]!.defaultArt?.name ?? "").cardNameKey}`)) {
+      deferKnown = true;
+      continue;
+    }
     if (fronts.length === 1 && backs.length >= 1) {
       const front = fronts[0]!;
       const [firstBack, ...moreBacks] = backs;
@@ -123,7 +194,9 @@ export function pairLooseFaces(input: DeckCard[]): FacePairing {
         level: "info",
         name,
         path: "",
-        reason: `Paired face ${pair}_1 with face ${pair}_2 so the back is printed with its front and is not counted as its own card.`,
+        reason: known
+          ? `Paired ${front.card.name} with its back face ${backName} (a known double-faced card whose files have no 1_1_/1_2_ prefix) so the back is printed with its front and is not counted as its own card.`
+          : `Paired face ${pair}_1 with face ${pair}_2 so the back is printed with its front and is not counted as its own card.`,
       });
       continue;
     }
@@ -167,5 +240,9 @@ export function pairLooseFaces(input: DeckCard[]): FacePairing {
     .map((card, index) => ({ card, index }))
     .sort((a, b) => ROLE_ORDER.indexOf(a.card.role) - ROLE_ORDER.indexOf(b.card.role) || a.index - b.index)
     .map((item) => item.card);
+  if (deferKnown && depth === 0) {
+    const again = pairLooseFaces(ordered, 1);
+    return { cards: again.cards, notes: [...notes, ...again.notes] };
+  }
   return { cards: ordered, notes };
 }

@@ -156,10 +156,12 @@ export default function App() {
     if (found.note) setToast(found.note);
     try {
       const treatment = treatmentsFor(found.edition.printType).some((item) => item.name === draft.treatment) ? draft.treatment : null;
+      const cardback = found.saved.cardbackId || found.edition.backs[0]?.id || "";
       const slots = selectionToSlots(found.edition, found.saved.cards, {
         printFlipBacksAsFronts: found.saved.printFlipBacksAsFronts === true,
+        cardBacks: found.saved.cardBacks,
+        cardback,
       });
-      const cardback = found.saved.cardbackId || found.edition.backs[0]?.id || "";
       assertIdsAllowed(slots, cardback, artIdsOf(found.edition));
       const [xml] = splitExportByPrintType({
         slots: slots.map((slot) => ({ ...slot, printType: found.edition.printType })),

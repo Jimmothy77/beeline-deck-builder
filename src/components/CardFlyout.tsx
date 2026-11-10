@@ -4,8 +4,8 @@ import type { FlipPlan, FlyoutPlacement } from "@/lib/desktop";
 import { FLYOUT_FLIP_EASING, FLYOUT_FLIP_MS, FLYOUT_GROW_EASING, FLYOUT_GROW_MS } from "@/lib/desktop";
 import { largeThumbSources, thumbSources } from "@/lib/thumb-load";
 
-/** One card the flyout can show. `dfcBack` is the chosen back face of a double-faced card. */
-export type FlyoutCard = { key: string; front?: string | null; dfcBack?: string | null; alt: string };
+/** One card the flyout can show. `dfcBack` is the chosen back face of a double-faced card; `customBack` is a back picked in the card editor, which wins over both. */
+export type FlyoutCard = { key: string; front?: string | null; dfcBack?: string | null; customBack?: string | null; alt: string };
 
 export type FlyoutShown = { card: FlyoutCard; placement: FlyoutPlacement; plan: FlipPlan };
 

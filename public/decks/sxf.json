@@ -295,7 +295,7 @@
         },
         {
           "id": "main-hydroelectric-specimen-melinda-desmond-former-first-lady",
-          "name": "Hydroelectric Specimen (Melinda Desmond, Former First Lady)",
+          "name": "Hydroelectric Specimen (Melinda Desmond, Former First Lady) // Hydroelectric Laboratory (Exclusive Circle)",
           "role": "main",
           "defaultQty": 1,
           "faces": [
@@ -304,11 +304,31 @@
               "name": "Hydroelectric Specimen (Melinda Desmond, Former First Lady)",
               "defaultArt": {
                 "id": "1ILCwgcD_KGTvIBG0T_L0yeqcnJsyN66f",
-                "name": "Hydroelectric Specimen (Melinda Desmond, Former First Lady).jpg",
+                "name": "1_1_Hydroelectric Specimen (Melinda Desmond, Former First Lady).jpg",
                 "thumbId": "1ILCwgcD_KGTvIBG0T_L0yeqcnJsyN66f",
                 "label": "Hydroelectric Specimen (Melinda Desmond, Former First Lady)"
               },
               "alternates": []
+            },
+            {
+              "id": "main-hydroelectric-specimen-melinda-desmond-former-first-lady:back",
+              "name": "Hydroelectric Laboratory (Exclusive Circle)",
+              "defaultArt": {
+                "id": "1GpVdTovUG5s6feqIgIAEWGUnbrBx9UII",
+                "name": "1_2_Hydroelectric Laboratory (Exclusive Circle).jpg",
+                "thumbId": "1GpVdTovUG5s6feqIgIAEWGUnbrBx9UII",
+                "label": "Hydroelectric Laboratory (Exclusive Circle)",
+                "tone": "color"
+              },
+              "alternates": [
+                {
+                  "id": "1ee00gA72YOW9UShGwVT-bdoNpDPvn8Kk",
+                  "name": "1_2_Hydroelectric Laboratory (Exclusive Circle).jpg",
+                  "thumbId": "1ee00gA72YOW9UShGwVT-bdoNpDPvn8Kk",
+                  "label": "Hydroelectric Laboratory (Exclusive Circle)",
+                  "tone": "bw"
+                }
+              ]
             }
           ]
         },
@@ -1367,34 +1387,6 @@
                   "name": "Hallowed Fountain (Shellbury Park).jpg",
                   "thumbId": "1uukwAx2VzwvDVjDTmEGfFsp221ULbVQH",
                   "label": "Hallowed Fountain (Shellbury Park)",
-                  "tone": "bw"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": "main-hydroelectric-laboratory-exclusive-circle",
-          "name": "Hydroelectric Laboratory (Exclusive Circle)",
-          "role": "main",
-          "defaultQty": 1,
-          "faces": [
-            {
-              "id": "main-hydroelectric-laboratory-exclusive-circle:front",
-              "name": "Hydroelectric Laboratory (Exclusive Circle)",
-              "defaultArt": {
-                "id": "1GpVdTovUG5s6feqIgIAEWGUnbrBx9UII",
-                "name": "Hydroelectric Laboratory (Exclusive Circle).jpg",
-                "thumbId": "1GpVdTovUG5s6feqIgIAEWGUnbrBx9UII",
-                "label": "Hydroelectric Laboratory (Exclusive Circle)",
-                "tone": "color"
-              },
-              "alternates": [
-                {
-                  "id": "1ee00gA72YOW9UShGwVT-bdoNpDPvn8Kk",
-                  "name": "Hydroelectric Laboratory (Exclusive Circle).jpg",
-                  "thumbId": "1ee00gA72YOW9UShGwVT-bdoNpDPvn8Kk",
-                  "label": "Hydroelectric Laboratory (Exclusive Circle)",
                   "tone": "bw"
                 }
               ]
@@ -2730,7 +2722,8 @@
                 "id": "1eXdI0IZN0bhpqqdsSI5mt-lnjZ9zxcbi",
                 "name": "Mountain 13.jpg",
                 "thumbId": "1eXdI0IZN0bhpqqdsSI5mt-lnjZ9zxcbi",
-                "label": "Mountain 13"
+                "label": "Mountain 13",
+                "tone": "color"
               },
               "alternates": []
             }
@@ -3477,7 +3470,8 @@
                 "id": "1G0cxvPPbQrE9DqA9l8yfUyvCyyvMUFy2",
                 "name": "Plains 26.jpg",
                 "thumbId": "1G0cxvPPbQrE9DqA9l8yfUyvCyyvMUFy2",
-                "label": "Plains 26"
+                "label": "Plains 26",
+                "tone": "color"
               },
               "alternates": []
             }
@@ -3496,7 +3490,8 @@
                 "id": "188sfd9UCxieR98deFcVZIch84MqsqpbC",
                 "name": "Plains 27.jpg",
                 "thumbId": "188sfd9UCxieR98deFcVZIch84MqsqpbC",
-                "label": "Plains 27"
+                "label": "Plains 27",
+                "tone": "color"
               },
               "alternates": []
             }
@@ -3515,7 +3510,8 @@
                 "id": "1iWWvkW1-zxSKVPMmPMDb1zVMH0n78zoE",
                 "name": "Plains 28.jpg",
                 "thumbId": "1iWWvkW1-zxSKVPMmPMDb1zVMH0n78zoE",
-                "label": "Plains 28"
+                "label": "Plains 28",
+                "tone": "color"
               },
               "alternates": []
             }
@@ -3534,7 +3530,8 @@
                 "id": "13W0qL9lPwH68JvvICUL8XDVedVwntmPQ",
                 "name": "Plains 29.jpg",
                 "thumbId": "13W0qL9lPwH68JvvICUL8XDVedVwntmPQ",
-                "label": "Plains 29"
+                "label": "Plains 29",
+                "tone": "color"
               },
               "alternates": []
             }
@@ -3581,7 +3578,8 @@
                 "id": "19EDVCLMObrZDmew_REIYfZ7Vhqib4ngB",
                 "name": "Plains 30.jpg",
                 "thumbId": "19EDVCLMObrZDmew_REIYfZ7Vhqib4ngB",
-                "label": "Plains 30"
+                "label": "Plains 30",
+                "tone": "color"
               },
               "alternates": []
             }
@@ -3600,7 +3598,8 @@
                 "id": "1XlZdGYHJtTlyyKadqnfakcg67Ezou2lN",
                 "name": "Plains 31.jpg",
                 "thumbId": "1XlZdGYHJtTlyyKadqnfakcg67Ezou2lN",
-                "label": "Plains 31"
+                "label": "Plains 31",
+                "tone": "color"
               },
               "alternates": []
             }
@@ -3787,7 +3786,8 @@
                 "id": "18N5BI9bCJ8WeWrFe04FSgn2qyB4ClMix",
                 "name": "Island 17.jpg",
                 "thumbId": "18N5BI9bCJ8WeWrFe04FSgn2qyB4ClMix",
-                "label": "Island 17"
+                "label": "Island 17",
+                "tone": "bw"
               },
               "alternates": []
             }
@@ -4030,7 +4030,8 @@
                 "id": "1QFfl1utfWwty0Bzm2XF4pKq2CCigQcKO",
                 "name": "Token - Treasure 3.jpg",
                 "thumbId": "1QFfl1utfWwty0Bzm2XF4pKq2CCigQcKO",
-                "label": "Token - Treasure 3"
+                "label": "Token - Treasure 3",
+                "tone": "bw"
               },
               "alternates": []
             }
@@ -4055,6 +4056,12 @@
           "name": "Color",
           "path": "Tokens/Color",
           "reason": "Token folder contains 8 different cards (Token - Elephant; Token - Gold 1; Token - Gold 2; Token - Radiation; Token - Treasure 1; Token - Treasure 2; Token Foretell 1; Token Foretell 2)."
+        },
+        {
+          "level": "info",
+          "name": "Hydroelectric Specimen (Melinda Desmond, Former First Lady) // Hydroelectric Laboratory (Exclusive Circle)",
+          "path": "",
+          "reason": "Paired face 1_1 with face 1_2 so the back is printed with its front and is not counted as its own card."
         },
         {
           "level": "skipped",

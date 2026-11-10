@@ -456,19 +456,21 @@ describe("SxF and Floating World default totals", () => {
   const file = (id: string, name: string): RawNode => ({ id, name, folder: false });
   const folder = (id: string, name: string, children: RawNode[]): RawNode => ({ id, name, folder: true, children });
   const mainNames = (deckFile: string) => {
-    const deck = JSON.parse(readFileSync(path.join(root, "public/decks", deckFile), "utf8")) as { editions: { cards: { name: string; role: string; defaultQty: number }[] }[] };
+    const deck = JSON.parse(readFileSync(path.join(root, "public/decks", deckFile), "utf8")) as { editions: { cards: { id: string; name: string; role: string; defaultQty: number }[] }[] };
     return deck.editions[0]!.cards.filter((card) => card.role === "main");
   };
   const total = (cards: { defaultQty: number }[]) => cards.reduce((sum, card) => sum + card.defaultQty, 0);
 
   it("keeps the shipped standard totals and applies the same totals to deluxe and partial foil", () => {
+    // SxF was 149 before v0.1.28: Hydroelectric Laboratory was its own main card until the source named it 1_2_, the back of Hydroelectric Specimen.
     for (const [deckFile, expected] of [
-      ["sxf.json", 149],
+      ["sxf.json", 148],
       ["floating-world.json", 134],
     ] as const) {
       const shipped = mainNames(deckFile);
       expect(total(shipped)).toBe(expected);
-      const names = shipped.map((card) => card.name);
+      // A double-faced card's folder file is named after its front.
+      const names = shipped.map((card) => card.name.split(" // ")[0]!);
       const deluxe = catalogueFromTree(
         folder(`${deckFile}-dx`, `3_${deckFile}`, [
           folder(`${deckFile}-wrap`, "2_Deck Deluxe Edition", [
@@ -485,7 +487,8 @@ describe("SxF and Floating World default totals", () => {
       ).editions[0]!;
       expect(total(deluxe.cards.filter((card) => card.role === "main"))).toBe(expected);
       expect(total(partial.cards.filter((card) => card.role === "main"))).toBe(expected);
-      expect(deluxe.cards.map((card) => card.id)).toEqual(names.map((name) => `main-${slug(name)}`));
+      expect(deluxe.cards.map((card) => card.id)).toEqual(shipped.map((card) => card.id));
+      expect(shipped.map((card) => card.id)).toEqual(names.map((name) => `main-${slug(name)}`));
     }
   });
 });

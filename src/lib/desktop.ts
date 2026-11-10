@@ -63,7 +63,7 @@ export type Size = { width: number; height: number };
 export type FlyoutSide = "right" | "left" | "over";
 export type FlyoutPlacement = { left: number; top: number; width: number; height: number; side: FlyoutSide };
 
-export type FlipMode = "dfc" | "cardback" | "spin" | "fade";
+export type FlipMode = "custom" | "dfc" | "cardback" | "spin" | "fade";
 export type FlipPlan = {
   mode: FlipMode;
   /** Whole turns. 0 means no flip. */
@@ -75,26 +75,30 @@ export type FlipPlan = {
 };
 
 /**
- * How the flyout turns while it opens. A double-faced card shows its own back,
- * any other card shows the deck's card back, and a card with neither just spins
+ * How the flyout turns while it opens. A card with a back picked in the card
+ * editor shows that back (even when it has a back face of its own), a
+ * double-faced card shows its own back, any other card shows the deck's card back, and a card with neither just spins
  * (its front on both sides). With reduced motion there is no turn, only a fade.
  */
 export function flipPlan({
+  customBack,
   dfcBack,
   cardback,
   reducedMotion,
   turns = FLYOUT_TURNS,
 }: {
+  /** The back picked for this card in the card editor. */
+  customBack?: string | null;
   dfcBack?: string | null;
   cardback?: string | null;
   reducedMotion: boolean;
   turns?: number;
 }): FlipPlan {
   if (reducedMotion || turns <= 0) return { mode: "fade", turns: 0, faces: ["front"], backImage: null };
-  const mode: FlipMode = dfcBack ? "dfc" : cardback ? "cardback" : "spin";
+  const mode: FlipMode = customBack ? "custom" : dfcBack ? "dfc" : cardback ? "cardback" : "spin";
   const faces: Array<"front" | "back"> = [];
   for (let half = 0; half <= turns * 2; half += 1) faces.push(half % 2 === 0 ? "front" : "back");
-  return { mode, turns, faces, backImage: dfcBack || cardback || null };
+  return { mode, turns, faces, backImage: customBack || dfcBack || cardback || null };
 }
 
 /** Flyout size: up to FLYOUT_MAX_WIDTH (400px) wide, never taller than the viewport minus its margins. */

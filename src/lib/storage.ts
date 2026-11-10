@@ -1,6 +1,7 @@
-import type { ArtTone, CatalogueNote, DeckCatalogue, Decklist, DecklistEntry, Edition, PrintType } from "@/lib/types";
-import type { SavedCard } from "@/lib/selection";
+import type { ArtTone, CatalogueNote, DeckCard, DeckCatalogue, Decklist, DecklistEntry, Edition, PrintType } from "@/lib/types";
+import { artsOf, toneBackId, defaultBackId, type SavedCard } from "@/lib/selection";
 import { artIdsOf, claimEditionId } from "@/lib/group";
+import { isKnownUnprefixedPair, pairLooseFaces } from "@/lib/faces";
 import { normalizeKey, parsePrintName, slug } from "@/lib/names";
 
 export const SAVED_KEY = "printabee.savedDecks.v1";
@@ -29,6 +30,13 @@ export type SavedDeck = {
   decklistId?: string;
   /** SxF Color or Black and White pick. Absent when the edition has only one version. */
   tone?: ArtTone;
+  /**
+   * Per-card back picked in the card editor: card id to a file id (one of
+   * the edition's card backs, or an extra's or token's front). Absent on
+   * decks saved before v0.1.28 and on decks with no pick; a card without an
+   * entry uses the deck-wide back, or its own back face.
+   */
+  cardBacks?: Record<string, string>;
   cards: SavedCard[];
   updatedAt: string;
 };
@@ -550,6 +558,23 @@ function cardByFaceName(base: string, edition: Edition): { cardId: string; backA
 
 const UPDATED_ART = "Some saved art picks were updated to this edition's files.";
 
+function backToneOf(card: DeckCard, fileId: string): ArtTone | undefined {
+  const face = card.faces[1];
+  return face ? artsOf(face).find((art) => art.id === fileId)?.tone ?? undefined : undefined;
+}
+
+/** True when the deck has a tone and this back face file is tagged with the other one. */
+function wrongTone(card: DeckCard, fileId: string, tone: ArtTone | null | undefined): boolean {
+  const own = backToneOf(card, fileId);
+  return Boolean(tone && own && own !== tone);
+}
+
+/** The saved back file when it fits the deck's tone, otherwise the back face's file in that tone. */
+function backInTone(card: DeckCard, saved: string | undefined, tone: ArtTone | null | undefined): string | undefined {
+  if (saved && !wrongTone(card, saved, tone)) return saved;
+  return (tone && card.faces[1] ? toneBackId(card, tone) : "") || saved;
+}
+
 /**
  * A v0.1.11 row is one art and one quantity. A file that now belongs to a card
  * already in the deck adds a pair, or adds to that pair when it is the same art.
@@ -629,11 +654,34 @@ function reconcileSavedCards(deck: SavedDeck, edition: Edition, catalogues: Deck
   const frontCounted = new Set([...cards.values()].filter((card) => card.pairs.some((pair) => pair.qty > 0)).map((card) => card.cardId));
   for (const row of backRows) {
     const card = edition.cards.find((item) => item.id === row.cardId)!;
+    // Only the renamed Hydroelectric pair folds its old back row in the deck's print set. Every other
+    // card's back row is handled exactly as before v0.1.28 (TMNT's Lost Vale, X-Men's Joshua, and so on).
+    const renamed = isKnownUnprefixedPair(card);
+    const back = renamed ? backInTone(card, row.back, deck.tone) : row.back;
     if (frontCounted.has(card.id)) {
       const current = cards.get(card.id)!;
       current.locked = current.locked || row.locked;
-    } else add(card.id, defaultArtOf(card), row.qty, row.locked, row.back);
+      if (renamed) {
+        // The old Laboratory row was the same physical card as Specimen's copies. Its back file
+        // goes onto those copies when they have no back, or one of the other print set, so a
+        // Black and White deck keeps its Black and White Laboratory.
+        current.pairs = current.pairs.map((pair) => (!pair.back || wrongTone(card, pair.back, deck.tone) ? { ...pair, ...(back ? { back } : {}) } : pair));
+      }
+    } else add(card.id, defaultArtOf(card), row.qty, row.locked, back);
     updated = true;
+  }
+  if (deck.tone) {
+    // The renamed pair saved before it had a back face (SxF's Specimen before v0.1.28) has
+    // pairs with no back. In a deck with a tone they take the back face's file in that tone,
+    // not the face's default file, which is the Color one. A Color deck's pairs are left as they were.
+    for (const current of cards.values()) {
+      const card = edition.cards.find((item) => item.id === current.cardId);
+      if (!card || !isKnownUnprefixedPair(card)) continue;
+      // Without a back the pair prints the face's default file, so only a different file is written.
+      const toned = card?.faces[1] ? toneBackId(card, deck.tone) : "";
+      if (!card || !toned || toned === defaultBackId(card)) continue;
+      current.pairs = current.pairs.map((pair) => (pair.back ? pair : { ...pair, back: toned }));
+    }
   }
   const notes = [dropped ? "Some saved cards were dropped." : "", updated ? UPDATED_ART : ""].filter(Boolean);
   return { deck: { ...deck, cards: [...cards.values()] }, note: notes.join(" ") || null };
@@ -758,9 +806,12 @@ export function migrateSavedDecks(saved: SavedDeck[], packs: UnlockedPack[], cat
 }
 
 function ownedEdition(edition: Edition, pack: UnlockedPack | null, id: string, packName: string, existing: Edition[]): Edition {
+  // A pack unlocked before a source rename (SxF's Hydroelectric pair) was stored with its faces apart. Pairing is idempotent.
+  const paired = pairLooseFaces(edition.cards).cards;
   return labeledEdition(
     {
       ...edition,
+      cards: paired,
       id,
       sourceId: edition.sourceId ?? edition.id,
       packHash: pack ? canonicalPackHash(pack) : edition.packHash,
@@ -873,6 +924,18 @@ function parseSavedCard(value: unknown): SavedCard | null {
   return { cardId: card.cardId, locked, pairs: [{ art: front, qty: clampQty(card.qty), ...(back ? { back } : {}) }] };
 }
 
+/** Keeps string card id to string file id entries. Nothing (not even an empty map) when there are none, so older decks round-trip unchanged. */
+function parseCardBacks(value: unknown): { cardBacks?: Record<string, string> } {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const out: Record<string, string> = {};
+  for (const [cardId, fileId] of Object.entries(value as Record<string, unknown>)) {
+    if (!cardId || cardId.length > 200 || typeof fileId !== "string") continue;
+    const id = fileId.trim();
+    if (id && id.length <= 200) out[cardId] = id;
+  }
+  return Object.keys(out).length ? { cardBacks: out } : {};
+}
+
 function parseSavedDeck(value: unknown): SavedDeck | null {
   if (!value || typeof value !== "object") return null;
   const deck = value as Record<string, unknown>;
@@ -894,6 +957,7 @@ function parseSavedDeck(value: unknown): SavedDeck | null {
     printFlipBacksAsFronts: deck.printFlipBacksAsFronts === true,
     ...(typeof deck.decklistId === "string" && /^[a-z0-9-]{1,80}$/.test(deck.decklistId) ? { decklistId: deck.decklistId } : {}),
     ...(deck.tone === "color" || deck.tone === "bw" ? { tone: deck.tone } : {}),
+    ...parseCardBacks(deck.cardBacks),
     cards: deck.cards.flatMap((item) => {
       const card = parseSavedCard(item);
       return card ? [card] : [];

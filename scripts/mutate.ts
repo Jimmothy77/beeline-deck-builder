@@ -425,7 +425,7 @@ const mutations: Mutation[] = [
     name: "t-All cards ignores print set",
     file: "src/lib/selection.ts",
     test: "All cards and Random stay in the chosen print set",
-    edits: [{ from: "onePair(card, card.bwOnly ? 0 : 1, toneArtId(card.faces[0], tone) ?? defaultArtId(card))", to: "onePair(card, card.bwOnly ? 0 : 1, defaultArtId(card))" }],
+    edits: [{ from: "onePair(card, card.bwOnly ? 0 : 1, toneArtId(card.faces[0], tone) ?? defaultArtId(card), toneBackId(card, tone))", to: "onePair(card, card.bwOnly ? 0 : 1, defaultArtId(card), toneBackId(card, tone))" }],
   },
   {
     name: "t-tone switch moves always-color cards",
@@ -573,8 +573,8 @@ const mutations: Mutation[] = [
   },
   // v0.1.26: desktop card flyout, Back to top, and the Extras / Tokens side tiles.
   { name: "v26-flip ends on the back", file: "src/lib/desktop.ts", test: "turns twice and ends on the front", edits: [{ from: 'faces.push(half % 2 === 0 ? "front" : "back")', to: 'faces.push(half % 2 === 0 ? "back" : "front")' }] },
-  { name: "v26-dfc back ignored (plan)", file: "src/lib/desktop.ts", test: "shows a double-faced card's own back", edits: [{ from: "backImage: dfcBack || cardback || null", to: "backImage: cardback || dfcBack || null" }] },
-  { name: "v26-dfc back ignored (tile)", file: "src/components/BuilderView.tsx", test: "uses a double-faced card's own back face", edits: [{ from: "dfcBack: backArt?.thumbId, alt: card.name };", to: "dfcBack: null, alt: card.name };" }] },
+  { name: "v26-dfc back ignored (plan)", file: "src/lib/desktop.ts", test: "shows a double-faced card's own back", edits: [{ from: "backImage: customBack || dfcBack || cardback || null", to: "backImage: customBack || cardback || dfcBack || null" }] },
+  { name: "v26-dfc back ignored (tile)", file: "src/components/BuilderView.tsx", test: "uses a double-faced card's own back face", edits: [{ from: "dfcBack: backArt?.thumbId, customBack: customBack?.thumbId, alt: card.name };", to: "dfcBack: null, customBack: customBack?.thumbId, alt: card.name };" }] },
   { name: "v26-reduced motion still flips", file: "src/lib/desktop.ts", test: "does no flips with reduced motion", edits: [{ from: "if (reducedMotion || turns <= 0)", to: "if (turns <= 0)" }] },
   { name: "v26-spin draws no back", file: "src/components/CardFlyout.tsx", test: "spins with the front on both sides", edits: [{ from: "(plan.backImage ?? front)", to: "plan.backImage" }] },
   { name: "v26-flyout over its own row", file: "src/lib/desktop.ts", test: "goes right of the card row", edits: [{ from: "    left = anchor.right + gap;\n    side = \"right\";", to: "    left = anchor.left + gap;\n    side = \"right\";" }] },
@@ -624,6 +624,306 @@ const mutations: Mutation[] = [
   { name: "v27-line break shows on phones", file: "src/components/BuilderView.tsx", test: "makes main-deck art bigger at desktop width", edits: [{ from: 'className="hidden lg:block lg:basis-full"', to: 'className="block lg:basis-full"' }] },
   { name: "v27-fixed four columns", file: "src/components/BuilderView.tsx", test: "wraps the main grid into as many 17rem columns", edits: [{ from: "sm:grid-cols-3 lg:grid-cols-[repeat(auto-fill,minmax(17rem,1fr))]", to: "sm:grid-cols-3 xl:grid-cols-4" }] },
   { name: "v27-page stays 80rem", file: "src/components/BuilderView.tsx", test: "wraps the main grid into as many 17rem columns", edits: [{ from: "lg:max-w-[96rem]", to: "lg:max-w-7xl" }] },
+  {
+    name: "v0.1.28 hydro: no known unprefixed pair",
+    file: "src/lib/faces.ts",
+    test: "Hydroelectric files without the 1_1_/1_2_ prefix",
+    edits: [
+      { from: "= [[\"hydroelectric specimen\", \"hydroelectric laboratory\"]];", to: "= [];" },
+    ],
+  },
+  {
+    name: "v0.1.28 hydro: known back alone demoted",
+    file: "src/lib/faces.ts",
+    test: "leaves a Laboratory with no Specimen",
+    edits: [
+      { from: "    if (known && (fronts.length !== 1 || backs.length !== 1)) continue;\n", to: "" },
+    ],
+  },
+  {
+    name: "v0.1.28 hydro: stored packs not re-paired",
+    file: "src/lib/storage.ts",
+    test: "re-pairs a pack that was unlocked and stored",
+    edits: [
+      { from: "  const paired = pairLooseFaces(edition.cards).cards;", to: "  const paired = edition.cards;" },
+    ],
+  },
+  {
+    name: "v0.1.28 backs: override ignored in export",
+    file: "src/lib/selection.ts",
+    test: "per-card back in the export",
+    edits: [
+      { from: "    const override = overrides.get(card.id);", to: "    const override = undefined as BackOption | undefined;" },
+    ],
+  },
+  {
+    name: "v0.1.28 backs: deck-back shortcut on a DFC",
+    file: "src/lib/selection.ts",
+    test: "keeps a double-faced card's own back unless it has a pick",
+    edits: [
+      { from: "const same = !backFace && override.kind === \"cardback\"", to: "const same = override.kind === \"cardback\"" },
+    ],
+  },
+  {
+    name: "v0.1.28 backs: picked back promoted in partial foil",
+    file: "src/lib/selection.ts",
+    test: "never prints a picked back as an extra front",
+    edits: [
+      { from: "    if (override) {", to: "    if (override && !promoteBacks) {" },
+    ],
+  },
+  {
+    name: "v0.1.28 backs: tokens by folder only",
+    file: "src/lib/selection.ts",
+    test: "back options in the card editor",
+    edits: [
+      { from: "const kind: BackKind = tokenTest(card) ? \"token\" : \"alt\";", to: "const kind: BackKind = card.role === \"token\" ? \"token\" : \"alt\";" },
+    ],
+  },
+  {
+    name: "v0.1.28 backs: card offered as its own back",
+    file: "src/lib/selection.ts",
+    test: "does not offer a token as its own back",
+    edits: [
+      { from: "if (card.role === \"main\" || card.id === cardId) continue;", to: "if (card.role === \"main\") continue;" },
+    ],
+  },
+  {
+    name: "v0.1.28 backs: empty map saved",
+    file: "src/lib/storage.ts",
+    test: "loads and saves a deck from before v0.1.28 unchanged",
+    edits: [
+      { from: "return Object.keys(out).length ? { cardBacks: out } : {};", to: "return { cardBacks: out };" },
+    ],
+  },
+
+  {
+    name: "v0.1.28 backs: editor keeps an empty map",
+    file: "src/components/BuilderView.tsx",
+    test: "saves a pick, shows it on the tile",
+    edits: [
+      { from: "return Object.keys(next).length ? { ...rest, cardBacks: next } : rest;", to: "return { ...rest, cardBacks: next };" },
+    ],
+  },
+  {
+    name: "v0.1.28 backs: tile ignores the pick",
+    file: "src/components/BuilderView.tsx",
+    test: "saves a pick, shows it on the tile",
+    edits: [
+      { from: "      <CustomBackBadge option={customBack} />\n      <ul className=\"mt-2 grid gap-2\">", to: "      <ul className=\"mt-2 grid gap-2\">" },
+    ],
+  },
+  {
+    name: "v0.1.28 backs: DFC tile thumb ignores the pick",
+    file: "src/components/BuilderView.tsx",
+    test: "a pick replaces that face",
+    edits: [
+      { from: "<CardThumb id={customBack?.thumbId ?? backArt?.thumbId} alt={customBack?.label ?? back.name} />", to: "<CardThumb id={backArt?.thumbId} alt={back.name} />" },
+    ],
+  },
+  {
+    name: "v0.1.28 backs: no DFC warning",
+    file: "src/components/BuilderView.tsx",
+    test: "a pick replaces that face",
+    edits: [
+      { from: "      {ownBack ? (\n        <p role=\"note\"", to: "      {false ? (\n        <p role=\"note\"" },
+    ],
+  },
+  {
+    name: "v0.1.28 flyout: own back wins over pick",
+    file: "src/lib/desktop.ts",
+    test: "flyout with a picked back",
+    edits: [
+      { from: "const mode: FlipMode = customBack ? \"custom\" : dfcBack ? \"dfc\"", to: "const mode: FlipMode = dfcBack ? \"dfc\" : customBack ? \"custom\"" },
+    ],
+  },
+  {
+    name: "v0.1.28 flyout: pick not passed",
+    file: "src/components/use-card-flyout.tsx",
+    test: "saves a pick, shows it on the tile",
+    edits: [
+      { from: "flipPlan({ customBack: card.customBack, dfcBack", to: "flipPlan({ dfcBack" },
+    ],
+  },
+  {
+    name: "v0.1.28 tokens: ambiguous trusted",
+    file: "src/lib/tokens.ts",
+    test: "token lookup",
+    edits: [
+      { from: "if (entry && !entry.ambiguous) return", to: "if (entry) return" },
+    ],
+  },
+  {
+    name: "v0.1.28 tokens: lookup ignored",
+    file: "src/lib/tokens.ts",
+    test: "token lookup",
+    edits: [
+      { from: "    const entry = lookup[normalizeKey(query)];", to: "    const entry = undefined as TokenLookupEntry | undefined;" },
+    ],
+  },
+  {
+    name: "v0.1.28 tokens: face prefix kept",
+    file: "src/lib/tokens.ts",
+    test: "looks names up without labels",
+    edits: [
+      { from: "  s = s.replace(/^\\d+_/, \"\");\n", to: "" },
+    ],
+  },  {
+    name: "v0.1.28 tone: saved Laboratory back dropped when Specimen has copies",
+    file: "src/lib/storage.ts",
+    test: "swaps a back of the other tone",
+    edits: [{ from: "      current.pairs = current.pairs.map((pair) => (!pair.back || wrongTone(card, pair.back, deck.tone) ? { ...pair, ...(back ? { back } : {}) } : pair));\n", to: "" }],
+  },
+  {
+    name: "v0.1.28 tone: other-tone back on Specimen kept",
+    file: "src/lib/storage.ts",
+    test: "swaps a back of the other tone",
+    edits: [{ from: "(!pair.back || wrongTone(card, pair.back, deck.tone) ?", to: "(!pair.back ?" }],
+  },
+  {
+    name: "v0.1.28 tone: saved back of the other tone kept",
+    file: "src/lib/storage.ts",
+    test: "moves a Laboratory row saved on the Color file",
+    edits: [{ from: "  if (saved && !wrongTone(card, saved, tone)) return saved;", to: "  if (saved) return saved;" }],
+  },
+  {
+    name: "v0.1.28 tone: pairs without a back left on the Color file",
+    file: "src/lib/storage.ts",
+    test: "saved without a Laboratory row",
+    edits: [{ from: "  if (deck.tone) {\n    // The renamed pair saved", to: "  if (false) {\n    // The renamed pair saved" }],
+  },
+  {
+    name: "v0.1.28 tone: Color deck gets a back written",
+    file: "src/lib/storage.ts",
+    test: "leaves a Color deck's Specimen as it was saved",
+    edits: [{ from: "if (!card || !toned || toned === defaultBackId(card)) continue;", to: "if (!card || !toned) continue;" }],
+  },
+  {
+    name: "v0.1.28 tone: new rows ignore the tone",
+    file: "src/lib/selection.ts",
+    test: "picks the back face file in the tone",
+    edits: [{ from: "  return toneArtId(card.faces[1], tone) ?? defaultBackId(card);", to: "  return defaultBackId(card);" }],
+  },
+  {
+    name: "v0.1.28 tone: All cards on the default back",
+    file: "src/lib/selection.ts",
+    test: "uses it in All cards",
+    edits: [{ from: "toneArtId(card.faces[0], tone) ?? defaultArtId(card), toneBackId(card, tone)),", to: "toneArtId(card.faces[0], tone) ?? defaultArtId(card))," }],
+  },
+  {
+    name: "v0.1.28 tone: new list rows on the default back",
+    file: "src/lib/selection.ts",
+    test: "uses it in All cards",
+    edits: [{ from: "onePair(card, target, defaultArtId(card), toneBackId(card, tone))", to: "onePair(card, target)" }],
+  },
+  {
+    name: "v0.1.28 tone: Add another art on the default back",
+    file: "src/components/BuilderView.tsx",
+    test: "starts a new art row",
+    edits: [{ from: "[...(saved?.pairs ?? []), newPair(card, 1, tone)]", to: "[...(saved?.pairs ?? []), newPair(card, 1, null)]" }],
+  },
+  {
+    name: "v0.1.28 tone: added card on the default back",
+    file: "src/components/BuilderView.tsx",
+    test: "starts a new art row",
+    edits: [{ from: "writeCard(card, [newPair(card, qty, tone)])", to: "writeCard(card, [newPair(card, qty, null)])" }],
+  },
+  {
+    name: "v0.1.28 known pair made beside the renamed files",
+    file: "src/lib/faces.ts",
+    test: "fold in too when the renamed faces were still two loose",
+    edits: [{ from: "if (known && prefixedFronts.has(", to: "if (false && prefixedFronts.has(" }],
+  },
+  {
+    name: "v0.1.28 tone: back pick stays in the old tone",
+    file: "src/lib/selection.ts",
+    test: "moves a Color token pick",
+    edits: [{ from: "    next[cardId] = other ?? fileId;", to: "    next[cardId] = fileId;" }],
+  },
+  {
+    name: "v0.1.28 tone: back picks not moved on a switch",
+    file: "src/components/BuilderView.tsx",
+    test: "moves a picked back to the same card's file",
+    edits: [{ from: "    const cardBacks = toneCardBacks(edition, draft.cardBacks, next);", to: "    const cardBacks = draft.cardBacks;" }],
+  },
+  {
+    name: "v0.1.28 tone: switch adds a cardBacks key",
+    file: "src/components/BuilderView.tsx",
+    test: "switches tone without adding a cardBacks key",
+    edits: [{ from: "...(cardBacks ? { cardBacks: { ...cardBacks } } : {})", to: "cardBacks: { ...cardBacks }" }],
+  },
+  {
+    name: "v0.1.28 tone: unchanged picks copied",
+    file: "src/lib/selection.ts",
+    test: "keeps card backs, files with no version",
+    edits: [{ from: "  return moved ? next : cardBacks;", to: "  return next;" }],
+  },
+  {
+    name: "v0.1.28 token overrides ignored",
+    file: "src/lib/tokens.ts",
+    test: "wins over Scryfall and the heuristic",
+    edits: [{ from: "  const override = tokenOverride(card, deckId, overrides);", to: "  const override = undefined as TokenOverride | undefined;" }],
+  },
+  {
+    name: "v0.1.28 token override in any deck",
+    file: "src/lib/tokens.ts",
+    test: "wins over Scryfall and the heuristic",
+    edits: [{ from: "overrides.find((item) => item.deck === deckId && item.card === card.name)", to: "overrides.find((item) => item.card === card.name)" }],
+  },
+  {
+    name: "v0.1.28 editor ignores the deck's overrides",
+    file: "src/components/BuilderView.tsx",
+    test: "uses the deck's hand decisions",
+    edits: [{ from: "isTokenCard(card, deckId), [deckId]", to: "isTokenCard(card), [deckId]" }],
+  },
+  {
+    name: "v0.1.28 picked back resolved without the deck's overrides",
+    file: "src/lib/selection.ts",
+    test: "uses the deck's hand decisions",
+    edits: [{ from: "resolveBackOverride(edition, card.id, cardBacks[card.id], tokenTest)", to: "resolveBackOverride(edition, card.id, cardBacks[card.id])" }],
+  },
+  {
+    name: "v0.1.28 Lands override flipped",
+    file: "src/data/token-overrides.ts",
+    test: "puts Raphael, Thor, Titania",
+    edits: [{ from: "{ deck: \"persona-5\", card: \"Lands\", token: false }", to: "{ deck: \"persona-5\", card: \"Lands\", token: true }" }],
+  },
+  {
+    name: "v0.1.28 override matches no card",
+    file: "src/data/token-overrides.ts",
+    test: "matches exactly one token or extra",
+    edits: [{ from: "{ deck: \"persona-5\", card: \"Thor\", token: true }", to: "{ deck: \"persona-5\", card: \"Thor 1\", token: true }" }],
+  },
+  {
+    name: "v0.1.28 rename fold widened to every back row",
+    file: "src/lib/storage.ts",
+    test: "matches v0.1.27",
+    edits: [{ from: "    const renamed = isKnownUnprefixedPair(card);", to: "    const renamed = true;" }],
+  },
+  {
+    name: "v0.1.28 known pair test true for every card",
+    file: "src/lib/faces.ts",
+    test: "matches v0.1.27",
+    edits: [{ from: "  return KNOWN_UNPREFIXED_PAIRS.some(([knownFront, knownBack]) => knownFront === front && knownBack === back);", to: "  return front !== \"\" || back !== \"\";" }],
+  },
+  {
+    name: "v0.1.28 known pair test false for Hydroelectric",
+    file: "src/lib/faces.ts",
+    test: "puts the saved Black and White Laboratory",
+    edits: [{ from: "  return KNOWN_UNPREFIXED_PAIRS.some(([knownFront, knownBack]) => knownFront === front && knownBack === back);", to: "  return false;" }],
+  },
+  {
+    name: "v0.1.28 old Hydroelectric files not folded",
+    file: "src/lib/faces.ts",
+    test: "fold into the renamed card as more arts",
+    edits: [{ from: "      ? input.filter((card) => card.role === role && card.faces.length >= 2 && faceKey(card, 0) === knownFront && !list.some((item) => item.card.id === card.id))", to: "      ? []" }],
+  },
+  {
+    name: "v0.1.28 old Hydroelectric files not folded after loose pairing",
+    file: "src/lib/faces.ts",
+    test: "fold in too when the renamed faces were still two loose",
+    edits: [{ from: "  if (deferKnown && depth === 0) {", to: "  if (false) {" }],
+  },
 ];
 
 let failed = 0;
