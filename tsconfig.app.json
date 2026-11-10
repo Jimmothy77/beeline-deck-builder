@@ -26,5 +26,5 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": ["src"],
-  "exclude": ["src/lib/flyout-css.test.ts", "src/lib/public-ids.ts", "src/lib/public-ids.test.ts", "src/lib/decklist.test.ts", "src/lib/shipped-decklists.test.ts", "src/components/banner.test.tsx", "src/lib/faces.test.ts", "src/components/home-counts.test.tsx", "src/lib/hydroelectric.test.ts", "src/lib/tone-backs.test.ts", "src/lib/card-backs.test.ts", "src/lib/v0127-golden.test.ts"]
+  "exclude": ["src/lib/flyout-css.test.ts", "src/lib/public-ids.ts", "src/lib/public-ids.test.ts", "src/lib/decklist.test.ts", "src/lib/shipped-decklists.test.ts", "src/components/banner.test.tsx", "src/lib/faces.test.ts", "src/components/home-counts.test.tsx", "src/lib/hydroelectric.test.ts", "src/lib/tone-backs.test.ts", "src/lib/card-backs.test.ts", "src/lib/v0127-golden.test.ts", "src/lib/v0128-golden.test.ts", "src/lib/card-facts.test.ts"]
 }

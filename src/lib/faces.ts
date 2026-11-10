@@ -166,12 +166,13 @@ export function pairLooseFaces(input: DeckCard[], depth = 0): FacePairing {
       continue;
     }
     if (existing.length > 1) continue;
-    if (known && (fronts.length !== 1 || backs.length !== 1)) continue;
-    // The renamed 1_1_/1_2_ files are still two loose faces: they pair in this pass, and the old files join them in the next.
-    if (known && prefixedFronts.has(`${role}\u0000${parsePrintName(fronts[0]!.card.faces[0]!.defaultArt?.name ?? "").cardNameKey}`)) {
+    // The renamed 1_1_/1_2_ files are still loose faces: they pair in this pass, and the old files join them in the next.
+    // This comes before the count check, so old files from tone folders (one Specimen, a Color and a Black and White Laboratory) fold in too.
+    if (known && prefixedFronts.has(`${role}\u0000${knownFront}`)) {
       deferKnown = true;
       continue;
     }
+    if (known && (fronts.length !== 1 || backs.length !== 1)) continue;
     if (fronts.length === 1 && backs.length >= 1) {
       const front = fronts[0]!;
       const [firstBack, ...moreBacks] = backs;

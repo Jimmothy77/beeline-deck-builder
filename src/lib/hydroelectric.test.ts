@@ -287,4 +287,31 @@ describe("the old unprefixed Hydroelectric files beside the renamed ones", () =>
     ]);
     expect(pairLooseFaces(paired).cards).toBe(paired);
   });
+
+  it("fold in from a Color and a Black and White folder too, keeping each file's print set and the fold note", () => {
+    const edition = catalogueFromTree(
+      folder("sx", "3_SxF", [
+        folder("std", "1_SxF Standard Edition", [
+          folder("fd", "Full Deck", [
+            file("new-spec", `1_1_${SPEC}.jpg`),
+            file("old-spec", `${SPEC}.jpg`),
+            file("std-sol", "Sol Ring.jpg"),
+            folder("opt", "IMPORTANT OPTIONS", [
+              folder("bw", "Black and White", [file("new-lab-bw", `1_2_${LABN}.jpg`), file("old-lab-bw", `${LABN}.jpg`)]),
+              folder("co", "Color", [file("new-lab-co", `1_2_${LABN}.jpg`), file("old-lab-co", `${LABN}.jpg`)]),
+            ]),
+          ]),
+        ]),
+      ]),
+    ).editions[0]!;
+    const hydro = mains(edition.cards).filter((card) => /hydroelectric/i.test(card.name));
+    expect(hydro).toHaveLength(1);
+    const [front, back] = hydro[0]!.faces;
+    expect([front!.defaultArt, ...front!.alternates].map((art) => art!.id)).toEqual(["new-spec", "old-spec"]);
+    const backs = [back!.defaultArt, ...back!.alternates].map((art) => [art!.id, art!.tone]);
+    expect(backs).toEqual(expect.arrayContaining([["new-lab-bw", "bw"], ["old-lab-co", "color"], ["old-lab-bw", "bw"]]));
+    expect(backs.map(([id]) => id).sort()).toEqual(["new-lab-bw", "new-lab-co", "old-lab-bw", "old-lab-co"]);
+    expect(mains(edition.cards)).toHaveLength(2);
+    expect(edition.notes.some((note) => note.level === "info" && note.reason.startsWith("Added the files without the 1_1_/1_2_ prefix"))).toBe(true);
+  });
 });

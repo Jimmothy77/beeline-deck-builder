@@ -1,6 +1,7 @@
 import { Component, type ReactNode, useCallback, useMemo, useRef, useState } from "react";
-import { ChevronLeft, Copy, Dices, Download, Lock, LockOpen, Save } from "lucide-react";
+import { ChevronLeft, Copy, Dices, Download, Eraser, Lock, LockOpen, Save, SlidersHorizontal, Undo2 } from "lucide-react";
 import { BackToTop } from "@/components/BackToTop";
+import { CardFilterPanel } from "@/components/CardFilterPanel";
 import type { FlyoutCard } from "@/components/CardFlyout";
 import { useCardFlyout, type FlyoutBinding } from "@/components/use-card-flyout";
 import { SideTile } from "@/components/SideTile";
@@ -23,7 +24,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { treatmentsFor } from "@/data/treatments";
 import { usesSideTile } from "@/lib/desktop";
 import { downloadText, xmlFilename } from "@/lib/download";
-import { decklistNotes, findDecklist, withDecklist } from "@/lib/decklist";
+import { factsFor, type FactsStatus } from "@/lib/card-facts";
+import { attributeFilters, EMPTY_FILTER, formatQuery, isFilterActive, matchCard, parseQuery, type CardFilter, type FilterResult } from "@/lib/card-filter";
+import { clearCounts, clearMessage, clearSummary, type ClearScope } from "@/lib/clear";
+import { decklistNotes, findDecklist, isBasicCard, withDecklist } from "@/lib/decklist";
 import { artIdsOf, pdfIdsInEdition } from "@/lib/group";
 import {
   applyListQuantities,
@@ -49,6 +53,7 @@ import {
 } from "@/lib/selection";
 import type { SavedDeck } from "@/lib/storage";
 import { isTokenCard } from "@/lib/tokens";
+import { useCardLookup } from "@/lib/use-card-lookup";
 import type { CardBack, DeckCard, Edition } from "@/lib/types";
 import { assertIdsAllowed, bracketFor, splitExportByPrintType } from "@/lib/xml";
 
@@ -61,6 +66,12 @@ function withCardBack(draft: SavedDeck, cardId: string, fileId: string | null): 
   delete rest.cardBacks;
   return Object.keys(next).length ? { ...rest, cardBacks: next } : rest;
 }
+
+/** "color", "color or type", "color, type or mana value". */
+const orList = (items: string[]) => (items.length < 2 ? items.join("") : `${items.slice(0, -1).join(", ")} or ${items[items.length - 1]}`);
+
+/** The time a change is saved with. Called from event handlers only. */
+const nowStamp = () => new Date().toISOString();
 
 /** The three back lists in the card editor. */
 const BACK_LABELS: Record<BackKind, string> = { cardback: "Card Back", alt: "Alt Back", token: "Token Backs" };
@@ -106,6 +117,9 @@ export function BuilderView({
   onToast: (message: string) => void;
 }) {
   const [query, setQuery] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  /** The last Clear all or Clear shown. Any other change in the builder ends it, so Undo never throws away a later edit. */
+  const [cleared, setCleared] = useState<{ scope: ClearScope; deckId: string; before: SavedCard[]; after: string; status: string; undo: string } | null>(null);
   const [artTarget, setArtTarget] = useState<{ cardId: string; pairIndex: number; side: "front" | "back" } | null>(null);
   const [backsOpen, setBacksOpen] = useState(false);
   /** The back list shown in the card editor. Null opens on the list of the card's current pick, or Card Back. */
@@ -142,10 +156,43 @@ export function BuilderView({
   const overrides = useMemo(() => activeBackOverrides(edition, draft.cardBacks, tokenTest), [edition, draft.cardBacks, tokenTest]);
   const flyout = useCardFlyout(back?.thumbId);
   const topRef = useRef<HTMLButtonElement | null>(null);
-  const q = query.trim().toLowerCase();
-  const mains = edition.cards.filter((card) => card.role === "main" && (!q || card.name.toLowerCase().includes(q)));
-  const tokens = edition.cards.filter((card) => card.role === "token" && (!q || card.name.toLowerCase().includes(q)));
-  const extras = edition.cards.filter((card) => card.role === "extra" && (!q || card.name.toLowerCase().includes(q)));
+  // The search box reads a Scryfall-style query; plain words search card names, as before.
+  const parsed = useMemo(() => parseQuery(query), [query]);
+  const filter = parsed.filter;
+  const filtering = isFilterActive(filter);
+  const needsFacts = attributeFilters(filter).length > 0;
+  const lookup = useCardLookup();
+  const results = useMemo(() => {
+    const out = new Map<string, { result: FilterResult; status: FactsStatus }>();
+    for (const card of edition.cards) {
+      const { status, facts } = lookup ? factsFor(card, lookup) : { status: "unmatched" as const, facts: null };
+      const subject = {
+        names: [card.name, ...card.faces.map((face) => face.name), ...(facts ? [facts.scryfall] : [])],
+        role: card.role,
+        dfc: card.faces.length === 2,
+        basic: isBasicCard(card),
+        copies: copyCount(byId.get(card.id)),
+        status,
+        facts,
+      };
+      out.set(card.id, { result: matchCard(subject, filter), status });
+    }
+    return out;
+  }, [edition.cards, lookup, filter, byId]);
+  const shown = (card: DeckCard) => results.get(card.id)?.result === "shown";
+  const mains = edition.cards.filter((card) => card.role === "main" && shown(card));
+  const tokens = edition.cards.filter((card) => card.role === "token" && shown(card));
+  const extras = edition.cards.filter((card) => card.role === "extra" && shown(card));
+  const leftOut = lookup && needsFacts ? edition.cards.filter((card) => results.get(card.id)?.result === "unknown").length : 0;
+  // The "unmatched" marker only shows while filtering, so the plain deck view looks as before.
+  const factsMark = (card: DeckCard): FactsStatus | undefined => {
+    const status = results.get(card.id)?.status;
+    return filtering && lookup && status !== "matched" ? status : undefined;
+  };
+  const shownIds = new Set([...mains, ...tokens, ...extras].map((card) => card.id));
+  const allSummary = clearSummary(draft.cards);
+  const shownSummary = clearSummary(draft.cards, shownIds);
+  const undoable = cleared && cleared.deckId === draft.id && cleared.after === JSON.stringify(draft.cards) ? cleared : null;
   const lists = edition.decklists ?? [];
   const list = findDecklist(edition, draft.decklistId);
   const listed = withDecklist(edition, list);
@@ -157,7 +204,8 @@ export function BuilderView({
   const ambiguous = [...edition.notes, ...listNotes].filter((note) => note.level === "ambiguous");
 
   function commit(next: SavedDeck) {
-    onChange({ ...next, updatedAt: new Date().toISOString() });
+    setCleared(null);
+    onChange({ ...next, updatedAt: nowStamp() });
   }
 
   function writeCard(card: DeckCard, pairs: ArtQty[], locked = byId.get(card.id)?.locked ?? false) {
@@ -192,6 +240,25 @@ export function BuilderView({
     const pairs = (saved?.pairs ?? []).map((pair, index) => (index === pairIndex ? { ...pair, [side === "back" ? "back" : "art"]: artId } : pair));
     writeCard(card, pairs.length ? pairs : [{ ...newPair(card, 1, tone), ...(side === "back" ? { back: artId } : { art: artId }) }], saved?.locked ?? false);
     closeEditor();
+  }
+
+  function setFilter(next: CardFilter) {
+    setQuery(formatQuery(next));
+  }
+
+  function runClear(scope: ClearScope) {
+    const ids = scope === "shown" ? shownIds : undefined;
+    const done = clearSummary(draft.cards, ids);
+    const after = clearCounts(draft.cards, ids);
+    commit({ ...draft, cards: after });
+    setCleared({ scope, deckId: draft.id, before: draft.cards, after: JSON.stringify(after), ...clearMessage(scope, done) });
+  }
+
+  function undoClear() {
+    if (!undoable) return;
+    commit({ ...draft, cards: undoable.before });
+    setCleared(null);
+    onToast(undoable.scope === "all" ? "Restored every count from before Clear all." : "Restored the counts from before Clear shown.");
   }
 
   function pickCardBack(card: DeckCard, fileId: string | null) {
@@ -270,7 +337,10 @@ export function BuilderView({
     <div>
       <div className="mb-3 flex items-center justify-between gap-3">
         <h2 className="font-heading text-2xl">Deck</h2>
-        <p className="text-xs text-muted-foreground">{mains.length} shown</p>
+        <p className="text-xs text-muted-foreground" data-shown-count="">
+          {mains.length} shown
+          {leftOut ? ` · ${leftOut} left out: Scryfall has no clear ${orList(attributeFilters(filter))} for ${leftOut === 1 ? "it" : "them"} (unmatched or ambiguous names)` : ""}
+        </p>
       </div>
       {mains.length === 0 ? (
         <p className="text-sm text-muted-foreground">No main-deck cards match that search.</p>
@@ -282,6 +352,7 @@ export function BuilderView({
               card={card}
               saved={byId.get(card.id)}
               customBack={overrides.get(card.id)}
+              mark={factsMark(card)}
               showLock
               flyout={flyout.bind}
               onQty={(index, qty) => changePair(card, index, qty)}
@@ -297,8 +368,8 @@ export function BuilderView({
 
   const addPane = (
     <div className="flex flex-col gap-6">
-      <AddGroup title="Tokens" cards={tokens} empty="No tokens in this deck." byId={byId} overrides={overrides} flyout={flyout.bind} onQty={(card, index, qty) => changePair(card, index, qty)} onArt={(card, index, side) => setArtTarget({ cardId: card.id, pairIndex: index, side })} onAdd={(card) => addPair(card)} />
-      <AddGroup title="Extras" cards={extras} empty="No sideboard or extra cards in this deck." byId={byId} overrides={overrides} flyout={flyout.bind} onQty={(card, index, qty) => changePair(card, index, qty)} onArt={(card, index, side) => setArtTarget({ cardId: card.id, pairIndex: index, side })} onAdd={(card) => addPair(card)} />
+      <AddGroup title="Tokens" cards={tokens} empty={filtering ? "No tokens match the filter." : "No tokens in this deck."} byId={byId} overrides={overrides} mark={factsMark} flyout={flyout.bind} onQty={(card, index, qty) => changePair(card, index, qty)} onArt={(card, index, side) => setArtTarget({ cardId: card.id, pairIndex: index, side })} onAdd={(card) => addPair(card)} />
+      <AddGroup title="Extras" cards={extras} empty={filtering ? "No extras match the filter." : "No sideboard or extra cards in this deck."} byId={byId} overrides={overrides} mark={factsMark} flyout={flyout.bind} onQty={(card, index, qty) => changePair(card, index, qty)} onArt={(card, index, side) => setArtTarget({ cardId: card.id, pairIndex: index, side })} onAdd={(card) => addPair(card)} />
     </div>
   );
 
@@ -318,6 +389,7 @@ export function BuilderView({
             card={card}
             saved={byId.get(card.id)}
             customBack={overrides.get(card.id)}
+            mark={factsMark(card)}
             flyout={flyout.bind}
             onQty={(index, qty) => changePair(card, index, qty)}
             onArt={(index, side) => setArtTarget({ cardId: card.id, pairIndex: index, side })}
@@ -326,13 +398,13 @@ export function BuilderView({
         )}
       />
     ) : (
-      <AddGroup title={title} cards={cards} empty={empty} byId={byId} overrides={overrides} flyout={flyout.bind} onQty={(card, index, qty) => changePair(card, index, qty)} onArt={(card, index, side) => setArtTarget({ cardId: card.id, pairIndex: index, side })} onAdd={(card) => addPair(card)} />
+      <AddGroup title={title} cards={cards} empty={empty} byId={byId} overrides={overrides} mark={factsMark} flyout={flyout.bind} onQty={(card, index, qty) => changePair(card, index, qty)} onArt={(card, index, side) => setArtTarget({ cardId: card.id, pairIndex: index, side })} onAdd={(card) => addPair(card)} />
     );
 
   const desktopAddPane = (
     <div className="flex flex-col gap-6">
-      {sideGroup("tokens", "Tokens", tokens, "No tokens in this deck.")}
-      {sideGroup("extras", "Extras", extras, "No sideboard or extra cards in this deck.")}
+      {sideGroup("tokens", "Tokens", tokens, filtering ? "No tokens match the filter." : "No tokens in this deck.")}
+      {sideGroup("extras", "Extras", extras, filtering ? "No extras match the filter." : "No sideboard or extra cards in this deck.")}
     </div>
   );
 
@@ -438,6 +510,14 @@ export function BuilderView({
         <Button type="button" variant="secondary" onClick={runRandom}>
           <Dices /> Random
         </Button>
+        <Button type="button" variant="outline" disabled={allSummary.copies === 0} title="Set every card in this deck to 0, tokens and extras too. You can undo it." onClick={() => runClear("all")}>
+          <Eraser /> Clear all
+        </Button>
+        {filtering ? (
+          <Button type="button" variant="outline" disabled={shownSummary.copies === 0} title="Set only the cards the filter shows to 0. Cards the filter hides keep their counts. You can undo it." onClick={() => runClear("shown")}>
+            <Eraser /> Clear shown ({shownSummary.cards})
+          </Button>
+        ) : null}
         <Button type="button" variant="outline" onClick={onSave}>
           <Save /> Save
         </Button>
@@ -453,7 +533,30 @@ export function BuilderView({
         </p>
       </div>
 
-      <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search this deck" aria-label="Search this deck" className="h-10" />
+      {undoable ? (
+        <div role="status" data-clear-undo="" className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-primary/40 bg-card px-4 py-2 text-sm">
+          <span>{undoable.status}</span>
+          <Button type="button" size="sm" onClick={undoClear}>
+            <Undo2 /> {undoable.undo}
+          </Button>
+        </div>
+      ) : null}
+
+      <div className="grid gap-2">
+        <div className="flex gap-2">
+          <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search this deck" aria-label="Search this deck" className="h-10" />
+          <Button type="button" variant={filtersOpen ? "secondary" : "outline"} className="h-10 shrink-0" aria-expanded={filtersOpen} aria-label="Filters" onClick={() => setFiltersOpen(!filtersOpen)}>
+            <SlidersHorizontal /> <span className="hidden sm:inline">Filters</span>
+          </Button>
+        </div>
+        {parsed.unknown.length ? (
+          <p className="text-xs text-amber-200" data-query-unknown="">
+            Not understood, so not used: {parsed.unknown.join(", ")}
+          </p>
+        ) : null}
+        {needsFacts && !lookup ? <p className="text-xs text-muted-foreground">Loading card data…</p> : null}
+        {filtersOpen ? <CardFilterPanel filter={filter} onChange={setFilter} onReset={() => setQuery(formatQuery(EMPTY_FILTER))} /> : null}
+      </div>
 
       <div className="hidden gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_20rem]">
         {deckPane}
@@ -718,10 +821,21 @@ function CustomBackBadge({ option }: { option?: BackOption }) {
   );
 }
 
+/** While filtering: a card Scryfall had no clear match for. Name search still finds it; the attribute filters leave it out. */
+function FactsMark({ mark }: { mark?: FactsStatus }) {
+  if (!mark || mark === "matched") return null;
+  return (
+    <Badge variant="outline" data-facts-mark={mark} className="mt-1 border-amber-300/50 text-[0.7rem] text-amber-100" title={mark === "unmatched" ? "Scryfall has no card by this name, so the color, type and other filters leave it out." : "Several Scryfall cards share this name, so filters on the facts they don't agree on leave it out."}>
+      {mark}
+    </Badge>
+  );
+}
+
 function CardTile({
   card,
   saved,
   customBack,
+  mark,
   showLock,
   flyout,
   onQty,
@@ -732,6 +846,7 @@ function CardTile({
   card: DeckCard;
   saved?: SavedCard;
   customBack?: BackOption;
+  mark?: FactsStatus;
   showLock: boolean;
   flyout?: (card: FlyoutCard) => FlyoutBinding;
   onQty: (index: number, qty: number) => void;
@@ -754,6 +869,7 @@ function CardTile({
         )}
       </div>
       <CustomBackBadge option={customBack} />
+      <FactsMark mark={mark} />
       <ul className="mt-2 grid gap-2">
         {pairs.map((pair, index) => {
           const art = chosenArt(card.faces[0]!, pair.art);
@@ -803,6 +919,7 @@ function AddGroup({
   empty,
   byId,
   overrides,
+  mark,
   flyout,
   onQty,
   onArt,
@@ -813,6 +930,7 @@ function AddGroup({
   empty: string;
   byId: Map<string, SavedCard>;
   overrides?: Map<string, BackOption>;
+  mark?: (card: DeckCard) => FactsStatus | undefined;
   flyout?: (card: FlyoutCard) => FlyoutBinding;
   onQty: (card: DeckCard, index: number, qty: number) => void;
   onArt: (card: DeckCard, index: number, side: "front" | "back") => void;
@@ -831,6 +949,7 @@ function AddGroup({
               card={card}
               saved={byId.get(card.id)}
               customBack={overrides?.get(card.id)}
+              mark={mark?.(card)}
               flyout={flyout}
               onQty={(index, qty) => onQty(card, index, qty)}
               onArt={(index, side) => onArt(card, index, side)}
@@ -848,6 +967,7 @@ export function AddItem({
   card,
   saved,
   customBack,
+  mark,
   flyout,
   onQty,
   onArt,
@@ -856,6 +976,7 @@ export function AddItem({
   card: DeckCard;
   saved?: SavedCard;
   customBack?: BackOption;
+  mark?: FactsStatus;
   flyout?: (card: FlyoutCard) => FlyoutBinding;
   onQty: (index: number, qty: number) => void;
   onArt: (index: number, side: "front" | "back") => void;
@@ -867,6 +988,7 @@ export function AddItem({
     <li data-flyout-anchor="" className="grid gap-2 rounded-xl border border-border bg-background/40 p-2">
       <p className="line-clamp-2 text-sm leading-snug">{card.name}</p>
       <CustomBackBadge option={customBack} />
+      <FactsMark mark={mark} />
       {pairs.map((pair, index) => {
         const art = face ? chosenArt(face, pair.art) : null;
         const backArt = card.faces[1] ? chosenArt(card.faces[1], pair.back) : null;

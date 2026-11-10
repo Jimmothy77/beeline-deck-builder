@@ -50,8 +50,27 @@ Choosing a deck loads it as designed (one copy of each main-deck card on the art
 - give one card its own back in the card editor (click the card's art): **Card Back** (one of the deck's card backs), **Alt Back** (any extra that is not a token) or **Token Backs** (a token). It prints on every copy of that card. Without a pick the card uses the deck back, and a double-faced card keeps its own back face. A pick on a double-faced card replaces that face, and the editor says so. In SxF a pick on a Color or Black and White token or extra moves to that card's other file when you switch the print set. A card with a pick shows a small "Back:" label on its tile and the desktop flyout turns to that back; cards without one look as before
 - **All cards**, which sets every card in that deck and section to 1 copy
 - **Random**, which picks a main-deck or alternate art for each main-deck card. Lock a card and Random leaves it alone
+- **Clear all**, which sets every card in the deck to 0: main deck, tokens and extras (locked cards too, the same as pressing − to 0). Per-card back picks stay. While a filter is on, **Clear shown (N)** sits beside it and sets only the N counted cards the filter shows to 0; the cards it hides keep their counts. Both say what they did in a status line with **Undo Clear all** / **Undo Clear shown**, which puts back every count from just before. Any other change ends the Undo
+- filter the deck view (see below). The filter only changes what is shown, never a count
 - save the deck, keep several, and export each as its own XML
 - export or import the saved-deck list as JSON
+
+### Filtering the deck view
+
+The search box takes plain words (all must be in the card's name, as before) and Scryfall-style terms; **Filters** opens the same filter as controls, and the controls write the query back into the box. Terms that are not understood are listed under the box and not used.
+
+| Filter | Query | Controls |
+| --- | --- | --- |
+| name | `sol ring`, `"sol ring"`, `name:signet` | the box |
+| color | `c:g`, `c:wu` (all of), `c=wu` (exactly), `c>=wu`, `(c:w or c:u)` (any of), `c:c` colorless, `c:m` multicolor, guild names (`c:izzet`) | W U B R G C Multi chips, any / all / exact |
+| card type | `t:creature`, `t:creature t:artifact` (both), `(t:creature or t:instant)`; any other word is matched against the type line (`t:goblin`, `t:"legendary creature"`) | type chips, any / all, Type line contains |
+| mana value | `mv=3`, `mv<3`, `mv>3`, `mv<=3`, `mv>=3`, `mv!=3`, a range `mv>=2 mv<=4` (also `cmc`) | = < > ≤ ≥ or range |
+| rarity | `r:common`, `r:u`, `(r:rare or r:mythic)`; also special and bonus | rarity chips (any of) |
+| rules text | `o:flying`, `o:"draw a card"` | Rules text contains |
+| power / toughness | `pow>=3`, `tou<2`, ranges as for mana value | Power, Toughness |
+| quick toggles | `qty>0` (or `is:indeck`), `is:dfc`, `is:token` (or `is:extra`), `is:basic` | Show only chips |
+
+Terms are joined with "and"; `or` works inside one kind of term (types, colors, rarities). Parentheses group, nothing more. Color, type, mana value, rarity, rules text, power and toughness come from `src/data/card-lookup.ts`, a one-time cross-reference of every card name in the shipped decks against Scryfall's public API (the app never calls Scryfall; the lookup loads as its own file the first time the deck view opens). A double-faced card has both faces' colors, type lines and rules text, the front's power and toughness, and matches a type on either face. Rarity is that of the printing Scryfall returns for the name. A name Scryfall has no card for is **unmatched**, and a name several different Scryfall cards share (most tokens) is **ambiguous** and keeps only the facts they agree on. While filtering, such cards carry an "unmatched" or "ambiguous" marker; name search and the quick toggles still find them, but a filter on a fact they lack leaves them out, and the line under the box says how many were left out that way.
 
 Treatments live in `src/data/treatments.ts`. Foil / Non-Foil offers the White Holo and Standard Holo finishes. Partial Foil offers only the Standard Holo finishes. Add a row to offer another one. Choosing a treatment sets `<foil>true</foil>`. Stock is `(S30) Standard Smooth`, the same default as the Art Picker.
 
@@ -185,8 +204,13 @@ Vitest covers:
 - the Drive client against a mocked `fetch` (pagination, `New Drive Link.txt`, a 403, reading deck list files)
 - deck lists: file names and labels, both line formats, the shipped lists, list counts and every never-zero rule, folder fallbacks, Spy x Family Color and Black and White
 - the banner copy, the shop link, the stacking rules, and the bee's flight path
+- Clear all, Clear shown and their Undo; the deck filter's matching, the query box and the controls; the card lookup
 
 Which extras are tokens comes from a one-time cross-reference of every extra and token name in the shipped decks against Scryfall's public API, committed as `src/data/token-lookup.ts`. The app never calls Scryfall. A name is a token when Scryfall's card has the layout token, double_faced_token or emblem, or "Token" in its type line. Names Scryfall has no card for, names that are both a token and a game card, and names whose only match is an art card or vanguard use the old rule (a Tokens folder, or a name starting with "Token"). `npx tsx scripts/token-lookup.ts` asks Scryfall again (about 165 requests, 8 a second) and rewrites the lookup; `--report <file>` writes the report from the committed lookup; `--check` fails when a shipped name has no entry or when a hand override matches no card. A few cards are decided by hand in `src/data/token-overrides.ts` (deck id and exact card name; the script never rewrites it), and those win over Scryfall and the old rule: Persona 5's Raphael, Thor and Titania, Silksong's Blood (Infection) and Vader's Shapeshifter 1-9 are tokens, and Persona 5's Lands (the Forest 3 art) is not. Nothing else uses the lookup: the Tokens and Extras lists still follow the folders.
+
+The card facts come from `npx tsx scripts/card-lookup.ts [--cache <dir>]`, which asks Scryfall's `/cards/collection` for every card name (75 a request, 8 requests a second, backing off on a 429), tries `The <name>` and then Scryfall's fuzzy match for main-deck names it still has no card for (flagged for a check by eye in the report), and does an exact search with extras for tokens and names shared by several cards. `--report <file>` writes the report from the committed lookup; `--check` fails when a shipped card name has no entry or is listed as both matched and unmatched.
+
+The golden tests `src/lib/v0127-golden.test.ts` and `src/lib/v0128-golden.test.ts` load saves made by v0.1.27 and v0.1.28 and check that they store, load and export byte for byte as those versions did, the v0.1.28 ones including Spy x Family Color and Black and White decks with Hydroelectric.
 
 `npx tsx scripts/mutate.ts` breaks the code on purpose, one rule at a time, and fails if any test still passes.
 
@@ -206,6 +230,11 @@ src/lib/tokens.ts         which extras are tokens
 src/data/token-lookup.ts  static Scryfall token lookup (generated)
 src/data/token-overrides.ts  hand token decisions (wins over the lookup)
 scripts/token-lookup.ts
+src/lib/card-facts.ts     Scryfall facts per card
+src/lib/card-filter.ts    deck filter and its query syntax
+src/lib/clear.ts          Clear all / Clear shown
+src/data/card-lookup.ts   static Scryfall card facts (generated)
+scripts/card-lookup.ts
 src/lib/decklist.ts       deck list parsing and counts
 src/lib/flight.ts         banner bee path
 decklists/                shipped deck list text files
