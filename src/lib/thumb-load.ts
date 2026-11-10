@@ -44,3 +44,12 @@ export class ThumbGate {
 }
 
 export const thumbGate = new ThumbGate();
+
+/** Larger copy of a thumbnail for the desktop card flyout. Same hosts and id as thumbSources. */
+export function largeThumbSources(id: string): string[] {
+  const encoded = encodeURIComponent(id);
+  return [
+    `https://drive.google.com/thumbnail?id=${encoded}&sz=w800`,
+    `https://lh3.googleusercontent.com/d/${encoded}=w800`,
+  ];
+}

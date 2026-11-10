@@ -1,5 +1,9 @@
-import { Component, type ReactNode, useMemo, useState } from "react";
+import { Component, type ReactNode, useMemo, useRef, useState } from "react";
 import { ChevronLeft, Copy, Dices, Download, Lock, LockOpen, Save } from "lucide-react";
+import { BackToTop } from "@/components/BackToTop";
+import type { FlyoutCard } from "@/components/CardFlyout";
+import { useCardFlyout, type FlyoutBinding } from "@/components/use-card-flyout";
+import { SideTile } from "@/components/SideTile";
 import { CardThumb } from "@/components/thumbs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { treatmentsFor } from "@/data/treatments";
+import { usesSideTile } from "@/lib/desktop";
 import { downloadText, xmlFilename } from "@/lib/download";
 import { decklistNotes, findDecklist, withDecklist } from "@/lib/decklist";
 import { artIdsOf, pdfIdsInEdition } from "@/lib/group";
@@ -109,6 +114,8 @@ export function BuilderView({
     bracket = error instanceof Error ? error.message : "Too many cards";
   }
   const back = edition.backs.find((item) => item.id === draft.cardbackId) ?? edition.backs[0];
+  const flyout = useCardFlyout(back?.thumbId);
+  const topRef = useRef<HTMLButtonElement | null>(null);
   const q = query.trim().toLowerCase();
   const mains = edition.cards.filter((card) => card.role === "main" && (!q || card.name.toLowerCase().includes(q)));
   const tokens = edition.cards.filter((card) => card.role === "token" && (!q || card.name.toLowerCase().includes(q)));
@@ -233,6 +240,7 @@ export function BuilderView({
               card={card}
               saved={byId.get(card.id)}
               showLock
+              flyout={flyout.bind}
               onQty={(index, qty) => changePair(card, index, qty)}
               onLock={(locked) => writeCard(card, byId.get(card.id)?.pairs ?? [], locked)}
               onArt={(index, side) => setArtTarget({ cardId: card.id, pairIndex: index, side })}
@@ -246,15 +254,48 @@ export function BuilderView({
 
   const addPane = (
     <div className="flex flex-col gap-6">
-      <AddGroup title="Tokens" cards={tokens} empty="No tokens in this deck." byId={byId} onQty={(card, index, qty) => changePair(card, index, qty)} onArt={(card, index, side) => setArtTarget({ cardId: card.id, pairIndex: index, side })} onAdd={(card) => addPair(card)} />
-      <AddGroup title="Extras" cards={extras} empty="No sideboard or extra cards in this deck." byId={byId} onQty={(card, index, qty) => changePair(card, index, qty)} onArt={(card, index, side) => setArtTarget({ cardId: card.id, pairIndex: index, side })} onAdd={(card) => addPair(card)} />
+      <AddGroup title="Tokens" cards={tokens} empty="No tokens in this deck." byId={byId} flyout={flyout.bind} onQty={(card, index, qty) => changePair(card, index, qty)} onArt={(card, index, side) => setArtTarget({ cardId: card.id, pairIndex: index, side })} onAdd={(card) => addPair(card)} />
+      <AddGroup title="Extras" cards={extras} empty="No sideboard or extra cards in this deck." byId={byId} flyout={flyout.bind} onQty={(card, index, qty) => changePair(card, index, qty)} onArt={(card, index, side) => setArtTarget({ cardId: card.id, pairIndex: index, side })} onAdd={(card) => addPair(card)} />
+    </div>
+  );
+
+  // Desktop side column: a long Extras (or Tokens) list becomes one tile that opens an overlay.
+  const sideGroup = (kind: "tokens" | "extras", title: string, cards: DeckCard[], empty: string) =>
+    usesSideTile(kind, cards.length) ? (
+      <SideTile
+        kind={kind}
+        title={title}
+        cards={cards}
+        byId={byId}
+        flyoutOpen={flyout.openRef}
+        onFlyoutClose={flyout.close}
+        renderItem={(card) => (
+          <AddItem
+            key={card.id}
+            card={card}
+            saved={byId.get(card.id)}
+            flyout={flyout.bind}
+            onQty={(index, qty) => changePair(card, index, qty)}
+            onArt={(index, side) => setArtTarget({ cardId: card.id, pairIndex: index, side })}
+            onAdd={() => addPair(card)}
+          />
+        )}
+      />
+    ) : (
+      <AddGroup title={title} cards={cards} empty={empty} byId={byId} flyout={flyout.bind} onQty={(card, index, qty) => changePair(card, index, qty)} onArt={(card, index, side) => setArtTarget({ cardId: card.id, pairIndex: index, side })} onAdd={(card) => addPair(card)} />
+    );
+
+  const desktopAddPane = (
+    <div className="flex flex-col gap-6">
+      {sideGroup("tokens", "Tokens", tokens, "No tokens in this deck.")}
+      {sideGroup("extras", "Extras", extras, "No sideboard or extra cards in this deck.")}
     </div>
   );
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 py-4 sm:px-6 sm:py-6">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 py-4 sm:px-6 sm:py-6 lg:max-w-7xl">
       <div className="flex flex-wrap items-center gap-3">
-        <Button type="button" variant="ghost" onClick={onBack}>
+        <Button ref={topRef} type="button" variant="ghost" onClick={onBack}>
           <ChevronLeft /> Decks
         </Button>
         <div className="min-w-0 flex-1">
@@ -372,7 +413,7 @@ export function BuilderView({
 
       <div className="hidden gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_20rem]">
         {deckPane}
-        <aside className="lg:sticky lg:top-4 lg:self-start">{addPane}</aside>
+        <aside className="lg:sticky lg:top-4 lg:self-start">{desktopAddPane}</aside>
       </div>
       <Tabs defaultValue="deck" className="lg:hidden">
         <TabsList className="grid w-full grid-cols-2">
@@ -416,7 +457,7 @@ export function BuilderView({
         </details>
       )}
 
-      <p className="pb-6 text-xs text-muted-foreground">Card designs by Beespair. A deck list sets the opening counts, basic lands included. Without a list, basic lands never open at 0. Main-deck tokens never open at 0. Random rerolls unlocked main-deck cards to one print. All cards does the same, and leaves a black-and-white-only card at zero until you add it. Add another art when you want a second file of the same card.</p>
+      <p className="pb-6 text-xs text-muted-foreground lg:pb-20">Card designs by Beespair. A deck list sets the opening counts, basic lands included. Without a list, basic lands never open at 0. Main-deck tokens never open at 0. Random rerolls unlocked main-deck cards to one print. All cards does the same, and leaves a black-and-white-only card at zero until you add it. Add another art when you want a second file of the same card.</p>
 
       <Dialog open={Boolean(artFace)} onOpenChange={(open) => !open && setArtTarget(null)}>
         <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-3xl">
@@ -527,6 +568,8 @@ export function BuilderView({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {flyout.layer}
+      <BackToTop focusTarget={topRef} />
     </div>
   );
 }
@@ -535,6 +578,7 @@ function CardTile({
   card,
   saved,
   showLock,
+  flyout,
   onQty,
   onLock,
   onArt,
@@ -543,6 +587,7 @@ function CardTile({
   card: DeckCard;
   saved?: SavedCard;
   showLock: boolean;
+  flyout?: (card: FlyoutCard) => FlyoutBinding;
   onQty: (index: number, qty: number) => void;
   onLock: (locked: boolean) => void;
   onArt: (index: number, side: "front" | "back") => void;
@@ -553,7 +598,7 @@ function CardTile({
   const locked = saved?.locked ?? false;
   const back = card.faces[1];
   return (
-    <li className={`rounded-2xl border border-border bg-card p-2 ${qty === 0 ? "opacity-60" : ""}`}>
+    <li data-flyout-anchor="" className={`rounded-2xl border border-border bg-card p-2 ${qty === 0 ? "opacity-60" : ""}`}>
       <div className="flex items-start justify-between gap-1">
         <p className="line-clamp-2 min-h-10 flex-1 text-sm leading-snug">{card.name}</p>
         {showLock && (
@@ -565,14 +610,16 @@ function CardTile({
       <ul className="mt-2 grid gap-2">
         {pairs.map((pair, index) => {
           const art = chosenArt(card.faces[0]!, pair.art);
+          const backArt = back ? chosenArt(back, pair.back) : null;
+          const preview: FlyoutCard = { key: `${card.id}:${index}`, front: art?.thumbId, dfcBack: backArt?.thumbId, alt: card.name };
           return (
-            <li key={`${pair.art}:${index}`} className="flex items-center gap-2">
-              <button type="button" onClick={() => saved && onArt(index, "front")} className="w-12 shrink-0 text-left" aria-label={`Choose front art ${index + 1} for ${card.name}`}>
+            <li key={`${pair.art}:${index}`} className="flex items-center gap-2 lg:flex-wrap">
+              <button type="button" {...flyout?.(preview)} onClick={() => saved && onArt(index, "front")} className="w-12 shrink-0 text-left lg:w-20" aria-label={`Choose front art ${index + 1} for ${card.name}`}>
                 <CardThumb id={art?.thumbId} alt={card.name} />
               </button>
               {back ? (
-                <button type="button" onClick={() => saved && onArt(index, "back")} className="w-12 shrink-0 text-left" aria-label={`Choose back art ${index + 1} for ${card.name}`}>
-                  <CardThumb id={chosenArt(back, pair.back)?.thumbId} alt={back.name} />
+                <button type="button" {...flyout?.(preview)} onClick={() => saved && onArt(index, "back")} className="w-12 shrink-0 text-left lg:w-20" aria-label={`Choose back art ${index + 1} for ${card.name}`}>
+                  <CardThumb id={backArt?.thumbId} alt={back.name} />
                 </button>
               ) : null}
               <Qty name={`${card.name} art ${index + 1}`} value={pair.qty} onChange={(next) => onQty(index, next)} />
@@ -606,6 +653,7 @@ function AddGroup({
   cards,
   empty,
   byId,
+  flyout,
   onQty,
   onArt,
   onAdd,
@@ -614,6 +662,7 @@ function AddGroup({
   cards: DeckCard[];
   empty: string;
   byId: Map<string, SavedCard>;
+  flyout?: (card: FlyoutCard) => FlyoutBinding;
   onQty: (card: DeckCard, index: number, qty: number) => void;
   onArt: (card: DeckCard, index: number, side: "front" | "back") => void;
   onAdd: (card: DeckCard) => void;
@@ -625,32 +674,59 @@ function AddGroup({
         <p className="mt-2 text-sm text-muted-foreground">{empty}</p>
       ) : (
         <ul className="mt-2 grid gap-2">
-          {cards.map((card) => {
-            const saved = byId.get(card.id);
-            const face = card.faces[0];
-            const pairs = saved?.pairs?.length ? saved.pairs : [{ art: "", qty: 0 }];
-            return (
-              <li key={card.id} className="grid gap-2 rounded-xl border border-border bg-background/40 p-2">
-                <p className="line-clamp-2 text-sm leading-snug">{card.name}</p>
-                {pairs.map((pair, index) => {
-                  const art = face ? chosenArt(face, pair.art) : null;
-                  return (
-                    <div key={`${pair.art}:${index}`} className="flex items-center gap-2">
-                      <button type="button" className="w-12 shrink-0" onClick={() => face && saved && onArt(card, index, "front")} aria-label={`Choose art ${index + 1} for ${card.name}`}>
-                        <CardThumb id={art?.thumbId} alt={card.name} />
-                      </button>
-                      <Qty name={`${card.name} art ${index + 1}`} value={pair.qty} onChange={(qty) => onQty(card, index, qty)} />
-                    </div>
-                  );
-                })}
-                <Button type="button" variant="ghost" className="h-8 justify-start px-2 text-xs" onClick={() => onAdd(card)}>
-                  Add another art
-                </Button>
-              </li>
-            );
-          })}
+          {cards.map((card) => (
+            <AddItem
+              key={card.id}
+              card={card}
+              saved={byId.get(card.id)}
+              flyout={flyout}
+              onQty={(index, qty) => onQty(card, index, qty)}
+              onArt={(index, side) => onArt(card, index, side)}
+              onAdd={() => onAdd(card)}
+            />
+          ))}
         </ul>
       )}
     </section>
+  );
+}
+
+/** One token or extra with its count controls. Used by the side list, the phone tab, and the desktop overlay. */
+export function AddItem({
+  card,
+  saved,
+  flyout,
+  onQty,
+  onArt,
+  onAdd,
+}: {
+  card: DeckCard;
+  saved?: SavedCard;
+  flyout?: (card: FlyoutCard) => FlyoutBinding;
+  onQty: (index: number, qty: number) => void;
+  onArt: (index: number, side: "front" | "back") => void;
+  onAdd: () => void;
+}) {
+  const face = card.faces[0];
+  const pairs = saved?.pairs?.length ? saved.pairs : [{ art: "", qty: 0 }];
+  return (
+    <li data-flyout-anchor="" className="grid gap-2 rounded-xl border border-border bg-background/40 p-2">
+      <p className="line-clamp-2 text-sm leading-snug">{card.name}</p>
+      {pairs.map((pair, index) => {
+        const art = face ? chosenArt(face, pair.art) : null;
+        const backArt = card.faces[1] ? chosenArt(card.faces[1], pair.back) : null;
+        return (
+          <div key={`${pair.art}:${index}`} className="flex items-center gap-2">
+            <button type="button" {...flyout?.({ key: `${card.id}:${index}`, front: art?.thumbId, dfcBack: backArt?.thumbId, alt: card.name })} className="w-12 shrink-0 lg:w-20" onClick={() => face && saved && onArt(index, "front")} aria-label={`Choose art ${index + 1} for ${card.name}`}>
+              <CardThumb id={art?.thumbId} alt={card.name} />
+            </button>
+            <Qty name={`${card.name} art ${index + 1}`} value={pair.qty} onChange={(qty) => onQty(index, qty)} />
+          </div>
+        );
+      })}
+      <Button type="button" variant="ghost" className="h-8 justify-start px-2 text-xs" onClick={onAdd}>
+        Add another art
+      </Button>
+    </li>
   );
 }
