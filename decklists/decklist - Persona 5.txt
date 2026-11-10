@@ -1,0 +1,106 @@
+About
+Name Take Your Heart [Terra, Magical Adept]
+
+Commander
+1x Terra, Magical Adept (FIN) 245
+
+Deck
+1x Adagia, Windswept Bastion (EOE) 250
+1x Arcane Denial (MSC) 147
+1x Arcane Signet (MBC) 254
+1x Arid Mesa (SPG) 109
+1x Assassin's Trophy (SOC) 294
+1x Awaken the Honored Dead (TDM) 170
+1x Ballad of the Black Flag (ACR) 13
+1x Binding the Old Gods (ECC) 120
+1x Birds of Paradise (MSC) 170
+1x Blood Crypt (TRK) 278
+1x Bloodstained Mire (MH3) 216
+1x Bloom Tender (ECL) 166
+1x Breeding Pool (TRK) 279
+1x Clockspinning (WHO) 215
+1x Command Tower (MBC) 256
+1x Deflecting Swat (TLE) 311
+1x Destiny Spinner (WOC) 123
+1x Dovin's Veto (FCA) 51
+1x Dryad of the Ilysian Grove (M3C) 225
+1x Eidolon of Blossoms (WOC) 124
+1x Eiganjo Dynastorian (SOC) 13
+1x Elspeth Conquers Death (THB) 13
+1x Enchantress's Presence (WOC) 125
+1x Estrid's Invocation (MH3) 269
+1x Exotic Orchard (MBC) 79
+1x Farseek (MSC) 173
+1x Flooded Strand (MH3) 220
+2x Forest (FRA) 394
+1x Garnet, Princess of Alexandria (FIN) 222
+1x Gleaming Splendor (HOB) 15
+1x Godless Shrine (TRK) 285
+1x Hall of Heliod's Generosity (DSC) 283
+1x Hallowed Fountain (TRK) 286
+1x Herald of the Pantheon (CMM) 898
+1x Ignoble Hierarch (ECC) 52
+1x Island (FRA) 385
+1x Jetmir's Garden (SNC) 250
+1x Jukai Naturalist (WOC) 140
+1x Kiora Bests the Sea God (THB) 52
+1x Mana Drain (OTP) 11
+1x Marsh Flats (SPG) 110
+1x Misty Rainforest (SPG) 111
+1x Mountain (FRA) 391
+1x Mystic Remora (TLE) 16
+1x Narci, Fable Singer (CMM) 710
+1x Nature's Lore (MSC) 177
+1x Nesting Grounds (ECC) 155
+1x Noble Hierarch (2XM) 177
+1x O'aka, Traveling Merchant (FIC) 39
+1x Ondu Spiritdancer (DSC) 101
+1x Overgrown Tomb (TRK) 289
+2x Plains (FRA) 382
+1x Polluted Delta (MH3) 224
+1x Power Conduit (NCC) 376
+1x Prismatic Vista (SPG) 38
+1x Replenish (WC00) tvdl15
+1x Rydia, Summoner of Mist (FIN) 239
+1x Sacred Foundry (TRK) 295
+1x Sanctum Weaver (WOC) 131
+1x Scalding Tarn (SPG) 112
+1x Setessan Champion (WOC) 132
+1x Sol Ring (FRC) 21
+1x Spara's Headquarters (SNC) 257
+1x Starfield of Nyx (CMM) 840
+1x Steam Vents (TRK) 298
+1x Sterling Grove (MH2) 293
+1x Stomping Ground (TRK) 299
+1x Summon: Bahamut (FIN) 1
+1x Summon: Fenrir (FIN) 203
+1x Summon: Ixion (FIC) 27
+1x Summon: Knights of Round (FIN) 36
+1x Summon: Kujata (FIC) 61
+1x Summon: Leviathan (FIN) 77
+1x Summon: Primal Odin (FIN) 121
+1x Summon: Shiva (FIN) 78
+1x Summon: Titan (FIN) 204
+1x Summon: Valefor (FIC) 42
+1x Summon: Yojimbo (FIC) 28
+1x Swamp (FRA) 388
+1x Swords to Plowshares (FRC) 37
+1x Sythis, Harvest's Hand (CMM) 938
+1x Temple Garden (TRK) 301
+1x The Apprentice's Folly (WOE) 200
+1x The Eldest Reborn (DSC) 139
+1x The Kami War (NEO) 227
+1x The Mending of Dominaria (OTC) 197
+1x There and Back Again (LTR) 151
+1x Three Visits (MSC) 181
+1x Tom Bombadil (HOC) 38
+1x Verdant Catacombs (SPG) 113
+1x Watery Grave (TRK) 306
+1x Weaver of Harmony (NEO) 213
+1x Windswept Heath (MH3) 235
+1x Wooded Foothills (MH3) 236
+1x Yenna, Redtooth Regent (WOE) 219
+1x Yuna, Hope of Spira (FIN) 250
+1x Zur, Eternal Schemer (DMU) 228
+
+

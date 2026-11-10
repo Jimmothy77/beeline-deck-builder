@@ -1,0 +1,3 @@
+# SHA-256 of the paid Silksong edition folder ids. The ids themselves are not stored.
+5a4b8f5c075343e864061727c3218627671a7a733b70838d3d137f1c55916ba6
+e2dcbb575cd2351231396f83286c3f45a5535db5e911481ef36edde6e78f488c

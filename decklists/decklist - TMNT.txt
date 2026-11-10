@@ -1,0 +1,93 @@
+About
+Name Shadows of the Sewer [Satoru Umezawa]
+
+Commander
+1x Satoru Umezawa (NEO) 234
+
+Deck
+1x Access Tunnel (TDC) 337
+1x Arcane Denial (MSC) 147
+1x Arcane Signet (MBC) 254
+1x Archon of Cruelty (FRC) 47
+1x Archpriest of Shadows (MOM) 89
+1x Baleful Strix (FIC) 318
+1x Bident of Thassa (BLC) 162
+1x Biting-Palm Ninja (NEO) 88
+1x Bojuka Bog (SOC) 363
+1x Callidus Assassin (40K) 109
+1x Changeling Outcast (OTC) 128
+1x Coastal Piracy (TLE) 156
+1x Command Tower (MBC) 256
+1x Counterspell (DSC) 114
+1x Creeping Tar Pit (EOS) 9
+1x Cyclonic Rift (SOA) 14
+1x Dimir Infiltrator (PC2) 86
+1x Dour Port-Mage (BLB) 47
+1x Dowsing Dagger (XLN) 235
+1x Drowned Catacomb (FRC) 69
+1x Enduring Curiosity (DSK) 51
+1x Exotic Orchard (MBC) 79
+1x Fabled Passage (FRC) 71
+1x Fallen Shinobi (OTC) 226
+1x Fellwar Stone (MBC) 74
+1x Fierce Guardianship (CMM) 94
+1x Gingerbrute (J25) 751
+1x Gloomlake Verge (DSK) 260
+1x Grazilaxx, Illithid Scholar (CLB) 723
+1x Great Whale (USG) 77
+1x Grim Hireling (CLB) 755
+1x Gudul Lurker (DTK) 56
+1x Ingenious Infiltrator (MH1) 204
+1x Ink-Eyes, Servant of Oni (BLC) 77
+1x Invisible Stalker (ZNC) 27
+13x Island (FRA) 385
+1x Kaito Shizuki (NEO) 226
+1x Lightning Greaves (FIC) 349
+1x Lord of the Void (RVR) 81
+1x Mana Drain (OTP) 11
+1x Mindleech Mass (RAV) 215
+1x Mist-Cloaked Herald (MSC) 760
+1x Mistblade Shinobi (PC2) 20
+1x Moon-Circuit Hacker (J25) 327
+1x Morphic Pool (CLB) 357
+1x Myriad Landscape (TDC) 380
+1x Nashi, Moon Sage's Scion (OTC) 143
+1x Negate (FDN) 710
+1x Nether Traitor (SOC) 220
+1x Neurok Stealthsuit (5DN) 140
+1x Noxious Gearhulk (TDC) 191
+1x Orochi Soul-Reaver (OTC) 22
+1x Otawara, Soaring City (NEO) 271
+1x Polluted Delta (MH3) 224
+1x Pongify (SOA) 20
+1x Propaganda (MSC) 151
+1x Rapid Hybridization (SOC) 198
+1x Reconnaissance Mission (MSC) 153
+1x Reliquary Tower (TDC) 386
+1x Rogue Class (AFR) 230
+1x Rogue's Passage (HOC) 212
+1x Sakashima's Student (SLD) 2355
+1x Satoru, the Infiltrator (OTJ) 230
+1x Shipwreck Marsh (FRA) 189
+1x Silent-Blade Oni (OTC) 241
+1x Silver-Fur Master (NEO) 236
+1x Slither Blade (OTC) 114
+1x Smoke Bomb (ACR) 75
+1x Sol Ring (FRC) 21
+1x Solemn Simulacrum (FIC) 360
+1x Sphinx of the Second Sun (MKC) 118
+4x Swamp (FRA) 388
+1x Swan Song (C16) 98
+1x Swiftfoot Boots (FIC) 361
+1x Sword of the Animist (MSC) 289
+1x Takenuma, Abandoned Mire (NEO) 278
+1x Thousand-Faced Shadow (NEO) 86
+1x Tormented Soul (J22) 477
+1x Triton Shorestalker (OTC) 121
+1x Urborg, Tomb of Yawgmoth (UMA) 254
+1x Victimize (TDC) 198
+1x Watery Grave (TRK) 306
+1x Withering Torment (DSK) 124
+1x Wrexial, the Risen Deep (NCC) 359
+
+

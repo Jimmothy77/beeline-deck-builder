@@ -1,0 +1,62 @@
+{
+  "publicFolderIds": [
+    "REDACTED_PAID_ID"
+  ],
+  "decks": [
+    {
+      "id": "dr-eggman",
+      "name": "Dr. Eggman",
+      "file": "decks/dr-eggman.json"
+    },
+    {
+      "id": "floating-world",
+      "name": "Floating World",
+      "file": "decks/floating-world.json"
+    },
+    {
+      "id": "horror-movie-poster-secret-lair",
+      "name": "Horror Movie Poster Secret Lair",
+      "file": "decks/horror-movie-poster-secret-lair.json"
+    },
+    {
+      "id": "kpdh",
+      "name": "KPDH",
+      "file": "decks/kpdh.json"
+    },
+    {
+      "id": "nier",
+      "name": "Nier",
+      "file": "decks/nier.json"
+    },
+    {
+      "id": "persona-5",
+      "name": "Persona 5",
+      "file": "decks/persona-5.json"
+    },
+    {
+      "id": "silksong",
+      "name": "Silksong",
+      "file": "decks/silksong.json"
+    },
+    {
+      "id": "sxf",
+      "name": "SxF",
+      "file": "decks/sxf.json"
+    },
+    {
+      "id": "tmnt",
+      "name": "TMNT",
+      "file": "decks/tmnt.json"
+    },
+    {
+      "id": "vader",
+      "name": "Vader",
+      "file": "decks/vader.json"
+    },
+    {
+      "id": "x-men",
+      "name": "X-Men",
+      "file": "decks/x-men.json"
+    }
+  ]
+}

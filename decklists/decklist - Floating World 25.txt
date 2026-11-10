@@ -1,0 +1,31 @@
+About
+Name Floating World — Fish of '25
+
+
+Deck
+2x Brainstorm (FRC) 39
+2x Crystal Spray (SLD) 2152
+2x Dance of the Skywise (DTK) 50
+10x Dandan (TSB) 19
+2x Diminishing Returns (EMA) 46
+2x Halimar Depths (DSC) 282
+18x Island (FRA) 385
+2x Izzet Boilerworks (M3C) 350
+2x Lonely Sandbar (EOC) 166
+8x Memory Lapse (STA) 16
+2x Metamorphose (SLD) 2155
+2x Mind Bend (10E) 93
+2x Mystic Retrieval (INR) 77
+2x Mystic Sanctuary (SOC) 388
+2x Narset's Reversal (MAR) 58
+2x Predict (MYS1) 459
+2x Ray of Command (DDM) 29
+2x Remote Isle (DMR) 254
+2x Supplant Form (FRF) 54
+2x Svyelunite Temple (SLD) 2164
+4x Take Inventory (SIR) 76
+2x Thundering Falls (MKM) 269
+2x Unsubstantiate (M21) 82
+2x Vision Charm (VIS) 49
+
+

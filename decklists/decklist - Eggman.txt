@@ -1,0 +1,102 @@
+About
+Name The Eggman Empire [Dr. Eggman]
+
+Commander
+1x Dr. Eggman (SLD) 2084
+
+Deck
+1x Academy Ruins (DRC) 58
+1x Anvil of Bogardan (VIS) 141
+1x Arcane Signet (MBC) 254
+1x Archway of Innovation (MH3) 214
+1x Blazemire Verge (DSK) 256
+1x Blitzwing, Cruel Tormentor (BOT) 4
+1x Blood Crypt (TRK) 278
+1x Bloodstained Mire (MH3) 216
+1x Chaos Defiler (40K) 110
+1x Chrome Dome (TMT) 172
+1x Cityscape Leveler (BRO) 233
+1x Coalstoke Gearhulk (DFT) 198
+1x Combustible Gearhulk (FIC) 292
+1x Command Tower (MBC) 256
+1x Cryptothrall (40K) 155
+1x Cyberdrive Awakener (MAR) 53
+1x Cybermen Squadron (WHO) 176
+1x Deadly Rollick (TLE) 309
+1x Deflecting Swat (TLE) 311
+1x Demonic Junker (DFT) 83
+1x Depthshaker Titan (EOC) 9
+1x Desynchronization (ACR) 16
+1x Entropic Battlecruiser (EOE) 99
+1x Exotic Orchard (MBC) 79
+1x Fabricate (SPG) 20
+1x Fierce Guardianship (TLE) 307
+1x Foundry Inspector (CMM) 385
+1x Geth's Grimoire (MYSTOR) 101
+1x Gloomlake Verge (DSK) 260
+1x Golbez, Crystal Collector (FIN) 225
+1x Imposter Mech (NEC) 13
+1x Inventors' Fair (EOS) 21
+3x Island (FRA) 385
+1x Knuckles the Echidna (SLD) 2082
+1x Krang, Utrom Warlord (TMT) 175
+1x Lightning Greaves (MSC) 202
+1x Luxury Suite (MSC) 252
+1x Mana Drain (OTP) 11
+1x Metalwork Colossus (MSC) 204
+1x Mikokoro, Center of the Sea (DMC) 217
+1x Morphic Pool (CLB) 357
+3x Mountain (FRA) 391
+1x Myr Battlesphere (TDC) 322
+1x Nautiloid Ship (CLB) 328
+1x Noxious Gearhulk (TDC) 191
+1x Oildeep Gearhulk (DFT) 215
+1x Oppression (WOT) 32
+1x Otawara, Soaring City (NEO) 271
+1x Padeem, Consul of Innovation (J25) 62
+1x Painful Quandary (FDN) 179
+1x Palantir of Orthanc (HOC) 45
+1x Polluted Delta (MH3) 224
+1x Prismatic Vista (SPG) 38
+1x Rakdos Charm (EOC) 125
+1x Raucous Theater (MKM) 266
+1x Ravenous Robots (TMT) 106
+1x Reaver Titan (40K) 163
+1x Relic of Sauron (HOC) 46
+1x Riverpyre Verge (DFT) 260
+1x Ruin Grinder (FIC) 297
+1x Scalding Tarn (SPG) 112
+1x Scrap Trawler (MOC) 373
+1x Scrawling Crawler (FDN) 132
+1x Shadow the Hedgehog (SLD) 2086
+1x Simulacrum Synthesizer (MAR) 61
+1x Skeleton Shard (MRD) 242
+1x Sol Ring (FRC) 21
+1x Starscream, Power Hungry (BOT) 5
+1x Steam Vents (TRK) 298
+1x Super State (SLD) 2081
+3x Swamp (FRA) 388
+1x Swiftfoot Boots (MBC) 77
+1x Tainted Isle (DSC) 303
+1x Tainted Peak (DSC) 304
+1x Talisman of Creativity (FRC) 61
+1x Talisman of Dominance (FRC) 62
+1x Talisman of Indulgence (FRC) 63
+1x Tergrid, God of Fright (KHM) 112
+1x Terminate (MSC) 189
+1x The Reaver Cleaver (HOC) 94
+1x The Regalia (FIN) 267
+1x Their Name is Death (40K) 62
+1x Thopter Spy Network (DRC) 83
+1x Thought Monitor (EOC) 79
+1x Thundering Falls (MKM) 269
+1x Tinybones, Bauble Burglar (FDN) 72
+1x Training Center (CMM) 434
+1x Ultron, Artificial Malevolence (MSH) 252
+1x Undercity Sewers (MKM) 270
+1x Uthros, Titanic Godcore (EOE) 260
+1x Waste Not (M15) 122
+1x Watery Grave (TRK) 306
+1x Y'shtola Rhul (FIN) 86
+
+

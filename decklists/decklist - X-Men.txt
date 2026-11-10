@@ -1,0 +1,99 @@
+About
+Name The First Krakoan Age [Havi, the All-Father]
+
+Commander
+1x Havi, the All-Father (ACR) 56
+
+Deck
+1x Abstergo Entertainment (ACR) 79
+1x Alexios, Deimos of Kosmos (ACR) 33
+1x Altar of Dementia (MH1) 218
+1x Annie Joins Up (OTJ) 191
+1x Ao, the Dawn Sky (SOC) 135
+1x Arbaaz Mir (ACR) 46
+1x Arcane Signet (MBC) 254
+1x Arid Mesa (MH2) 244
+1x Ashnod's Altar (CMM) 368
+1x Atsushi, the Blazing Sky (SOC) 236
+1x Bayek of Siwa (ACR) 50
+1x Birthing Pod (NPH) 104
+1x Birthing Ritual (MH3) 146
+1x Boromir, Warden of the Tower (LTR) 4
+1x Boseiju, Who Endures (NEO) 266
+1x Bountiful Promenade (MSC) 226
+1x Brass's Tunnel-Grinder (LCI) 135
+1x Cadric, Soul Kindler (DMC) 10
+1x Caduceus, Staff of Hermes (ACR) 2
+1x Canopy Vista (FIC) 378
+1x Chaos Warp (MBC) 72
+1x Cinder Glade (EOC) 154
+1x Command Tower (EOC) 59
+1x Demolition Field (FIC) 385
+1x Djeru and Hazoret (MOM) 221
+1x Duke Ulder Ravengard (CLB) 272
+1x Eiganjo, Seat of the Empire (NEO) 268
+1x Eomer, Marshal of Rohan (LTR) 120
+1x Eowyn, Fearless Knight (LTR) 201
+1x Etali, Primal Conqueror (MOM) 137
+1x Excalibur, Sword of Eden (ACR) 72
+1x Exotic Orchard (EOC) 159
+1x Feldon of the Third Path (MOC) 277
+1x Flare of Fortitude (MH3) 26
+1x Flowering of the White Tree (LTR) 15
+2x Forest (EOE) 266
+1x Gandalf the White (LTR) 19
+1x Garruk's Uprising (ECC) 109
+1x Gisela, Blade of Goldnight (MKC) 211
+1x Greater Good (MSC) 174
+1x Hajar, Loyal Bodyguard (BRO) 211
+1x Heroes' Podium (DMC) 185
+1x Jaxis, the Troublemaker (SNC) 112
+1x Jetmir's Garden (SNC) 250
+1x Joshua, Phoenix's Dominant (FIN) 229
+1x Kolvori, God of Kinship (KHM) 181
+1x Kutzil, Malamet Exemplar (LCI) 232
+1x Life from the Loam (TDC) 96
+1x Lightning Greaves (FIC) 349
+1x Loran of the Third Path (FCA) 24
+1x Minas Tirith (LTR) 256
+1x Monumental Henge (MH3) 222
+4x Mountain (FRA) 391
+1x Mox Amber (DAR) 224
+1x Ojer Kaslem, Deepest Growth (LCI) 204
+1x Palantir of Orthanc (LTR) 247
+1x Path to Exile (FIC) 248
+6x Plains (EOE) 262
+1x Plaza of Heroes (DMU) 252
+1x Purphoros, God of the Forge (FCA) 14
+1x Radiant Summit (FRC) 80
+1x Ragavan, Nimble Pilferer (FCA) 43
+1x Reki, the History of Kamigawa (MYSTOR) 76
+1x Relic of Legends (FIC) 354
+1x Ruby, Daring Tracker (FDN) 245
+1x Sacred Foundry (EOE) 256
+1x Saffi Eriksdotter (TSR) 260
+1x Samwise Gamgee (LTR) 222
+1x Serah Farron (FIN) 240
+1x Shifting Woodland (MH3) 228
+1x Shinka, the Bloodsoaked Keep (CHK) 282
+1x Six (MH3) 169
+1x Smuggler's Surprise (OTJ) 180
+1x Sol Ring (EOC) 57
+1x Spectator Seating (MSC) 268
+1x Starfall Invocation (BLB) 34
+1x Stomping Ground (EOE) 258
+1x Surtr, Fiery Jotun (ACR) 293
+1x Swords to Plowshares (EOC) 45
+1x Temple Garden (GRN) 258
+1x Teshar, Ancestor's Apostle (SOC) 180
+1x The Great Henge (CMM) 294
+1x The Jolly Balloon Man (DSK) 219
+1x The Seriema (EOE) 35
+1x Tibalt's Trickery (KHM) 153
+1x Urza's Ruinous Blast (CMM) 842
+1x Venat, Heart of Hydaelyn (FIN) 39
+1x Wayfarer's Bauble (FIC) 372
+1x Windswept Heath (MH3) 235
+1x Wooded Foothills (MH3) 236
+
+

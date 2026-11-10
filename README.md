@@ -1,1 +1,207 @@
-# beeline-deck-builder
+# BeeLine Deck Builder
+
+BeeLine (formerly Print-a-Bee) builds [MPCFill](https://mpcfill.com) print-order XML for Beespair's MTG proxy decks. It is a static site: the catalogue, the art picker, and the XML all run in the browser. There is no Python server and no backend.
+
+Standard prints ship with the site. Deluxe and Partial Foil do not. A buyer unlocks those by pasting the Google Drive folder link from their Ko-fi order. The browser lists that folder with the Drive API and stores the result in `localStorage`. Paid file ids and folder ids are never written into this repo.
+
+The XML matches the Art Picker's `build_xml` (`order`, `details`, `fronts`, `backs`, `cardback`) and adds a `printabee` block other tools ignore. The block keeps that name so Leyline's print script keeps reading it:
+
+```xml
+<printabee>
+    <deck>Silksong</deck>
+    <printType>standard</printType>
+    <treatment>Standard Holo Rainbow</treatment>
+</printabee>
+```
+
+`<treatment>` is left out when none is picked. A partial-foil order only contains partial-foil files, and its fronts are the converted PDF ids.
+
+## Run it
+
+```bash
+npm install
+npm test
+npm run dev
+```
+
+Open [http://127.0.0.1:4178](http://127.0.0.1:4178).
+
+A production folder, the thing you would later put on GitHub Pages, is:
+
+```bash
+npm run build
+npm run preview
+```
+
+`dist/` is static. Asset paths are relative (`base: "./"`), so the same folder works at a domain root, a project-site subpath such as `https://<owner>.github.io/beeline-deck-builder/`, and `http://127.0.0.1:4178`. Nothing in this repo deploys by itself; see [GitHub Pages](#github-pages).
+
+## What's in the box
+
+The home page is a **Make a Deck** banner with two sections:
+
+- **Foil / Non-Foil** lists decks that have standard files (the free Standard editions that shipped, plus a Deluxe edition after it is unlocked). Deluxe is still a normal print, so it stays in this section.
+- **Partial Foil** lists only partial-foil files. It is empty until someone unlocks one.
+
+Choosing a deck loads it as designed (one copy of each main-deck card on the art from Full Deck). From there you can:
+
+- swap any card for an alternate art
+- add tokens and other extras, with a quantity on every card
+- pick the card back
+- **All cards**, which sets every card in that deck and section to 1 copy
+- **Random**, which picks a main-deck or alternate art for each main-deck card. Lock a card and Random leaves it alone
+- save the deck, keep several, and export each as its own XML
+- export or import the saved-deck list as JSON
+
+Treatments live in `src/data/treatments.ts`. Foil / Non-Foil offers the White Holo and Standard Holo finishes. Partial Foil offers only the Standard Holo finishes. Add a row to offer another one. Choosing a treatment sets `<foil>true</foil>`. Stock is `(S30) Standard Smooth`, the same default as the Art Picker.
+
+## Deck lists
+
+A deck list is a text file named `decklist.txt` or `decklist - <label>.txt` that sits directly in an edition folder (not in a subfolder). The dropdown shows the text after the dash; a bare `decklist.txt` uses the `Name` line under `About`, or "Deck list". When a folder has more than one list, the builder shows a **Deck list** dropdown. A new deck opens on "Complete Collection" when there is one, otherwise the first list. Each deck card on the homepage shows that opening total (the copies a new deck starts with), not the number of files in the main folder.
+
+Lines can be Tapped Out style (`1x Name (SET) 123`, with `*F*` or `#tags` ignored) or plain (`1 Name`). `About`, `Commander`, `Deck`, and `Sideboard` headers are understood; `Maybeboard` is ignored. Commander lines count toward the main deck. Sideboard lines are kept apart and shown in a note; they are never added to the main counts (Vader's list has a five-card sideboard). Repeated lines for one card add up.
+
+How a list sets counts:
+
+- A listed card gets the list's quantity. When several files share the card's name (several arts), the copies are spread over them so each art keeps its own count.
+- A main-folder card the list leaves out opens at 0. You can still add it.
+- Basic lands follow the list. Only the basics the list asks for are kept: the listed copies are spread over that basic's arts, one each in turn, so a leftover art can open at 0, and a basic the list leaves out opens at 0. Without a list, basic lands never open at 0.
+- Tokens in the main folder keep their folder count and stay in the main deck, even past 100.
+- `Flip N`, `Front N`, and `Mask N` have no card title, so they keep their folder count.
+- Double-faced prints are named `N_1_Front name` and `N_2_Back name` (a space after the face number also works, as in `1_2 Lost Vale`). `N_1` is the front and `N_2` the back, even when the two names differ, so the back is printed with its front and never counted as its own card. A back with no front is listed as an extra at 0. A deck saved before a pair was joined (for example a v0.1.11 save with The Ring Tempts You as its own token, or TMNT's old Lost Vale card) puts the back's copies on the paired card. If the deck already has that card, the back row is not counted again.
+- A list line whose file name is spelled a little differently (one or two letters, a shortened name, the same first two words) is matched only when exactly one leftover file fits. Every list line with no file is listed in a note. Nothing is invented.
+
+Shipped Standard lists live in `decklists/` and are copied into `public/decks/*.json` by `npx tsx scripts/attach-decklists.ts` (run it after `npm run catalogue`; `--check` verifies the JSON matches). Unlocked Deluxe and Partial Foil editions read the list files in their own folders through the Drive API. If a list there can't be read, the shipped copy with the same file name is used, and if there is none the deck opens on folder counts with a note.
+
+Coverage of the shipped lists:
+
+| Deck | Lists |
+| --- | --- |
+| Dr. Eggman, KPDH, NieR, Persona 5, Silksong, Spy x Family, TMNT, Vader, X-Men | one each |
+| Floating World | six (25, Complete Collection, Fish of '97, Fish of Heat, Fish of Legends, Fish of Lies); the Standard and Deluxe folders only |
+| Horror Movie Poster Secret Lair | none: every image opens at its default count |
+
+TMNT and X-Men have no Partial Foil folder. There is no Dandan deck; Floating World lists that name Dandan, Red Herring, Filigree Familiar, or Slash Panther show those lines as missing because the folder has no file for them.
+
+### Spy x Family Color and Black and White
+
+Spy x Family keeps 35 always-color cards in Full Deck and 53 cards (plus basic lands) twice under `IMPORTANT OPTIONS/Color` and `IMPORTANT OPTIONS/Black and White` (`Black & White` in Deluxe). Those become one card each with a Color file and a Black and White file, and the builder shows a **Print set** switch. Switching moves the 53 option cards and the basics to that set and leaves the 35 alone. All cards and Random stay in the chosen set. Partial Foil never shows the switch.
+
+## Silksong standard
+
+The free files are generated from the public Drive folder `REDACTED_PAID_ID`, which is a list of decks. Silksong's folder has three editions. The build only requests **1_ Silksong Standard Edition**. It records the Deluxe and Partial Foil sibling names and does not open them.
+
+Inside Standard:
+
+- `Full Deck` image files are the main deck. `1_1_` / `1_2_` prefixes are the two faces of one card, so Cecil and the other double-faced cards are a single slot with a back.
+- `Full Deck/Card Back` is the card backs.
+- `Full Deck/Tokens` is the token list, not part of the 100.
+- `Extras` folders are alternate arts when the name matches a main-deck card (`Sol Ring 2`, `Card Name (Variant) 2`, `Plains 3 1` under `Plains 3 (Crystal Peak)`). A folder of several different cards, or a loose file that isn't in the deck, becomes an extra.
+
+The generated file is `public/decks/silksong.json`: 100 main cards, 10 tokens, 10 extras, 4 backs. The same public folder also ships Standard for X-Men, Vader, KPDH, Dr. Eggman, Nier, Persona 5, TMNT, Spy x Family, Floating World, and Horror Movie Poster Secret Lair. Thumbnails use `https://drive.google.com/thumbnail?id=<ID>&sz=w400` with no referrer, then `https://lh3.googleusercontent.com/d/<ID>=w400`.
+
+### Names that needed a judgement
+
+These are also in `editions[0].notes`.
+
+The script could not treat this folder as alternates of a main-deck card, so the three cards are extras:
+
+- **True Duals**: Scrubland (The Cradle), Tundra (Mount Fay), Underground Sea (Greenpath). The main deck has the shock lands with those themes, not these duals.
+
+These were placed, and the note says the names don't match exactly:
+
+- `Lochtwain Lancer (Last Judge)` is a one-letter typo for Locthwain. Kept as alternates.
+- `Suppressor Skyguard (The Hive Knight)` sits in the Nyleth and Seth folder. Kept as an alternate.
+- `Unsettled Mariner (Seth)` sits in the Crust King Khann folder. Kept as alternates.
+- Folder titles that are longer or shorter than the deck file (`Island (Fog Canyon)`, `Plains 3 (Crystal Peak)`, `Teferi's Protection (Bench's Repose)`, `Watery Grave`, `Swamp (Shellwood)`) were matched and tagged `info`.
+
+Loose files in Extras that are not in the main deck are extras, including Farewell and a few cards whose file names are spelled the way the folder spells them (`Muderous Rider`, `Zurgo,Helmsmasher`).
+
+## Add a deck
+
+Decks are data. The app reads `public/decks/index.json` and whatever JSON files it points at.
+
+1. Put the deck in a public Drive folder whose name contains the deck's name, with a child folder whose name contains "Standard" and "Edition" (and not Deluxe or Partial Foil). Use the same Full Deck / Extras / Tokens / Card Back layout.
+2. Rebuild:
+
+```bash
+npm run catalogue -- --root REDACTED_PAID_ID --deck vader
+```
+
+`--deck` is matched against folder names. The default root is the public Decks folder above. Output defaults to `public/decks/<deck>.json` and the script adds the deck to `public/decks/index.json`.
+
+The crawl uses `https://drive.google.com/embeddedfolderview?id=<ID>`, which lists names and ids with no sign-in. It waits a short beat between folders. It will not request a sibling whose name is a Deluxe or Partial Foil edition.
+
+## Paid unlock and the API key
+
+`public/config.js` is loaded as a plain script so it can be edited after a build:
+
+```js
+window.PRINTABEE_CONFIG = {
+  googleApiKey: "YOUR_GOOGLE_API_KEY",
+};
+```
+
+Until that placeholder is replaced, unlock explains that the key is missing and does not call Drive.
+
+To create the key:
+
+1. In Google Cloud, enable the **Google Drive API**.
+2. Create an API key. Restrict it to that API.
+3. Restrict the websites that can use it (HTTP referrers). Include the GitHub Pages origin, and `http://127.0.0.1:4178/*` if you want to try unlock locally.
+4. Paste the key into `public/config.js`.
+
+The key is visible to anyone who can load the page. The referrer restriction is what stops other sites from using it. Do not use a key that can do anything besides read Drive.
+
+The paid folder has to be visible to an API key, which means shared so anyone with the link can view it. The app calls Drive API v3 `files.list` with `'<id>' in parents`, follows shortcuts, and walks subfolders. If it finds `New Drive Link.txt`, it reads the file and continues from the newer folder link inside (up to three hops).
+
+Unlocked catalogues stay in `localStorage` under `printabee.unlocked.v1`. Saved decks are `printabee.savedDecks.v1`. Export that JSON before upgrading BeeLine. The storage keys keep their old `printabee.` names so saved decks carry over. An upgrade can change how a saved Deluxe or Partial Foil deck finds its folder, and the export is the copy you can put back. Forgetting unlocked folders does not delete saved decks, but a saved Deluxe or Partial Foil deck cannot export until that folder is unlocked again on that browser. A saved deck remembers the first 12 characters of the SHA-256 of its folder, not the folder id. A hash from v0.1.5 still finds that folder and is replaced with the SHA-256 form. If that folder is not unlocked, the deck stays put and asks you to unlock it instead of opening a different pack. The unlocked list stores the deck catalogue and that hash. It does not store the Drive link. Paste the link again when you want to refresh a folder. On the first load after an upgrade, an older unlock record that still contains a folder id or a link is rewritten without them.
+
+A pack is partial foil only when an edition folder's own name says partial foil (`Partial-Foil`, `partial_foil`, `PartialFoil`, and `Partial Foil Edition (Standard Holo)` all count). A pasted folder title does not decide the print type. `Nonstandard art` is not a Standard edition. Inside a partial foil edition, Deluxe and Standard folders are not partial-foil print sources. A nested Deluxe folder is unlocked as its own Foil / Non-Foil deck. Its id comes from the folder name, and an id that is already taken is skipped, so “Deluxe Edition 2” does not collide with a second “Deluxe Edition”. The edition label includes that folder name. If a pasted Deluxe pack and a nested Deluxe folder still share an id, both stay in the merged deck with different ids. A deck saved in v0.1.0–v0.1.2 with the edition id `deluxe` opens the only Deluxe edition when there is one. When there is more than one, the deck stays in the list with a note asking which edition to use. A PDF folder is used when its name says partial foil. If there is exactly one PDF folder and it sits directly under the edition, it is used and the deck shows a note naming that folder. A nested unnamed PDF folder is not used, and the largest folder is never chosen. `DeLuxe` and `deLuxe` count as Deluxe. Partial foil decks can turn on "Print flip backs as fronts". That also prints the back face of each double-faced main card, flip card, and token as its own card when the back is a partial-foil PDF. A back without that PDF stays a normal back. PNG previews are thumbnails only, and export refuses a partial foil XML if any front is not one of those PDFs. `npm test` fails if a Drive file id in the repo or in `dist/` is not listed in `src/lib/drive-allow-list.txt`, or if its SHA-256 is in `src/lib/drive-deny-list.txt`. `Front` / `Back` files named `Flip N` and `Token N` don't carry card titles, so they stay under those names and the deck shows a note. Folders named template or font, and `Readme.txt`, are skipped.
+
+## GitHub Pages
+
+Suggested repository name: `beeline-deck-builder`. The site would then live at `https://<owner>.github.io/beeline-deck-builder/`.
+
+`.github/workflows/pages.yml` builds with `npm ci` and `npm run build` (tests run first) and deploys `dist/` with the official Pages actions on every push to `main`, or by hand from the Actions tab. It does nothing until someone:
+
+1. creates the repository and pushes this tree,
+2. sets **Settings → Pages → Source** to **GitHub Actions**,
+3. replaces the placeholder in `public/config.js` with a browser key restricted to the Drive API and to the referrers `https://<owner>.github.io/beeline-deck-builder/*` and `http://127.0.0.1:4178/*` (local dev and preview).
+
+The key stays out of the bundle, so it can also be edited in the deployed `config.js`. Never commit a paid Drive file or folder id; `npm test` checks every id in the repo and in `dist/` against the allow list.
+
+## Tests
+
+```bash
+npm test
+```
+
+Vitest covers:
+
+- the XML builder (brackets, slot grouping, escaping, the `printabee` block, omitting treatment, rejecting a standard file in a partial-foil id set)
+- catalogue grouping (Plains 1 vs Plains 3, alternates, double-faced cards, tokens, True Duals, the Locthwain typo)
+- the shipped crawl refusing to request Deluxe or Partial Foil ids
+- the Drive client against a mocked `fetch` (pagination, `New Drive Link.txt`, a 403, reading deck list files)
+- deck lists: file names and labels, both line formats, the shipped lists, list counts and every never-zero rule, folder fallbacks, Spy x Family Color and Black and White
+- the banner copy, the shop link, the stacking rules, and the bee's flight path
+
+`npx tsx scripts/mutate.ts` breaks the code on purpose, one rule at a time, and fails if any test still passes.
+
+## Layout
+
+```
+public/config.js          API key, not bundled
+public/decks/index.json   decks the site ships
+public/decks/<deck>.json
+scripts/build-catalogue.ts
+src/data/treatments.ts
+src/lib/group.ts          folder tree → cards
+src/lib/xml.ts            MPCFill XML
+src/lib/drive.ts          paid folder listing
+src/lib/selection.ts      quantities, All cards, Random, print set
+src/lib/decklist.ts       deck list parsing and counts
+src/lib/flight.ts         banner bee path
+decklists/                shipped deck list text files
+scripts/attach-decklists.ts
+.github/workflows/pages.yml
+```

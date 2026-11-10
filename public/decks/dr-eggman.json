@@ -1,0 +1,3206 @@
+{
+  "id": "dr-eggman",
+  "name": "Dr. Eggman",
+  "creator": "Beespair",
+  "editions": [
+    {
+      "id": "standard",
+      "name": "Standard",
+      "printType": "standard",
+      "cards": [
+        {
+          "id": "main-1-blitzwing-cruel-tormentor-e-105-zeta",
+          "name": "Blitzwing, Cruel Tormentor (E-105 Zeta) // Blitzwing, Adaptive Assailant (E-105 Zeta Mark II)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-1-blitzwing-cruel-tormentor-e-105-zeta:front",
+              "name": "Blitzwing, Cruel Tormentor (E-105 Zeta)",
+              "defaultArt": {
+                "id": "1ztAoAgcVED-1ijhAOtKaBY7eUiFSROf1",
+                "name": "1_1_Blitzwing, Cruel Tormentor (E-105 Zeta).jpg",
+                "thumbId": "1ztAoAgcVED-1ijhAOtKaBY7eUiFSROf1",
+                "label": "Blitzwing, Cruel Tormentor (E-105 Zeta)"
+              },
+              "alternates": []
+            },
+            {
+              "id": "main-1-blitzwing-cruel-tormentor-e-105-zeta:back",
+              "name": "Blitzwing, Adaptive Assailant (E-105 Zeta Mark II)",
+              "defaultArt": {
+                "id": "1cDCUNkqErWMx5tHimBpL2eH_pULHwqTJ",
+                "name": "1_2_Blitzwing, Adaptive Assailant (E-105 Zeta Mark II).jpg",
+                "thumbId": "1cDCUNkqErWMx5tHimBpL2eH_pULHwqTJ",
+                "label": "Blitzwing, Adaptive Assailant (E-105 Zeta Mark II)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-2-starscream-power-hungry-e-101-beta",
+          "name": "Starscream, Power Hungry (E-101 Beta) // Starscream, Seeker Leader (E-101 Beta Mark II)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-2-starscream-power-hungry-e-101-beta:front",
+              "name": "Starscream, Power Hungry (E-101 Beta)",
+              "defaultArt": {
+                "id": "1k8pFmFzOGW9LWskOFYwhD6Xq8I7vwRKL",
+                "name": "2_1_Starscream, Power Hungry (E-101 Beta).jpg",
+                "thumbId": "1k8pFmFzOGW9LWskOFYwhD6Xq8I7vwRKL",
+                "label": "Starscream, Power Hungry (E-101 Beta)"
+              },
+              "alternates": []
+            },
+            {
+              "id": "main-2-starscream-power-hungry-e-101-beta:back",
+              "name": "Starscream, Seeker Leader (E-101 Beta Mark II)",
+              "defaultArt": {
+                "id": "10qic45mHewA24vAdbQzfI3Q6RvpIo-9n",
+                "name": "2_2_Starscream, Seeker Leader (E-101 Beta Mark II).jpg",
+                "thumbId": "10qic45mHewA24vAdbQzfI3Q6RvpIo-9n",
+                "label": "Starscream, Seeker Leader (E-101 Beta Mark II)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-3-tergrid-god-of-fright-infinite",
+          "name": "Tergrid, God of Fright (Infinite) // Tergrid's Lantern (The Phantom Ruby)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-3-tergrid-god-of-fright-infinite:front",
+              "name": "Tergrid, God of Fright (Infinite)",
+              "defaultArt": {
+                "id": "1mZHPURxa3ynLN_YL6hd4EV246a3JoZEA",
+                "name": "3_1_Tergrid, God of Fright (Infinite).jpg",
+                "thumbId": "1mZHPURxa3ynLN_YL6hd4EV246a3JoZEA",
+                "label": "Tergrid, God of Fright (Infinite)"
+              },
+              "alternates": []
+            },
+            {
+              "id": "main-3-tergrid-god-of-fright-infinite:back",
+              "name": "Tergrid's Lantern (The Phantom Ruby)",
+              "defaultArt": {
+                "id": "1VkIME5ndVpCHiAMyuWWFy6LeE5nvOj1r",
+                "name": "3_2_Tergrid's Lantern (The Phantom Ruby).jpg",
+                "thumbId": "1VkIME5ndVpCHiAMyuWWFy6LeE5nvOj1r",
+                "label": "Tergrid's Lantern (The Phantom Ruby)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-academy-ruins-hidden-base",
+          "name": "Academy Ruins (Hidden Base)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-academy-ruins-hidden-base:front",
+              "name": "Academy Ruins (Hidden Base)",
+              "defaultArt": {
+                "id": "1wawZT03nEYth8uKJIA_ufMGQNnNO9E0x",
+                "name": "Academy Ruins (Hidden Base).jpg",
+                "thumbId": "1wawZT03nEYth8uKJIA_ufMGQNnNO9E0x",
+                "label": "Academy Ruins (Hidden Base)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-anvil-of-bogardan-burned-memories",
+          "name": "Anvil of Bogardan (Burned Memories)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-anvil-of-bogardan-burned-memories:front",
+              "name": "Anvil of Bogardan (Burned Memories)",
+              "defaultArt": {
+                "id": "155lwbTqRlP8kZdvRl8_8gFe1prCZpTJc",
+                "name": "Anvil of Bogardan (Burned Memories).jpg",
+                "thumbId": "155lwbTqRlP8kZdvRl8_8gFe1prCZpTJc",
+                "label": "Anvil of Bogardan (Burned Memories)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-arcane-signet-warp-topaz",
+          "name": "Arcane Signet (The Warp Topaz)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-arcane-signet-warp-topaz:front",
+              "name": "Arcane Signet (The Warp Topaz)",
+              "defaultArt": {
+                "id": "1bMNspro2z-4MRHjNcAzihTHQVwEswqCl",
+                "name": "Arcane Signet (The Warp Topaz).jpg",
+                "thumbId": "1bMNspro2z-4MRHjNcAzihTHQVwEswqCl",
+                "label": "Arcane Signet (The Warp Topaz)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-archway-of-innovation-roulette-road",
+          "name": "Archway of Innovation (Roulette Road)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-archway-of-innovation-roulette-road:front",
+              "name": "Archway of Innovation (Roulette Road)",
+              "defaultArt": {
+                "id": "1aRaENpXHqZWX2OdNQ38y_xUFjJ-UnlES",
+                "name": "Archway of Innovation (Roulette Road).jpg",
+                "thumbId": "1aRaENpXHqZWX2OdNQ38y_xUFjJ-UnlES",
+                "label": "Archway of Innovation (Roulette Road)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-basic-island-1",
+          "name": "Basic Island 1",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-basic-island-1:front",
+              "name": "Basic Island 1",
+              "defaultArt": {
+                "id": "1wHpEu5rlkDJLcPLLOy_C4EjQN8or8RDY",
+                "name": "Basic Island 1.jpg",
+                "thumbId": "1wHpEu5rlkDJLcPLLOy_C4EjQN8or8RDY",
+                "label": "Basic Island 1"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-basic-island-2",
+          "name": "Basic Island 2",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-basic-island-2:front",
+              "name": "Basic Island 2",
+              "defaultArt": {
+                "id": "1Tl69JDHb7oA3BvtS3foGdmVNn14PhCK7",
+                "name": "Basic Island 2.jpg",
+                "thumbId": "1Tl69JDHb7oA3BvtS3foGdmVNn14PhCK7",
+                "label": "Basic Island 2"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-basic-island-3",
+          "name": "Basic Island 3",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-basic-island-3:front",
+              "name": "Basic Island 3",
+              "defaultArt": {
+                "id": "16174nCpBznHMcSFu_ow-aeh_NiTPGika",
+                "name": "Basic Island 3.jpg",
+                "thumbId": "16174nCpBznHMcSFu_ow-aeh_NiTPGika",
+                "label": "Basic Island 3"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-basic-mountain-1",
+          "name": "Basic Mountain 1",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-basic-mountain-1:front",
+              "name": "Basic Mountain 1",
+              "defaultArt": {
+                "id": "1CGEbd4bYEc6iWRWtDtfMwqz4Pz0_iO5d",
+                "name": "Basic Mountain 1.jpg",
+                "thumbId": "1CGEbd4bYEc6iWRWtDtfMwqz4Pz0_iO5d",
+                "label": "Basic Mountain 1"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-basic-mountain-2",
+          "name": "Basic Mountain 2",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-basic-mountain-2:front",
+              "name": "Basic Mountain 2",
+              "defaultArt": {
+                "id": "1SQ85ahHlFH8a2lw0bMWTft4ZBOLv2-hK",
+                "name": "Basic Mountain 2.jpg",
+                "thumbId": "1SQ85ahHlFH8a2lw0bMWTft4ZBOLv2-hK",
+                "label": "Basic Mountain 2"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-basic-mountain-3",
+          "name": "Basic Mountain 3",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-basic-mountain-3:front",
+              "name": "Basic Mountain 3",
+              "defaultArt": {
+                "id": "1B7vBL6M9J_APIy-bTG5nJNxOlhELySM3",
+                "name": "Basic Mountain 3.jpg",
+                "thumbId": "1B7vBL6M9J_APIy-bTG5nJNxOlhELySM3",
+                "label": "Basic Mountain 3"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-basic-swamp-1",
+          "name": "Basic Swamp 1",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-basic-swamp-1:front",
+              "name": "Basic Swamp 1",
+              "defaultArt": {
+                "id": "1TMuLd1f9o_R9gidEjZqVYkktgrrIckwN",
+                "name": "Basic Swamp 1.jpg",
+                "thumbId": "1TMuLd1f9o_R9gidEjZqVYkktgrrIckwN",
+                "label": "Basic Swamp 1"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-basic-swamp-2",
+          "name": "Basic Swamp 2",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-basic-swamp-2:front",
+              "name": "Basic Swamp 2",
+              "defaultArt": {
+                "id": "1vnty3-jGA9VxcmF195j0w2D2of2cOwFS",
+                "name": "Basic Swamp 2.jpg",
+                "thumbId": "1vnty3-jGA9VxcmF195j0w2D2of2cOwFS",
+                "label": "Basic Swamp 2"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-basic-swamp-3",
+          "name": "Basic Swamp 3",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-basic-swamp-3:front",
+              "name": "Basic Swamp 3",
+              "defaultArt": {
+                "id": "1yt4csFOhpqn5pnT_b2uZ2vY4vnZeiUfl",
+                "name": "Basic Swamp 3.jpg",
+                "thumbId": "1yt4csFOhpqn5pnT_b2uZ2vY4vnZeiUfl",
+                "label": "Basic Swamp 3"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-blazemire-verge-rail-canyon",
+          "name": "Blazemire Verge (Rail Canyon)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-blazemire-verge-rail-canyon:front",
+              "name": "Blazemire Verge (Rail Canyon)",
+              "defaultArt": {
+                "id": "1jZg4OLpXN-t0l5rKMkvDgMbbxxy__qme",
+                "name": "Blazemire Verge (Rail Canyon).jpg",
+                "thumbId": "1jZg4OLpXN-t0l5rKMkvDgMbbxxy__qme",
+                "label": "Blazemire Verge (Rail Canyon)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-blood-crypt-sandopolis-zone",
+          "name": "Blood Crypt (Sandopolis Zone)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-blood-crypt-sandopolis-zone:front",
+              "name": "Blood Crypt (Sandopolis Zone)",
+              "defaultArt": {
+                "id": "1biMf4X4aw2-qDk7GXHlVU8LonaJwb_ha",
+                "name": "Blood Crypt (Sandopolis Zone).jpg",
+                "thumbId": "1biMf4X4aw2-qDk7GXHlVU8LonaJwb_ha",
+                "label": "Blood Crypt (Sandopolis Zone)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-bloodstained-mire-press-garden",
+          "name": "Bloodstained Mire (Press Garden)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-bloodstained-mire-press-garden:front",
+              "name": "Bloodstained Mire (Press Garden)",
+              "defaultArt": {
+                "id": "1YHz30RX82LWj-vZUbYOa-bQSIyPrN6Wp",
+                "name": "Bloodstained Mire (Press Garden).jpg",
+                "thumbId": "1YHz30RX82LWj-vZUbYOa-bQSIyPrN6Wp",
+                "label": "Bloodstained Mire (Press Garden)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-chaos-defiler-e-123-omega",
+          "name": "Chaos Defiler (E-123 Omega)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-chaos-defiler-e-123-omega:front",
+              "name": "Chaos Defiler (E-123 Omega)",
+              "defaultArt": {
+                "id": "1acCMXO7JU3egTS3gHSfoJwpes0idMJos",
+                "name": "Chaos Defiler (E-123 Omega).jpg",
+                "thumbId": "1acCMXO7JU3egTS3gHSfoJwpes0idMJos",
+                "label": "Chaos Defiler (E-123 Omega)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-chrome-dome-tails-doll",
+          "name": "Chrome Dome (Tails Doll)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-chrome-dome-tails-doll:front",
+              "name": "Chrome Dome (Tails Doll)",
+              "defaultArt": {
+                "id": "1mr2b8fHHy65dcAA5fwMzYHft7T6I2ia1",
+                "name": "Chrome Dome (Tails Doll).jpg",
+                "thumbId": "1mr2b8fHHy65dcAA5fwMzYHft7T6I2ia1",
+                "label": "Chrome Dome (Tails Doll)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-cityscape-leveler-interceptor",
+          "name": "Cityscape Leveler (The Interceptor)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-cityscape-leveler-interceptor:front",
+              "name": "Cityscape Leveler (The Interceptor)",
+              "defaultArt": {
+                "id": "1_kvPI0NcAqXd6BEA4NB5YAJqQ_PPPfc4",
+                "name": "Cityscape Leveler (The Interceptor).jpg",
+                "thumbId": "1_kvPI0NcAqXd6BEA4NB5YAJqQ_PPPfc4",
+                "label": "Cityscape Leveler (The Interceptor)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-coalstoke-gearhulk-supreme",
+          "name": "Coalstoke Gearhulk (Supreme)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-coalstoke-gearhulk-supreme:front",
+              "name": "Coalstoke Gearhulk (Supreme)",
+              "defaultArt": {
+                "id": "1y03OZDJzF0up2n4k5BJgcxYi9NsV1fFM",
+                "name": "Coalstoke Gearhulk (Supreme).jpg",
+                "thumbId": "1y03OZDJzF0up2n4k5BJgcxYi9NsV1fFM",
+                "label": "Coalstoke Gearhulk (Supreme)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-combustible-gearhulk-wyvern",
+          "name": "Combustible Gearhulk (Wyvern)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-combustible-gearhulk-wyvern:front",
+              "name": "Combustible Gearhulk (Wyvern)",
+              "defaultArt": {
+                "id": "1SfDPTHRD8tTxqeSyLlblasfj5kxF1G2x",
+                "name": "Combustible Gearhulk (Wyvern).jpg",
+                "thumbId": "1SfDPTHRD8tTxqeSyLlblasfj5kxF1G2x",
+                "label": "Combustible Gearhulk (Wyvern)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-command-tower-master-emerald-shrine",
+          "name": "Command Tower (Master Emerald Shrine)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-command-tower-master-emerald-shrine:front",
+              "name": "Command Tower (Master Emerald Shrine)",
+              "defaultArt": {
+                "id": "1Bw-Psuxb18F8JITzjJEbfbIMZGqlpJKT",
+                "name": "Command Tower (Master Emerald Shrine).jpg",
+                "thumbId": "1Bw-Psuxb18F8JITzjJEbfbIMZGqlpJKT",
+                "label": "Command Tower (Master Emerald Shrine)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-cryptothrall-mecha-knuckles",
+          "name": "Cryptothrall (Mecha Knuckles)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-cryptothrall-mecha-knuckles:front",
+              "name": "Cryptothrall (Mecha Knuckles)",
+              "defaultArt": {
+                "id": "1f8mVlZqucJFKQsXyxDDiP0JbnpV3dikv",
+                "name": "Cryptothrall (Mecha Knuckles).jpg",
+                "thumbId": "1f8mVlZqucJFKQsXyxDDiP0JbnpV3dikv",
+                "label": "Cryptothrall (Mecha Knuckles)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-cyberdrive-awakener-sage-eggman-heir",
+          "name": "Cyberdrive Awakener (Sage, Eggman's Heir)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-cyberdrive-awakener-sage-eggman-heir:front",
+              "name": "Cyberdrive Awakener (Sage, Eggman's Heir)",
+              "defaultArt": {
+                "id": "1pbjBNrJ0gyeq3Hgn_cjHdUzmN14H0CuN",
+                "name": "Cyberdrive Awakener (Sage, Eggman's Heir).jpg",
+                "thumbId": "1pbjBNrJ0gyeq3Hgn_cjHdUzmN14H0CuN",
+                "label": "Cyberdrive Awakener (Sage, Eggman's Heir)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-cybermen-squadron-hard-boiled-heavies",
+          "name": "Cybermen Squadron (Hard Boiled Heavies)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-cybermen-squadron-hard-boiled-heavies:front",
+              "name": "Cybermen Squadron (Hard Boiled Heavies)",
+              "defaultArt": {
+                "id": "1fUlY8ZjW_AQ84hzXaVoJ7HQRdfIQalvZ",
+                "name": "Cybermen Squadron (Hard Boiled Heavies).jpg",
+                "thumbId": "1fUlY8ZjW_AQ84hzXaVoJ7HQRdfIQalvZ",
+                "label": "Cybermen Squadron (Hard Boiled Heavies)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-deadly-rollick-phantom-edict",
+          "name": "Deadly Rollick (Phantom Edict)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-deadly-rollick-phantom-edict:front",
+              "name": "Deadly Rollick (Phantom Edict)",
+              "defaultArt": {
+                "id": "1LMAEUx08fVcSOKbikIW-8KOheeWXgqW6",
+                "name": "Deadly Rollick (Phantom Edict).jpg",
+                "thumbId": "1LMAEUx08fVcSOKbikIW-8KOheeWXgqW6",
+                "label": "Deadly Rollick (Phantom Edict)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-deflecting-swat-chaos-control",
+          "name": "Deflecting Swat (Chaos Control)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-deflecting-swat-chaos-control:front",
+              "name": "Deflecting Swat (Chaos Control)",
+              "defaultArt": {
+                "id": "1lScxAxn1DqHGlIRlTGWf03jJv5m1rDde",
+                "name": "Deflecting Swat (Chaos Control).jpg",
+                "thumbId": "1lScxAxn1DqHGlIRlTGWf03jJv5m1rDde",
+                "label": "Deflecting Swat (Chaos Control)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-demonic-junker-egg-emperor",
+          "name": "Demonic Junker (Egg Emperor)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-demonic-junker-egg-emperor:front",
+              "name": "Demonic Junker (Egg Emperor)",
+              "defaultArt": {
+                "id": "1iOmQYLFJBC7acjeE7GJQhEzrmLhyCZDr",
+                "name": "Demonic Junker (Egg Emperor).jpg",
+                "thumbId": "1iOmQYLFJBC7acjeE7GJQhEzrmLhyCZDr",
+                "label": "Demonic Junker (Egg Emperor)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-depthshaker-titan-mirage-express",
+          "name": "Depthshaker Titan (The Mirage Express)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-depthshaker-titan-mirage-express:front",
+              "name": "Depthshaker Titan (The Mirage Express)",
+              "defaultArt": {
+                "id": "1qL7OCO95pjz1vUvxLPNt3Upsb862WECp",
+                "name": "Depthshaker Titan (The Mirage Express).jpg",
+                "thumbId": "1qL7OCO95pjz1vUvxLPNt3Upsb862WECp",
+                "label": "Depthshaker Titan (The Mirage Express)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-desynchronization-null-space",
+          "name": "Desynchronization (Null Space)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-desynchronization-null-space:front",
+              "name": "Desynchronization (Null Space)",
+              "defaultArt": {
+                "id": "1xjJo2e-5IWTZZ482yk7gV3WHB5r1isgo",
+                "name": "Desynchronization (Null Space).jpg",
+                "thumbId": "1xjJo2e-5IWTZZ482yk7gV3WHB5r1isgo",
+                "label": "Desynchronization (Null Space)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-dr-eggman",
+          "name": "Dr. Eggman",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-dr-eggman:front",
+              "name": "Dr. Eggman",
+              "defaultArt": {
+                "id": "1-Fhdm9UL2BOlojIKC9IE7OeWTzis7KHJ",
+                "name": "Dr. Eggman.jpg",
+                "thumbId": "1-Fhdm9UL2BOlojIKC9IE7OeWTzis7KHJ",
+                "label": "Dr. Eggman"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-entropic-battlecruiser-death-egg",
+          "name": "Entropic Battlecruiser (Death Egg)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-entropic-battlecruiser-death-egg:front",
+              "name": "Entropic Battlecruiser (Death Egg)",
+              "defaultArt": {
+                "id": "1IaMOkviAao6IwwNF9Hk-Ln95RJ3r6wNS",
+                "name": "Entropic Battlecruiser (Death Egg).jpg",
+                "thumbId": "1IaMOkviAao6IwwNF9Hk-Ln95RJ3r6wNS",
+                "label": "Entropic Battlecruiser (Death Egg)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-exotic-orchard-chao-garden",
+          "name": "Exotic Orchard (Chao Garden)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-exotic-orchard-chao-garden:front",
+              "name": "Exotic Orchard (Chao Garden)",
+              "defaultArt": {
+                "id": "1TiZIYqI__XoKmOu5bzWXTacfol5HOWJp",
+                "name": "Exotic Orchard (Chao Garden).jpg",
+                "thumbId": "1TiZIYqI__XoKmOu5bzWXTacfol5HOWJp",
+                "label": "Exotic Orchard (Chao Garden)"
+              },
+              "alternates": [
+                {
+                  "id": "1nOSTwGm5kSC6QAcpOzNOtc0TW9Bjxwdf",
+                  "name": "Exotic Orchard (Chao Garden) 2.jpg",
+                  "thumbId": "1nOSTwGm5kSC6QAcpOzNOtc0TW9Bjxwdf",
+                  "label": "Exotic Orchard (Chao Garden) 2"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "main-fabricate",
+          "name": "Fabricate",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-fabricate:front",
+              "name": "Fabricate",
+              "defaultArt": {
+                "id": "1sC0PBnmA6StBM70eB-52OYOefxnuhHXs",
+                "name": "Fabricate.jpg",
+                "thumbId": "1sC0PBnmA6StBM70eB-52OYOefxnuhHXs",
+                "label": "Fabricate"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-fierce-guardianship-steel-dominance",
+          "name": "Fierce Guardianship (Steel Dominance)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-fierce-guardianship-steel-dominance:front",
+              "name": "Fierce Guardianship (Steel Dominance)",
+              "defaultArt": {
+                "id": "1C0rbRyo9VNUKepi2EEXeDpZaIPzktq0q",
+                "name": "Fierce Guardianship (Steel Dominance).jpg",
+                "thumbId": "1C0rbRyo9VNUKepi2EEXeDpZaIPzktq0q",
+                "label": "Fierce Guardianship (Steel Dominance)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-foundry-inspector-belle-tinkerer",
+          "name": "Foundry Inspector (Belle the Tinkerer)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-foundry-inspector-belle-tinkerer:front",
+              "name": "Foundry Inspector (Belle the Tinkerer)",
+              "defaultArt": {
+                "id": "1MoK1j3wmviQi_u0UVMIbRmVmHHnwNxPu",
+                "name": "Foundry Inspector (Belle the Tinkerer).jpg",
+                "thumbId": "1MoK1j3wmviQi_u0UVMIbRmVmHHnwNxPu",
+                "label": "Foundry Inspector (Belle the Tinkerer)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-geth-grimoire-eggnet",
+          "name": "Geth's Grimoire (The Eggnet)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-geth-grimoire-eggnet:front",
+              "name": "Geth's Grimoire (The Eggnet)",
+              "defaultArt": {
+                "id": "1Q-T_Kw-ab4y2dpVEgLRSVilu9WGKhZ1D",
+                "name": "Geth's Grimoire (The Eggnet).jpg",
+                "thumbId": "1Q-T_Kw-ab4y2dpVEgLRSVilu9WGKhZ1D",
+                "label": "Geth's Grimoire (The Eggnet)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-gloomlake-verge-white-space",
+          "name": "Gloomlake Verge (White Space)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-gloomlake-verge-white-space:front",
+              "name": "Gloomlake Verge (White Space)",
+              "defaultArt": {
+                "id": "1hcsHFcFASgOlvUUdMj-bK4vYgkAm6wtf",
+                "name": "Gloomlake Verge (White Space).jpg",
+                "thumbId": "1hcsHFcFASgOlvUUdMj-bK4vYgkAm6wtf",
+                "label": "Gloomlake Verge (White Space)"
+              },
+              "alternates": [
+                {
+                  "id": "1a_jxSd3CWi9qSp0aQGOFMXwQ-ql7SxBM",
+                  "name": "Gloomlake Verge (White Space) 2.jpg",
+                  "thumbId": "1a_jxSd3CWi9qSp0aQGOFMXwQ-ql7SxBM",
+                  "label": "Gloomlake Verge (White Space) 2"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "main-golbez-crystal-collector-zavok-king-of-chaos",
+          "name": "Golbez, Crystal Collector (Zavok, King of Chaos)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-golbez-crystal-collector-zavok-king-of-chaos:front",
+              "name": "Golbez, Crystal Collector (Zavok, King of Chaos)",
+              "defaultArt": {
+                "id": "1zlSG4dAyfokt7EUdHpaZRLxVies4x08s",
+                "name": "Golbez, Crystal Collector (Zavok, King of Chaos).jpg",
+                "thumbId": "1zlSG4dAyfokt7EUdHpaZRLxVies4x08s",
+                "label": "Golbez, Crystal Collector (Zavok, King of Chaos)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-imposter-mech-egg-dragoon",
+          "name": "Imposter Mech (Egg Dragoon)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-imposter-mech-egg-dragoon:front",
+              "name": "Imposter Mech (Egg Dragoon)",
+              "defaultArt": {
+                "id": "1KNTnxfl1agOvS78yspm3sw1mC_cYrJ5X",
+                "name": "Imposter Mech (Egg Dragoon).jpg",
+                "thumbId": "1KNTnxfl1agOvS78yspm3sw1mC_cYrJ5X",
+                "label": "Imposter Mech (Egg Dragoon)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-inventors-fair-spagonia-university",
+          "name": "Inventors' Fair (Spagonia University)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-inventors-fair-spagonia-university:front",
+              "name": "Inventors' Fair (Spagonia University)",
+              "defaultArt": {
+                "id": "14QY60r1k021NjGlkHa9GZm5wZjardth8",
+                "name": "Inventors' Fair (Spagonia University).jpg",
+                "thumbId": "14QY60r1k021NjGlkHa9GZm5wZjardth8",
+                "label": "Inventors' Fair (Spagonia University)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-knuckles-echidna",
+          "name": "Knuckles the Echidna",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-knuckles-echidna:front",
+              "name": "Knuckles the Echidna",
+              "defaultArt": {
+                "id": "1XYSJIuHeRvXOLh58Butph9ctKYKCXzTD",
+                "name": "Knuckles the Echidna.jpg",
+                "thumbId": "1XYSJIuHeRvXOLh58Butph9ctKYKCXzTD",
+                "label": "Knuckles the Echidna"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-krang-utrom-warlord-metal-sonic",
+          "name": "Krang, Utrom Warlord (Metal Sonic)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-krang-utrom-warlord-metal-sonic:front",
+              "name": "Krang, Utrom Warlord (Metal Sonic)",
+              "defaultArt": {
+                "id": "1_miKaFkz0bwmWQZxFuYqQsxZoiex4yQQ",
+                "name": "Krang, Utrom Warlord (Metal Sonic).jpg",
+                "thumbId": "1_miKaFkz0bwmWQZxFuYqQsxZoiex4yQQ",
+                "label": "Krang, Utrom Warlord (Metal Sonic)"
+              },
+              "alternates": [
+                {
+                  "id": "1aP-vRSgnhzlX6wjH2A0-vL-jMd4oyKDP",
+                  "name": "Krang, Utrom Warlord (Metal Sonic) 2.jpg",
+                  "thumbId": "1aP-vRSgnhzlX6wjH2A0-vL-jMd4oyKDP",
+                  "label": "Krang, Utrom Warlord (Metal Sonic) 2"
+                },
+                {
+                  "id": "17HbztnsHeeA01CwkUAsTHbYBtlljmYK6",
+                  "name": "Krang, Utrom Warlord (Metal Sonic) 3.jpg",
+                  "thumbId": "17HbztnsHeeA01CwkUAsTHbYBtlljmYK6",
+                  "label": "Krang, Utrom Warlord (Metal Sonic) 3"
+                },
+                {
+                  "id": "1NXLTPhVq1zF1ZE_7wRPch-K965JyVR95",
+                  "name": "Krang, Utrom Warlord (Metal Sonic) 4.jpg",
+                  "thumbId": "1NXLTPhVq1zF1ZE_7wRPch-K965JyVR95",
+                  "label": "Krang, Utrom Warlord (Metal Sonic) 4"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "main-lightning-greaves-power-sneakers",
+          "name": "Lightning Greaves (Power Sneakers)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-lightning-greaves-power-sneakers:front",
+              "name": "Lightning Greaves (Power Sneakers)",
+              "defaultArt": {
+                "id": "1eD2zPsqPUEMBwfEAYrDOxGukAOZTb0QO",
+                "name": "Lightning Greaves (Power Sneakers).jpg",
+                "thumbId": "1eD2zPsqPUEMBwfEAYrDOxGukAOZTb0QO",
+                "label": "Lightning Greaves (Power Sneakers)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-luxury-suite-golden-capital",
+          "name": "Luxury Suite (Golden Capital)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-luxury-suite-golden-capital:front",
+              "name": "Luxury Suite (Golden Capital)",
+              "defaultArt": {
+                "id": "1MgiVO67p_C7v668gsWfz3G_hrn7xMa7a",
+                "name": "Luxury Suite (Golden Capital).jpg",
+                "thumbId": "1MgiVO67p_C7v668gsWfz3G_hrn7xMa7a",
+                "label": "Luxury Suite (Golden Capital)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-mana-drain-data-manipulation",
+          "name": "Mana Drain (Data Manipulation)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-mana-drain-data-manipulation:front",
+              "name": "Mana Drain (Data Manipulation)",
+              "defaultArt": {
+                "id": "1TfyNVBXWJGd7Nybbwmw5nT7Y53ni-3OB",
+                "name": "Mana Drain (Data Manipulation).jpg",
+                "thumbId": "1TfyNVBXWJGd7Nybbwmw5nT7Y53ni-3OB",
+                "label": "Mana Drain (Data Manipulation)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-metalwork-colossus-death-egg-robot",
+          "name": "Metalwork Colossus (Death Egg Robot)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-metalwork-colossus-death-egg-robot:front",
+              "name": "Metalwork Colossus (Death Egg Robot)",
+              "defaultArt": {
+                "id": "1d9ckq8b07Bfz-k5UTzNaLj9I3RGP2soC",
+                "name": "Metalwork Colossus (Death Egg Robot).jpg",
+                "thumbId": "1d9ckq8b07Bfz-k5UTzNaLj9I3RGP2soC",
+                "label": "Metalwork Colossus (Death Egg Robot)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-mikokoro-center-of-sea-starfall-islands",
+          "name": "Mikokoro, Center of the Sea (Starfall Islands)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-mikokoro-center-of-sea-starfall-islands:front",
+              "name": "Mikokoro, Center of the Sea (Starfall Islands)",
+              "defaultArt": {
+                "id": "12NbzphZKJciT48gpwI2ib6lugRNzL0qU",
+                "name": "Mikokoro, Center of the Sea (Starfall Islands).jpg",
+                "thumbId": "12NbzphZKJciT48gpwI2ib6lugRNzL0qU",
+                "label": "Mikokoro, Center of the Sea (Starfall Islands)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-morphic-pool-scrapnik-island",
+          "name": "Morphic Pool (Scrapnik Island)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-morphic-pool-scrapnik-island:front",
+              "name": "Morphic Pool (Scrapnik Island)",
+              "defaultArt": {
+                "id": "1vAS8QzOIZTKVB47WHYEhrJwRUCtquCiS",
+                "name": "Morphic Pool (Scrapnik Island).jpg",
+                "thumbId": "1vAS8QzOIZTKVB47WHYEhrJwRUCtquCiS",
+                "label": "Morphic Pool (Scrapnik Island)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-myr-battlesphere-egg-hammer",
+          "name": "Myr Battlesphere (Egg Hammer)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-myr-battlesphere-egg-hammer:front",
+              "name": "Myr Battlesphere (Egg Hammer)",
+              "defaultArt": {
+                "id": "1JCgLuzlQdJpU8N58XWACZ8xeYts1Y9yx",
+                "name": "Myr Battlesphere (Egg Hammer).jpg",
+                "thumbId": "1JCgLuzlQdJpU8N58XWACZ8xeYts1Y9yx",
+                "label": "Myr Battlesphere (Egg Hammer)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-nautiloid-ship-faceship",
+          "name": "Nautiloid Ship (The Faceship)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-nautiloid-ship-faceship:front",
+              "name": "Nautiloid Ship (The Faceship)",
+              "defaultArt": {
+                "id": "1H-qc01xRP7_RaMoVrZtUKVLJKms9djOn",
+                "name": "Nautiloid Ship (The Faceship).jpg",
+                "thumbId": "1H-qc01xRP7_RaMoVrZtUKVLJKms9djOn",
+                "label": "Nautiloid Ship (The Faceship)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-noxious-gearhulk-giganto",
+          "name": "Noxious Gearhulk (Giganto)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-noxious-gearhulk-giganto:front",
+              "name": "Noxious Gearhulk (Giganto)",
+              "defaultArt": {
+                "id": "1laD0gXY1Bq6yDCN9zQ3ymtlV54aD4Rgs",
+                "name": "Noxious Gearhulk (Giganto).jpg",
+                "thumbId": "1laD0gXY1Bq6yDCN9zQ3ymtlV54aD4Rgs",
+                "label": "Noxious Gearhulk (Giganto)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-oildeep-gearhulk-knight",
+          "name": "Oildeep Gearhulk (Knight)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-oildeep-gearhulk-knight:front",
+              "name": "Oildeep Gearhulk (Knight)",
+              "defaultArt": {
+                "id": "1f5ci6AHfAWdAV2Pcn9j2HRwMKc5oYlQa",
+                "name": "Oildeep Gearhulk (Knight).jpg",
+                "thumbId": "1f5ci6AHfAWdAV2Pcn9j2HRwMKc5oYlQa",
+                "label": "Oildeep Gearhulk (Knight)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-oppression",
+          "name": "Oppression",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-oppression:front",
+              "name": "Oppression",
+              "defaultArt": {
+                "id": "1iSEucLgrTrYJIhqaiKl0pfU5MyX74hnC",
+                "name": "Oppression.jpg",
+                "thumbId": "1iSEucLgrTrYJIhqaiKl0pfU5MyX74hnC",
+                "label": "Oppression"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-otawara-soaring-city-little-planet",
+          "name": "Otawara, Soaring City (Little Planet)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-otawara-soaring-city-little-planet:front",
+              "name": "Otawara, Soaring City (Little Planet)",
+              "defaultArt": {
+                "id": "1QEryX0945_RSQ0VktYVYDP9ZhxJ89hhV",
+                "name": "Otawara, Soaring City (Little Planet).jpg",
+                "thumbId": "1QEryX0945_RSQ0VktYVYDP9ZhxJ89hhV",
+                "label": "Otawara, Soaring City (Little Planet)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-padeem-consul-of-innovation-dr-starline",
+          "name": "Padeem, Consul of Innovation (Dr. Starline)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-padeem-consul-of-innovation-dr-starline:front",
+              "name": "Padeem, Consul of Innovation (Dr. Starline)",
+              "defaultArt": {
+                "id": "1W_SwWAJpf2dRDK-7RUJ2nf9RnNfbQ9uf",
+                "name": "Padeem, Consul of Innovation (Dr. Starline).jpg",
+                "thumbId": "1W_SwWAJpf2dRDK-7RUJ2nf9RnNfbQ9uf",
+                "label": "Padeem, Consul of Innovation (Dr. Starline)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-painful-quandary-nefarious-plan",
+          "name": "Painful Quandary (Nefarious Plan)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-painful-quandary-nefarious-plan:front",
+              "name": "Painful Quandary (Nefarious Plan)",
+              "defaultArt": {
+                "id": "1PtftrhtZOpBISc4VwvAk_WNJOG4weqIa",
+                "name": "Painful Quandary (Nefarious Plan).jpg",
+                "thumbId": "1PtftrhtZOpBISc4VwvAk_WNJOG4weqIa",
+                "label": "Painful Quandary (Nefarious Plan)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-palantir-of-orthanc-cyber-space",
+          "name": "Palantir of Orthanc (Cyber Space)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-palantir-of-orthanc-cyber-space:front",
+              "name": "Palantir of Orthanc (Cyber Space)",
+              "defaultArt": {
+                "id": "1NwLmi9uwJdWkodhxG8epLitxxWC5HCbx",
+                "name": "Palantir of Orthanc (Cyber Space).jpg",
+                "thumbId": "1NwLmi9uwJdWkodhxG8epLitxxWC5HCbx",
+                "label": "Palantir of Orthanc (Cyber Space)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-polluted-delta-eternal-highway",
+          "name": "Polluted Delta (Eternal Highway)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-polluted-delta-eternal-highway:front",
+              "name": "Polluted Delta (Eternal Highway)",
+              "defaultArt": {
+                "id": "1N-BYITViKF9MS3eD3kGABMs-LvTN19sX",
+                "name": "Polluted Delta (Eternal Highway).jpg",
+                "thumbId": "1N-BYITViKF9MS3eD3kGABMs-LvTN19sX",
+                "label": "Polluted Delta (Eternal Highway)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-prismatic-vista-green-hill",
+          "name": "Prismatic Vista (Green Hill)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-prismatic-vista-green-hill:front",
+              "name": "Prismatic Vista (Green Hill)",
+              "defaultArt": {
+                "id": "1Kq9yoFmEGgkFVubXqNwH2nXyOpSEwyug",
+                "name": "Prismatic Vista (Green Hill).jpg",
+                "thumbId": "1Kq9yoFmEGgkFVubXqNwH2nXyOpSEwyug",
+                "label": "Prismatic Vista (Green Hill)"
+              },
+              "alternates": [
+                {
+                  "id": "11y51Tg7blyWNCVKesfQ1X5fch6FbZl3c",
+                  "name": "Prismatic Vista (Green Hill).jpg",
+                  "thumbId": "11y51Tg7blyWNCVKesfQ1X5fch6FbZl3c",
+                  "label": "Prismatic Vista (Green Hill)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "main-rakdos-charm-deadly-six",
+          "name": "Rakdos Charm (The Deadly Six)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-rakdos-charm-deadly-six:front",
+              "name": "Rakdos Charm (The Deadly Six)",
+              "defaultArt": {
+                "id": "1OCPbLwy1tFwQqKT1kuVMcDniuY46EwPA",
+                "name": "Rakdos Charm (The Deadly Six).jpg",
+                "thumbId": "1OCPbLwy1tFwQqKT1kuVMcDniuY46EwPA",
+                "label": "Rakdos Charm (The Deadly Six)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-raucous-theater-carnival-night",
+          "name": "Raucous Theater (Carnival Night)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-raucous-theater-carnival-night:front",
+              "name": "Raucous Theater (Carnival Night)",
+              "defaultArt": {
+                "id": "1rIqJIpdpwHgU08WyaJpUYLLVXRc5jMNU",
+                "name": "Raucous Theater (Carnival Night).jpg",
+                "thumbId": "1rIqJIpdpwHgU08WyaJpUYLLVXRc5jMNU",
+                "label": "Raucous Theater (Carnival Night)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-ravenous-robots-motobug",
+          "name": "Ravenous Robots (Motobug)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-ravenous-robots-motobug:front",
+              "name": "Ravenous Robots (Motobug)",
+              "defaultArt": {
+                "id": "1RVnHTcn1DPgNvVBzUN9iHdIPHaa8MWIM",
+                "name": "Ravenous Robots (Motobug).jpg",
+                "thumbId": "1RVnHTcn1DPgNvVBzUN9iHdIPHaa8MWIM",
+                "label": "Ravenous Robots (Motobug)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-reaver-titan-giant-eggman-robo",
+          "name": "Reaver Titan (Giant Eggman Robo)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-reaver-titan-giant-eggman-robo:front",
+              "name": "Reaver Titan (Giant Eggman Robo)",
+              "defaultArt": {
+                "id": "1yOIaPqtSBUkMXnb5srz-tPzgMhAksZXr",
+                "name": "Reaver Titan (Giant Eggman Robo).jpg",
+                "thumbId": "1yOIaPqtSBUkMXnb5srz-tPzgMhAksZXr",
+                "label": "Reaver Titan (Giant Eggman Robo)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-relic-of-sauron-wisp-capsule",
+          "name": "Relic of Sauron (Wisp Capsule)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-relic-of-sauron-wisp-capsule:front",
+              "name": "Relic of Sauron (Wisp Capsule)",
+              "defaultArt": {
+                "id": "1PjG-K-0zEk2hAzB1LYyhBWeChf3nohWF",
+                "name": "Relic of Sauron (Wisp Capsule).jpg",
+                "thumbId": "1PjG-K-0zEk2hAzB1LYyhBWeChf3nohWF",
+                "label": "Relic of Sauron (Wisp Capsule)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-riverpyre-verge-apotos",
+          "name": "Riverpyre Verge (Apotos)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-riverpyre-verge-apotos:front",
+              "name": "Riverpyre Verge (Apotos)",
+              "defaultArt": {
+                "id": "1O1PsDTEiDr53JDNUpc4l6k4-cc2XdUXz",
+                "name": "Riverpyre Verge (Apotos).jpg",
+                "thumbId": "1O1PsDTEiDr53JDNUpc4l6k4-cc2XdUXz",
+                "label": "Riverpyre Verge (Apotos)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-ruin-grinder-e-102-gamma",
+          "name": "Ruin Grinder (E-102 Gamma)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-ruin-grinder-e-102-gamma:front",
+              "name": "Ruin Grinder (E-102 Gamma)",
+              "defaultArt": {
+                "id": "1Z778B556705p1m-zG-pFPBQX_tftvXZh",
+                "name": "Ruin Grinder (E-102 Gamma).jpg",
+                "thumbId": "1Z778B556705p1m-zG-pFPBQX_tftvXZh",
+                "label": "Ruin Grinder (E-102 Gamma)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-scalding-tarn-cool-edge",
+          "name": "Scalding Tarn (Cool Edge)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-scalding-tarn-cool-edge:front",
+              "name": "Scalding Tarn (Cool Edge)",
+              "defaultArt": {
+                "id": "1Ds4LXBUd0NVhkl24Eb28Ca5Uu-jYmUwN",
+                "name": "Scalding Tarn (Cool Edge).jpg",
+                "thumbId": "1Ds4LXBUd0NVhkl24Eb28Ca5Uu-jYmUwN",
+                "label": "Scalding Tarn (Cool Edge)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-scrap-trawler-mecha-sonic-mark-ii",
+          "name": "Scrap Trawler (Mecha Sonic Mark II)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-scrap-trawler-mecha-sonic-mark-ii:front",
+              "name": "Scrap Trawler (Mecha Sonic Mark II)",
+              "defaultArt": {
+                "id": "1AVRocKWEKmO9QDt_2ykDZJRH6roYTfvd",
+                "name": "Scrap Trawler (Mecha Sonic Mark II).jpg",
+                "thumbId": "1AVRocKWEKmO9QDt_2ykDZJRH6roYTfvd",
+                "label": "Scrap Trawler (Mecha Sonic Mark II)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-scrawling-crawler-orbot-and-cubot",
+          "name": "Scrawling Crawler (Orbot and Cubot)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-scrawling-crawler-orbot-and-cubot:front",
+              "name": "Scrawling Crawler (Orbot and Cubot)",
+              "defaultArt": {
+                "id": "18HZhDtyhoFcf7KNhgpqd-nn8HA0f55zM",
+                "name": "Scrawling Crawler (Orbot and Cubot).jpg",
+                "thumbId": "18HZhDtyhoFcf7KNhgpqd-nn8HA0f55zM",
+                "label": "Scrawling Crawler (Orbot and Cubot)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-shadow-hedgehog",
+          "name": "Shadow the Hedgehog",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-shadow-hedgehog:front",
+              "name": "Shadow the Hedgehog",
+              "defaultArt": {
+                "id": "1Fpfs5h-eOAwcLTrzTtlfCL-_IhEuDxVC",
+                "name": "Shadow the Hedgehog.jpg",
+                "thumbId": "1Fpfs5h-eOAwcLTrzTtlfCL-_IhEuDxVC",
+                "label": "Shadow the Hedgehog"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-simulacrum-synthesizer-starline-lab",
+          "name": "Simulacrum Synthesizer (Starline's Lab)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-simulacrum-synthesizer-starline-lab:front",
+              "name": "Simulacrum Synthesizer (Starline's Lab)",
+              "defaultArt": {
+                "id": "1hFyqC0MqSttiX1Jgl-dhjbXMJF_b1NpH",
+                "name": "Simulacrum Synthesizer (Starline's Lab).jpg",
+                "thumbId": "1hFyqC0MqSttiX1Jgl-dhjbXMJF_b1NpH",
+                "label": "Simulacrum Synthesizer (Starline's Lab)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-skeleton-shard-cyber-space-portal",
+          "name": "Skeleton Shard (Cyber Space Portal)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-skeleton-shard-cyber-space-portal:front",
+              "name": "Skeleton Shard (Cyber Space Portal)",
+              "defaultArt": {
+                "id": "1llljynKB-4dnabcdeVb-We61JOdPEsgD",
+                "name": "Skeleton Shard (Cyber Space Portal).jpg",
+                "thumbId": "1llljynKB-4dnabcdeVb-We61JOdPEsgD",
+                "label": "Skeleton Shard (Cyber Space Portal)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-sol-ring",
+          "name": "Sol Ring",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-sol-ring:front",
+              "name": "Sol Ring",
+              "defaultArt": {
+                "id": "1v43cdozyqcMTFIwfYK517IzgJI_klDmQ",
+                "name": "Sol Ring.jpg",
+                "thumbId": "1v43cdozyqcMTFIwfYK517IzgJI_klDmQ",
+                "label": "Sol Ring"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-steam-vents-aquatic-ruin",
+          "name": "Steam Vents (Aquatic Ruin)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-steam-vents-aquatic-ruin:front",
+              "name": "Steam Vents (Aquatic Ruin)",
+              "defaultArt": {
+                "id": "1NZIANCSeEZIcPWVOu3kixKCNBjuHNox1",
+                "name": "Steam Vents (Aquatic Ruin).jpg",
+                "thumbId": "1NZIANCSeEZIcPWVOu3kixKCNBjuHNox1",
+                "label": "Steam Vents (Aquatic Ruin)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-super-state",
+          "name": "Super State",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-super-state:front",
+              "name": "Super State",
+              "defaultArt": {
+                "id": "1Lt_Vv9Rn4zIe3_XU05kpEnOBaP94AR3C",
+                "name": "Super State.jpg",
+                "thumbId": "1Lt_Vv9Rn4zIe3_XU05kpEnOBaP94AR3C",
+                "label": "Super State"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-swiftfoot-boots-air-shoes",
+          "name": "Swiftfoot Boots (Air Shoes)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-swiftfoot-boots-air-shoes:front",
+              "name": "Swiftfoot Boots (Air Shoes)",
+              "defaultArt": {
+                "id": "1Zrx38uYZcmyhevrSWpjOzr6EwgEhxr-g",
+                "name": "Swiftfoot Boots (Air Shoes).jpg",
+                "thumbId": "1Zrx38uYZcmyhevrSWpjOzr6EwgEhxr-g",
+                "label": "Swiftfoot Boots (Air Shoes)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-tainted-isle-angel-island-fortress",
+          "name": "Tainted Isle (Angel Island Fortress)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-tainted-isle-angel-island-fortress:front",
+              "name": "Tainted Isle (Angel Island Fortress)",
+              "defaultArt": {
+                "id": "1gBwaJvmqIHgx16MFOBtYvx4n2L1A5Oup",
+                "name": "Tainted Isle (Angel Island Fortress).jpg",
+                "thumbId": "1gBwaJvmqIHgx16MFOBtYvx4n2L1A5Oup",
+                "label": "Tainted Isle (Angel Island Fortress)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-tainted-peak-radical-highway",
+          "name": "Tainted Peak (Radical Highway)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-tainted-peak-radical-highway:front",
+              "name": "Tainted Peak (Radical Highway)",
+              "defaultArt": {
+                "id": "1Pc1WCT3hzP7XEv1_ynRtLJqeogv0-aRh",
+                "name": "Tainted Peak (Radical Highway).jpg",
+                "thumbId": "1Pc1WCT3hzP7XEv1_ynRtLJqeogv0-aRh",
+                "label": "Tainted Peak (Radical Highway)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-talisman-of-creativity-flicky-battery",
+          "name": "Talisman of Creativity (Flicky Battery)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-talisman-of-creativity-flicky-battery:front",
+              "name": "Talisman of Creativity (Flicky Battery)",
+              "defaultArt": {
+                "id": "1Yez_QVVOcJHoscre4Mp0uHeF8_UDtjml",
+                "name": "Talisman of Creativity (Flicky Battery).jpg",
+                "thumbId": "1Yez_QVVOcJHoscre4Mp0uHeF8_UDtjml",
+                "label": "Talisman of Creativity (Flicky Battery)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-talisman-of-dominance-cucky-battery",
+          "name": "Talisman of Dominance (Cucky Battery)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-talisman-of-dominance-cucky-battery:front",
+              "name": "Talisman of Dominance (Cucky Battery)",
+              "defaultArt": {
+                "id": "1e0ddRDUAZV4q6gGQ7AGBcrEWifC3bZsq",
+                "name": "Talisman of Dominance (Cucky Battery).jpg",
+                "thumbId": "1e0ddRDUAZV4q6gGQ7AGBcrEWifC3bZsq",
+                "label": "Talisman of Dominance (Cucky Battery)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-talisman-of-indulgence-picky-battery",
+          "name": "Talisman of Indulgence (Picky Battery)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-talisman-of-indulgence-picky-battery:front",
+              "name": "Talisman of Indulgence (Picky Battery)",
+              "defaultArt": {
+                "id": "1PubhaqmNHo5h-nQ0Y-dd1QR-eFTJRc9s",
+                "name": "Talisman of Indulgence (Picky Battery).jpg",
+                "thumbId": "1PubhaqmNHo5h-nQ0Y-dd1QR-eFTJRc9s",
+                "label": "Talisman of Indulgence (Picky Battery)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-terminate-team-dark",
+          "name": "Terminate (Team Dark)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-terminate-team-dark:front",
+              "name": "Terminate (Team Dark)",
+              "defaultArt": {
+                "id": "1UvZpcVv_UQcml97p_vaoLuaF3JBqqEY6",
+                "name": "Terminate (Team Dark).jpg",
+                "thumbId": "1UvZpcVv_UQcml97p_vaoLuaF3JBqqEY6",
+                "label": "Terminate (Team Dark)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-reaver-cleaver-knuckles-gloves",
+          "name": "The Reaver Cleaver (Knuckles's Gloves)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-reaver-cleaver-knuckles-gloves:front",
+              "name": "The Reaver Cleaver (Knuckles's Gloves)",
+              "defaultArt": {
+                "id": "1_TlxV-ggHFX4-TatKihH_oH-ke2FzCAJ",
+                "name": "The Reaver Cleaver (Knuckles's Gloves).jpg",
+                "thumbId": "1_TlxV-ggHFX4-TatKihH_oH-ke2FzCAJ",
+                "label": "The Reaver Cleaver (Knuckles's Gloves)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-regalia-eggwalker",
+          "name": "The Regalia (The Eggwalker)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-regalia-eggwalker:front",
+              "name": "The Regalia (The Eggwalker)",
+              "defaultArt": {
+                "id": "1HZt1Ls6FWGfi_sqPbXhbWz3TQ0ySe-IC",
+                "name": "The Regalia (The Eggwalker).jpg",
+                "thumbId": "1HZt1Ls6FWGfi_sqPbXhbWz3TQ0ySe-IC",
+                "label": "The Regalia (The Eggwalker)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-their-name-is-death-metal-overlord",
+          "name": "Their Name is Death (Metal Overlord)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-their-name-is-death-metal-overlord:front",
+              "name": "Their Name is Death (Metal Overlord)",
+              "defaultArt": {
+                "id": "1bkM9aFuqeQdbDLnVQKATPE9AhJH18r1U",
+                "name": "Their Name is Death (Metal Overlord).jpg",
+                "thumbId": "1bkM9aFuqeQdbDLnVQKATPE9AhJH18r1U",
+                "label": "Their Name is Death (Metal Overlord)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-thopter-spy-factory-eggperial-city",
+          "name": "Thopter Spy Factory (Eggperial City)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-thopter-spy-factory-eggperial-city:front",
+              "name": "Thopter Spy Factory (Eggperial City)",
+              "defaultArt": {
+                "id": "1V1SY2Mysj74nw3KIPpAMUBMnDYna9E39",
+                "name": "Thopter Spy Factory (Eggperial City).jpg",
+                "thumbId": "1V1SY2Mysj74nw3KIPpAMUBMnDYna9E39",
+                "label": "Thopter Spy Factory (Eggperial City)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-thought-monitor-buzz-bomber",
+          "name": "Thought Monitor (Buzz Bomber)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-thought-monitor-buzz-bomber:front",
+              "name": "Thought Monitor (Buzz Bomber)",
+              "defaultArt": {
+                "id": "1AL-1mAN2xiqoTBUdWST-m-rmj8pugtMe",
+                "name": "Thought Monitor (Buzz Bomber).jpg",
+                "thumbId": "1AL-1mAN2xiqoTBUdWST-m-rmj8pugtMe",
+                "label": "Thought Monitor (Buzz Bomber)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-thundering-falls-sky-sanctuary",
+          "name": "Thundering Falls (Sky Sanctuary)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-thundering-falls-sky-sanctuary:front",
+              "name": "Thundering Falls (Sky Sanctuary)",
+              "defaultArt": {
+                "id": "1vgb-jcqZOFHklS2H8xutBOdbwIwIKm83",
+                "name": "Thundering Falls (Sky Sanctuary).jpg",
+                "thumbId": "1vgb-jcqZOFHklS2H8xutBOdbwIwIKm83",
+                "label": "Thundering Falls (Sky Sanctuary)"
+              },
+              "alternates": [
+                {
+                  "id": "1y9JCgUEYRGynbi7GYNUVwDI7wheBRAvg",
+                  "name": "Thundering Falls (Sky Sanctuary) 2.jpg",
+                  "thumbId": "1y9JCgUEYRGynbi7GYNUVwDI7wheBRAvg",
+                  "label": "Thundering Falls (Sky Sanctuary) 2"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "main-tinybones-bauble-burglar-rouge-bat",
+          "name": "Tinybones, Bauble Burglar (Rouge the Bat)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-tinybones-bauble-burglar-rouge-bat:front",
+              "name": "Tinybones, Bauble Burglar (Rouge the Bat)",
+              "defaultArt": {
+                "id": "1V_9P_Nd7Jg-rSkmlqwVrPjdvFABpMH8C",
+                "name": "Tinybones, Bauble Burglar (Rouge the Bat).jpg",
+                "thumbId": "1V_9P_Nd7Jg-rSkmlqwVrPjdvFABpMH8C",
+                "label": "Tinybones, Bauble Burglar (Rouge the Bat)"
+              },
+              "alternates": [
+                {
+                  "id": "1a_GtotyFXPI2GLXVGBxogT7b9QCKam28",
+                  "name": "Tinybones, Bauble Burglar (Rouge the Bat) 2.jpg",
+                  "thumbId": "1a_GtotyFXPI2GLXVGBxogT7b9QCKam28",
+                  "label": "Tinybones, Bauble Burglar (Rouge the Bat) 2"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "main-training-center-seaside-hill",
+          "name": "Training Center (Seaside Hill)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-training-center-seaside-hill:front",
+              "name": "Training Center (Seaside Hill)",
+              "defaultArt": {
+                "id": "1ULLyxS3RUBWn7aa0ZJAI7zwCm2L7aF4B",
+                "name": "Training Center (Seaside Hill).jpg",
+                "thumbId": "1ULLyxS3RUBWn7aa0ZJAI7zwCm2L7aF4B",
+                "label": "Training Center (Seaside Hill)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-ultron-artificial-malevolence-gemerl-robot",
+          "name": "Ultron, Artificial Malevolence (Gemerl the Robot)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-ultron-artificial-malevolence-gemerl-robot:front",
+              "name": "Ultron, Artificial Malevolence (Gemerl the Robot)",
+              "defaultArt": {
+                "id": "1xRYzW-o7LLjlyRhEf3-TXB3LhWRJnQt7",
+                "name": "Ultron, Artificial Malevolence (Gemerl the Robot).jpg",
+                "thumbId": "1xRYzW-o7LLjlyRhEf3-TXB3LhWRJnQt7",
+                "label": "Ultron, Artificial Malevolence (Gemerl the Robot)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-undercity-sewers-chemical-plant",
+          "name": "Undercity Sewers (Chemical Plant)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-undercity-sewers-chemical-plant:front",
+              "name": "Undercity Sewers (Chemical Plant)",
+              "defaultArt": {
+                "id": "1XOwC3piWxM9VK3F4_-Un3IDLfKAetcQi",
+                "name": "Undercity Sewers (Chemical Plant).jpg",
+                "thumbId": "1XOwC3piWxM9VK3F4_-Un3IDLfKAetcQi",
+                "label": "Undercity Sewers (Chemical Plant)"
+              },
+              "alternates": [
+                {
+                  "id": "1j6-t7YLZglnIC3RxP-xcgdQjemHHKGXY",
+                  "name": "Undercity Sewers (Chemical Plant) 2.jpg",
+                  "thumbId": "1j6-t7YLZglnIC3RxP-xcgdQjemHHKGXY",
+                  "label": "Undercity Sewers (Chemical Plant) 2"
+                },
+                {
+                  "id": "1bEUQXzyRgBV_DUIJsalPbTkvTUrHAJkZ",
+                  "name": "Undercity Sewers (Chemical Plant) 3.jpg",
+                  "thumbId": "1bEUQXzyRgBV_DUIJsalPbTkvTUrHAJkZ",
+                  "label": "Undercity Sewers (Chemical Plant) 3"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "main-uthros-titanic-godcore-space-colony-ark",
+          "name": "Uthros, Titanic Godcore (Space Colony Ark)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-uthros-titanic-godcore-space-colony-ark:front",
+              "name": "Uthros, Titanic Godcore (Space Colony Ark)",
+              "defaultArt": {
+                "id": "1xU9bi8qj3QB_rI-Z2O24c0wx-1yTp2fg",
+                "name": "Uthros, Titanic Godcore (Space Colony Ark).jpg",
+                "thumbId": "1xU9bi8qj3QB_rI-Z2O24c0wx-1yTp2fg",
+                "label": "Uthros, Titanic Godcore (Space Colony Ark)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-waste-not-metal-virus",
+          "name": "Waste Not (Metal Virus)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-waste-not-metal-virus:front",
+              "name": "Waste Not (Metal Virus)",
+              "defaultArt": {
+                "id": "1joC9cJz6evuKJHp26AsTUcJeceKc-HDt",
+                "name": "Waste Not (Metal Virus).jpg",
+                "thumbId": "1joC9cJz6evuKJHp26AsTUcJeceKc-HDt",
+                "label": "Waste Not (Metal Virus)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-watery-grave-collision-chaos",
+          "name": "Watery Grave (Collision Chaos)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-watery-grave-collision-chaos:front",
+              "name": "Watery Grave (Collision Chaos)",
+              "defaultArt": {
+                "id": "19qy4RdYz2f9G_dmN8Ld_oXNRjMXtuewI",
+                "name": "Watery Grave (Collision Chaos).jpg",
+                "thumbId": "19qy4RdYz2f9G_dmN8Ld_oXNRjMXtuewI",
+                "label": "Watery Grave (Collision Chaos)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "main-yshtola-rhul-chaos",
+          "name": "Y'shtola Rhul (Chaos)",
+          "role": "main",
+          "defaultQty": 1,
+          "faces": [
+            {
+              "id": "main-yshtola-rhul-chaos:front",
+              "name": "Y'shtola Rhul (Chaos)",
+              "defaultArt": {
+                "id": "1ZjRrMuki93S9mqC4Q9D03MmU7f2_C_Pn",
+                "name": "Y'shtola Rhul (Chaos).jpg",
+                "thumbId": "1ZjRrMuki93S9mqC4Q9D03MmU7f2_C_Pn",
+                "label": "Y'shtola Rhul (Chaos)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "token-token-construct-1",
+          "name": "Token - Construct 1",
+          "role": "token",
+          "defaultQty": 0,
+          "faces": [
+            {
+              "id": "token-token-construct-1:front",
+              "name": "Token - Construct 1",
+              "defaultArt": {
+                "id": "1Gbqx-HMGygTDzlKWALb-QgexcamIMvHX",
+                "name": "Token - Construct 1.jpg",
+                "thumbId": "1Gbqx-HMGygTDzlKWALb-QgexcamIMvHX",
+                "label": "Token - Construct 1"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "token-token-construct-2",
+          "name": "Token - Construct 2",
+          "role": "token",
+          "defaultQty": 0,
+          "faces": [
+            {
+              "id": "token-token-construct-2:front",
+              "name": "Token - Construct 2",
+              "defaultArt": {
+                "id": "1tvdsn4uF6AX50QqjAFRV0buYVPXjgm_A",
+                "name": "Token - Construct 2.jpg",
+                "thumbId": "1tvdsn4uF6AX50QqjAFRV0buYVPXjgm_A",
+                "label": "Token - Construct 2"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "token-token-copy-clone-1",
+          "name": "Token - Copy Clone 1",
+          "role": "token",
+          "defaultQty": 0,
+          "faces": [
+            {
+              "id": "token-token-copy-clone-1:front",
+              "name": "Token - Copy Clone 1",
+              "defaultArt": {
+                "id": "10rKOe9YhzJmQbm6QxQg9OYKfi2vQV3a_",
+                "name": "Token - Copy Clone 1.jpg",
+                "thumbId": "10rKOe9YhzJmQbm6QxQg9OYKfi2vQV3a_",
+                "label": "Token - Copy Clone 1"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "token-token-copy-clone-2",
+          "name": "Token - Copy Clone 2",
+          "role": "token",
+          "defaultQty": 0,
+          "faces": [
+            {
+              "id": "token-token-copy-clone-2:front",
+              "name": "Token - Copy Clone 2",
+              "defaultArt": {
+                "id": "1KHgMYAxQcYGIPU_K3jLbk7biXOEibAlP",
+                "name": "Token - Copy Clone 2.jpg",
+                "thumbId": "1KHgMYAxQcYGIPU_K3jLbk7biXOEibAlP",
+                "label": "Token - Copy Clone 2"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "token-token-myr-1",
+          "name": "Token - Myr 1",
+          "role": "token",
+          "defaultQty": 0,
+          "faces": [
+            {
+              "id": "token-token-myr-1:front",
+              "name": "Token - Myr 1",
+              "defaultArt": {
+                "id": "1m4-82YJN9N1tshlgrOp7qdRu5kElAciw",
+                "name": "Token - Myr 1.jpg",
+                "thumbId": "1m4-82YJN9N1tshlgrOp7qdRu5kElAciw",
+                "label": "Token - Myr 1"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "token-token-myr-2",
+          "name": "Token - Myr 2",
+          "role": "token",
+          "defaultQty": 0,
+          "faces": [
+            {
+              "id": "token-token-myr-2:front",
+              "name": "Token - Myr 2",
+              "defaultArt": {
+                "id": "1V4lCi6-ExQUGJgfUYWDnUUgwhYKtLs4g",
+                "name": "Token - Myr 2.jpg",
+                "thumbId": "1V4lCi6-ExQUGJgfUYWDnUUgwhYKtLs4g",
+                "label": "Token - Myr 2"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "token-token-powerstone-1",
+          "name": "Token - Powerstone 1",
+          "role": "token",
+          "defaultQty": 0,
+          "faces": [
+            {
+              "id": "token-token-powerstone-1:front",
+              "name": "Token - Powerstone 1",
+              "defaultArt": {
+                "id": "1atoIX4ZAPmmPWl0cmdKt50C0dJK_YILP",
+                "name": "Token - Powerstone 1.jpg",
+                "thumbId": "1atoIX4ZAPmmPWl0cmdKt50C0dJK_YILP",
+                "label": "Token - Powerstone 1"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "token-token-powerstone-2",
+          "name": "Token - Powerstone 2",
+          "role": "token",
+          "defaultQty": 0,
+          "faces": [
+            {
+              "id": "token-token-powerstone-2:front",
+              "name": "Token - Powerstone 2",
+              "defaultArt": {
+                "id": "1MGIJ1rUQ88jQKhWf1z7vxNj0mYVJoQUs",
+                "name": "Token - Powerstone 2.jpg",
+                "thumbId": "1MGIJ1rUQ88jQKhWf1z7vxNj0mYVJoQUs",
+                "label": "Token - Powerstone 2"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "token-token-robot-1",
+          "name": "Token - Robot 1",
+          "role": "token",
+          "defaultQty": 0,
+          "faces": [
+            {
+              "id": "token-token-robot-1:front",
+              "name": "Token - Robot 1",
+              "defaultArt": {
+                "id": "1_lu5F03313sfqF0cZExJaMOH0_yg93Kc",
+                "name": "Token - Robot 1.jpg",
+                "thumbId": "1_lu5F03313sfqF0cZExJaMOH0_yg93Kc",
+                "label": "Token - Robot 1"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "token-token-robot-2",
+          "name": "Token - Robot 2",
+          "role": "token",
+          "defaultQty": 0,
+          "faces": [
+            {
+              "id": "token-token-robot-2:front",
+              "name": "Token - Robot 2",
+              "defaultArt": {
+                "id": "1XUpv4pWa3-x1kHZTnronzdzVoQD_wszz",
+                "name": "Token - Robot 2.jpg",
+                "thumbId": "1XUpv4pWa3-x1kHZTnronzdzVoQD_wszz",
+                "label": "Token - Robot 2"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "token-token-monarch",
+          "name": "Token - The Monarch",
+          "role": "token",
+          "defaultQty": 0,
+          "faces": [
+            {
+              "id": "token-token-monarch:front",
+              "name": "Token - The Monarch",
+              "defaultArt": {
+                "id": "1BU4qJIPGXTqQAlb396fwrVsn6xa9k8bq",
+                "name": "Token - The Monarch.jpg",
+                "thumbId": "1BU4qJIPGXTqQAlb396fwrVsn6xa9k8bq",
+                "label": "Token - The Monarch"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "token-token-thopter-1",
+          "name": "Token - Thopter 1",
+          "role": "token",
+          "defaultQty": 0,
+          "faces": [
+            {
+              "id": "token-token-thopter-1:front",
+              "name": "Token - Thopter 1",
+              "defaultArt": {
+                "id": "12Y13n-tchQUJuHoX_emJp8BwNaxowXLU",
+                "name": "Token - Thopter 1.jpg",
+                "thumbId": "12Y13n-tchQUJuHoX_emJp8BwNaxowXLU",
+                "label": "Token - Thopter 1"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "token-token-thopter-2",
+          "name": "Token - Thopter 2",
+          "role": "token",
+          "defaultQty": 0,
+          "faces": [
+            {
+              "id": "token-token-thopter-2:front",
+              "name": "Token - Thopter 2",
+              "defaultArt": {
+                "id": "1a49l1T1uqzQ6_TfZT60ItQu3FtzHpoyw",
+                "name": "Token - Thopter 2.jpg",
+                "thumbId": "1a49l1T1uqzQ6_TfZT60ItQu3FtzHpoyw",
+                "label": "Token - Thopter 2"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "token-token-treasure-1",
+          "name": "Token - Treasure 1",
+          "role": "token",
+          "defaultQty": 0,
+          "faces": [
+            {
+              "id": "token-token-treasure-1:front",
+              "name": "Token - Treasure 1",
+              "defaultArt": {
+                "id": "13BxLNEZMTvXaNqcqG9G-4NgbGbjbgvd5",
+                "name": "Token - Treasure 1.jpg",
+                "thumbId": "13BxLNEZMTvXaNqcqG9G-4NgbGbjbgvd5",
+                "label": "Token - Treasure 1"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "token-token-treasure-2",
+          "name": "Token - Treasure 2",
+          "role": "token",
+          "defaultQty": 0,
+          "faces": [
+            {
+              "id": "token-token-treasure-2:front",
+              "name": "Token - Treasure 2",
+              "defaultArt": {
+                "id": "19Y9yKVCBMHUp6-Appb9ORTneGf_OEYEj",
+                "name": "Token - Treasure 2.jpg",
+                "thumbId": "19Y9yKVCBMHUp6-Appb9ORTneGf_OEYEj",
+                "label": "Token - Treasure 2"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "token-token-zombie-1",
+          "name": "Token - Zombie 1",
+          "role": "token",
+          "defaultQty": 0,
+          "faces": [
+            {
+              "id": "token-token-zombie-1:front",
+              "name": "Token - Zombie 1",
+              "defaultArt": {
+                "id": "1JdYgPjeppB8McvIaH4i7aS5AqpaMqi9J",
+                "name": "Token - Zombie 1.jpg",
+                "thumbId": "1JdYgPjeppB8McvIaH4i7aS5AqpaMqi9J",
+                "label": "Token - Zombie 1"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "token-token-zombie-2",
+          "name": "Token - Zombie 2",
+          "role": "token",
+          "defaultQty": 0,
+          "faces": [
+            {
+              "id": "token-token-zombie-2:front",
+              "name": "Token - Zombie 2",
+              "defaultArt": {
+                "id": "1NVGo1dvVyuMB6qXuJMAQHlFldLnxFv1O",
+                "name": "Token - Zombie 2.jpg",
+                "thumbId": "1NVGo1dvVyuMB6qXuJMAQHlFldLnxFv1O",
+                "label": "Token - Zombie 2"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "extra-dr-eggman-2",
+          "name": "Dr. Eggman 2",
+          "role": "extra",
+          "defaultQty": 0,
+          "faces": [
+            {
+              "id": "extra-dr-eggman-2:front",
+              "name": "Dr. Eggman 2",
+              "defaultArt": {
+                "id": "1ElwpnMPZpeiirW3dxtXXX25NPw3oz6XY",
+                "name": "Dr. Eggman 2.jpg",
+                "thumbId": "1ElwpnMPZpeiirW3dxtXXX25NPw3oz6XY",
+                "label": "Dr. Eggman 2"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "extra-dr-eggman-3",
+          "name": "Dr. Eggman 3",
+          "role": "extra",
+          "defaultQty": 0,
+          "faces": [
+            {
+              "id": "extra-dr-eggman-3:front",
+              "name": "Dr. Eggman 3",
+              "defaultArt": {
+                "id": "1-tmwiVqc8yDKR3NovCB3ZolbVJMgRMJa",
+                "name": "Dr. Eggman 3.jpg",
+                "thumbId": "1-tmwiVqc8yDKR3NovCB3ZolbVJMgRMJa",
+                "label": "Dr. Eggman 3"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "extra-dr-eggman-4",
+          "name": "Dr. Eggman 4",
+          "role": "extra",
+          "defaultQty": 0,
+          "faces": [
+            {
+              "id": "extra-dr-eggman-4:front",
+              "name": "Dr. Eggman 4",
+              "defaultArt": {
+                "id": "1VgFkiHjag7NEFgHXzvoWOq_1YeB8sYs1",
+                "name": "Dr. Eggman 4.jpg",
+                "thumbId": "1VgFkiHjag7NEFgHXzvoWOq_1YeB8sYs1",
+                "label": "Dr. Eggman 4"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "extra-dr-eggman-5",
+          "name": "Dr. Eggman 5",
+          "role": "extra",
+          "defaultQty": 0,
+          "faces": [
+            {
+              "id": "extra-dr-eggman-5:front",
+              "name": "Dr. Eggman 5",
+              "defaultArt": {
+                "id": "1wxVA3yryTAydyek7NLHdxY5VJ0hjZzE8",
+                "name": "Dr. Eggman 5.jpg",
+                "thumbId": "1wxVA3yryTAydyek7NLHdxY5VJ0hjZzE8",
+                "label": "Dr. Eggman 5"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "extra-fierce-guardianship-2",
+          "name": "Fierce Guardianship 2",
+          "role": "extra",
+          "defaultQty": 0,
+          "faces": [
+            {
+              "id": "extra-fierce-guardianship-2:front",
+              "name": "Fierce Guardianship 2",
+              "defaultArt": {
+                "id": "10ocQPhloRTLC5x_RFq2TTodUNVScaVyo",
+                "name": "Fierce Guardianship 2.jpg",
+                "thumbId": "10ocQPhloRTLC5x_RFq2TTodUNVScaVyo",
+                "label": "Fierce Guardianship 2"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "extra-island-chaos",
+          "name": "Island Chaos",
+          "role": "extra",
+          "defaultQty": 0,
+          "faces": [
+            {
+              "id": "extra-island-chaos:front",
+              "name": "Island Chaos",
+              "defaultArt": {
+                "id": "1lLQQ5AAVfRNwYYQB--q09fw-fBWmidsK",
+                "name": "Island Chaos.jpg",
+                "thumbId": "1lLQQ5AAVfRNwYYQB--q09fw-fBWmidsK",
+                "label": "Island Chaos"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "extra-knuckles-echidna-2",
+          "name": "Knuckles the Echidna 2",
+          "role": "extra",
+          "defaultQty": 0,
+          "faces": [
+            {
+              "id": "extra-knuckles-echidna-2:front",
+              "name": "Knuckles the Echidna 2",
+              "defaultArt": {
+                "id": "1CoesSiwpORfbck_nh9rNZrI8YWXoVUEj",
+                "name": "Knuckles the Echidna 2.jpg",
+                "thumbId": "1CoesSiwpORfbck_nh9rNZrI8YWXoVUEj",
+                "label": "Knuckles the Echidna 2"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "extra-knuckles-echidna-3",
+          "name": "Knuckles the Echidna 3",
+          "role": "extra",
+          "defaultQty": 0,
+          "faces": [
+            {
+              "id": "extra-knuckles-echidna-3:front",
+              "name": "Knuckles the Echidna 3",
+              "defaultArt": {
+                "id": "1O7IaXeVvZ2MoSHlUowryPPk-9_PVKply",
+                "name": "Knuckles the Echidna 3.jpg",
+                "thumbId": "1O7IaXeVvZ2MoSHlUowryPPk-9_PVKply",
+                "label": "Knuckles the Echidna 3"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "extra-mountain-chaos",
+          "name": "Mountain Chaos",
+          "role": "extra",
+          "defaultQty": 0,
+          "faces": [
+            {
+              "id": "extra-mountain-chaos:front",
+              "name": "Mountain Chaos",
+              "defaultArt": {
+                "id": "1c0OW_sYRB5eHVORcU_nZBT0I3fVuXGra",
+                "name": "Mountain Chaos.jpg",
+                "thumbId": "1c0OW_sYRB5eHVORcU_nZBT0I3fVuXGra",
+                "label": "Mountain Chaos"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "extra-shadow-hedgehog-2",
+          "name": "Shadow the Hedgehog 2",
+          "role": "extra",
+          "defaultQty": 0,
+          "faces": [
+            {
+              "id": "extra-shadow-hedgehog-2:front",
+              "name": "Shadow the Hedgehog 2",
+              "defaultArt": {
+                "id": "1belwtYzch9z7IU9qoscbgMo9lsWNZiOY",
+                "name": "Shadow the Hedgehog 2.jpg",
+                "thumbId": "1belwtYzch9z7IU9qoscbgMo9lsWNZiOY",
+                "label": "Shadow the Hedgehog 2"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "extra-shadow-hedgehog-3",
+          "name": "Shadow the Hedgehog 3",
+          "role": "extra",
+          "defaultQty": 0,
+          "faces": [
+            {
+              "id": "extra-shadow-hedgehog-3:front",
+              "name": "Shadow the Hedgehog 3",
+              "defaultArt": {
+                "id": "1UV05SfZzLzB7N7V3qt05XWf3q1OKcvLp",
+                "name": "Shadow the Hedgehog 3.jpg",
+                "thumbId": "1UV05SfZzLzB7N7V3qt05XWf3q1OKcvLp",
+                "label": "Shadow the Hedgehog 3"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "extra-steel-overseer-captain-whisker",
+          "name": "Steel Overseer (Captain Whisker)",
+          "role": "extra",
+          "defaultQty": 0,
+          "faces": [
+            {
+              "id": "extra-steel-overseer-captain-whisker:front",
+              "name": "Steel Overseer (Captain Whisker)",
+              "defaultArt": {
+                "id": "1HRqc9wODNTYTmAS5lb8CHM7RZDKVqf9K",
+                "name": "Steel Overseer (Captain Whisker).jpg",
+                "thumbId": "1HRqc9wODNTYTmAS5lb8CHM7RZDKVqf9K",
+                "label": "Steel Overseer (Captain Whisker)"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "extra-swamp-chaos",
+          "name": "Swamp Chaos",
+          "role": "extra",
+          "defaultQty": 0,
+          "faces": [
+            {
+              "id": "extra-swamp-chaos:front",
+              "name": "Swamp Chaos",
+              "defaultArt": {
+                "id": "1kUezMs8g1lNpxdKderF3uGyNRqhTz4Le",
+                "name": "Swamp Chaos.jpg",
+                "thumbId": "1kUezMs8g1lNpxdKderF3uGyNRqhTz4Le",
+                "label": "Swamp Chaos"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "extra-wastes-chaos",
+          "name": "Wastes Chaos",
+          "role": "extra",
+          "defaultQty": 0,
+          "faces": [
+            {
+              "id": "extra-wastes-chaos:front",
+              "name": "Wastes Chaos",
+              "defaultArt": {
+                "id": "1kEYmvu_XsvAQHsFZKbpX3_pOiyhtijEM",
+                "name": "Wastes Chaos.jpg",
+                "thumbId": "1kEYmvu_XsvAQHsFZKbpX3_pOiyhtijEM",
+                "label": "Wastes Chaos"
+              },
+              "alternates": []
+            }
+          ]
+        }
+      ],
+      "backs": [
+        {
+          "id": "18XF9NBMc608inyPaps7ommmOut4tI4x9",
+          "name": "Card Back 1",
+          "thumbId": "18XF9NBMc608inyPaps7ommmOut4tI4x9"
+        },
+        {
+          "id": "1EnqCLgw0As9cDb7FZNNS4AiFo-g5taJ8",
+          "name": "Card Back 2",
+          "thumbId": "1EnqCLgw0As9cDb7FZNNS4AiFo-g5taJ8"
+        }
+      ],
+      "notes": [
+        {
+          "level": "skipped",
+          "name": "2_Dr. Eggman Deluxe Edition",
+          "path": "Dr. Eggman",
+          "reason": "Paid edition. Not fetched and not included in the shipped catalogue."
+        },
+        {
+          "level": "skipped",
+          "name": "3_Dr. Eggman Partial Foil Edition",
+          "path": "Dr. Eggman",
+          "reason": "Paid edition. Not fetched and not included in the shipped catalogue."
+        }
+      ],
+      "decklists": [
+        {
+          "id": "eggman",
+          "label": "Eggman",
+          "fileName": "decklist - Eggman.txt",
+          "title": "The Eggman Empire [Dr. Eggman]",
+          "commander": [
+            {
+              "qty": 1,
+              "name": "Dr. Eggman",
+              "set": "SLD",
+              "number": "2084"
+            }
+          ],
+          "main": [
+            {
+              "qty": 1,
+              "name": "Academy Ruins",
+              "set": "DRC",
+              "number": "58"
+            },
+            {
+              "qty": 1,
+              "name": "Anvil of Bogardan",
+              "set": "VIS",
+              "number": "141"
+            },
+            {
+              "qty": 1,
+              "name": "Arcane Signet",
+              "set": "MBC",
+              "number": "254"
+            },
+            {
+              "qty": 1,
+              "name": "Archway of Innovation",
+              "set": "MH3",
+              "number": "214"
+            },
+            {
+              "qty": 1,
+              "name": "Blazemire Verge",
+              "set": "DSK",
+              "number": "256"
+            },
+            {
+              "qty": 1,
+              "name": "Blitzwing, Cruel Tormentor",
+              "set": "BOT",
+              "number": "4"
+            },
+            {
+              "qty": 1,
+              "name": "Blood Crypt",
+              "set": "TRK",
+              "number": "278"
+            },
+            {
+              "qty": 1,
+              "name": "Bloodstained Mire",
+              "set": "MH3",
+              "number": "216"
+            },
+            {
+              "qty": 1,
+              "name": "Chaos Defiler",
+              "set": "40K",
+              "number": "110"
+            },
+            {
+              "qty": 1,
+              "name": "Chrome Dome",
+              "set": "TMT",
+              "number": "172"
+            },
+            {
+              "qty": 1,
+              "name": "Cityscape Leveler",
+              "set": "BRO",
+              "number": "233"
+            },
+            {
+              "qty": 1,
+              "name": "Coalstoke Gearhulk",
+              "set": "DFT",
+              "number": "198"
+            },
+            {
+              "qty": 1,
+              "name": "Combustible Gearhulk",
+              "set": "FIC",
+              "number": "292"
+            },
+            {
+              "qty": 1,
+              "name": "Command Tower",
+              "set": "MBC",
+              "number": "256"
+            },
+            {
+              "qty": 1,
+              "name": "Cryptothrall",
+              "set": "40K",
+              "number": "155"
+            },
+            {
+              "qty": 1,
+              "name": "Cyberdrive Awakener",
+              "set": "MAR",
+              "number": "53"
+            },
+            {
+              "qty": 1,
+              "name": "Cybermen Squadron",
+              "set": "WHO",
+              "number": "176"
+            },
+            {
+              "qty": 1,
+              "name": "Deadly Rollick",
+              "set": "TLE",
+              "number": "309"
+            },
+            {
+              "qty": 1,
+              "name": "Deflecting Swat",
+              "set": "TLE",
+              "number": "311"
+            },
+            {
+              "qty": 1,
+              "name": "Demonic Junker",
+              "set": "DFT",
+              "number": "83"
+            },
+            {
+              "qty": 1,
+              "name": "Depthshaker Titan",
+              "set": "EOC",
+              "number": "9"
+            },
+            {
+              "qty": 1,
+              "name": "Desynchronization",
+              "set": "ACR",
+              "number": "16"
+            },
+            {
+              "qty": 1,
+              "name": "Entropic Battlecruiser",
+              "set": "EOE",
+              "number": "99"
+            },
+            {
+              "qty": 1,
+              "name": "Exotic Orchard",
+              "set": "MBC",
+              "number": "79"
+            },
+            {
+              "qty": 1,
+              "name": "Fabricate",
+              "set": "SPG",
+              "number": "20"
+            },
+            {
+              "qty": 1,
+              "name": "Fierce Guardianship",
+              "set": "TLE",
+              "number": "307"
+            },
+            {
+              "qty": 1,
+              "name": "Foundry Inspector",
+              "set": "CMM",
+              "number": "385"
+            },
+            {
+              "qty": 1,
+              "name": "Geth's Grimoire",
+              "set": "MYSTOR",
+              "number": "101"
+            },
+            {
+              "qty": 1,
+              "name": "Gloomlake Verge",
+              "set": "DSK",
+              "number": "260"
+            },
+            {
+              "qty": 1,
+              "name": "Golbez, Crystal Collector",
+              "set": "FIN",
+              "number": "225"
+            },
+            {
+              "qty": 1,
+              "name": "Imposter Mech",
+              "set": "NEC",
+              "number": "13"
+            },
+            {
+              "qty": 1,
+              "name": "Inventors' Fair",
+              "set": "EOS",
+              "number": "21"
+            },
+            {
+              "qty": 3,
+              "name": "Island",
+              "set": "FRA",
+              "number": "385"
+            },
+            {
+              "qty": 1,
+              "name": "Knuckles the Echidna",
+              "set": "SLD",
+              "number": "2082"
+            },
+            {
+              "qty": 1,
+              "name": "Krang, Utrom Warlord",
+              "set": "TMT",
+              "number": "175"
+            },
+            {
+              "qty": 1,
+              "name": "Lightning Greaves",
+              "set": "MSC",
+              "number": "202"
+            },
+            {
+              "qty": 1,
+              "name": "Luxury Suite",
+              "set": "MSC",
+              "number": "252"
+            },
+            {
+              "qty": 1,
+              "name": "Mana Drain",
+              "set": "OTP",
+              "number": "11"
+            },
+            {
+              "qty": 1,
+              "name": "Metalwork Colossus",
+              "set": "MSC",
+              "number": "204"
+            },
+            {
+              "qty": 1,
+              "name": "Mikokoro, Center of the Sea",
+              "set": "DMC",
+              "number": "217"
+            },
+            {
+              "qty": 1,
+              "name": "Morphic Pool",
+              "set": "CLB",
+              "number": "357"
+            },
+            {
+              "qty": 3,
+              "name": "Mountain",
+              "set": "FRA",
+              "number": "391"
+            },
+            {
+              "qty": 1,
+              "name": "Myr Battlesphere",
+              "set": "TDC",
+              "number": "322"
+            },
+            {
+              "qty": 1,
+              "name": "Nautiloid Ship",
+              "set": "CLB",
+              "number": "328"
+            },
+            {
+              "qty": 1,
+              "name": "Noxious Gearhulk",
+              "set": "TDC",
+              "number": "191"
+            },
+            {
+              "qty": 1,
+              "name": "Oildeep Gearhulk",
+              "set": "DFT",
+              "number": "215"
+            },
+            {
+              "qty": 1,
+              "name": "Oppression",
+              "set": "WOT",
+              "number": "32"
+            },
+            {
+              "qty": 1,
+              "name": "Otawara, Soaring City",
+              "set": "NEO",
+              "number": "271"
+            },
+            {
+              "qty": 1,
+              "name": "Padeem, Consul of Innovation",
+              "set": "J25",
+              "number": "62"
+            },
+            {
+              "qty": 1,
+              "name": "Painful Quandary",
+              "set": "FDN",
+              "number": "179"
+            },
+            {
+              "qty": 1,
+              "name": "Palantir of Orthanc",
+              "set": "HOC",
+              "number": "45"
+            },
+            {
+              "qty": 1,
+              "name": "Polluted Delta",
+              "set": "MH3",
+              "number": "224"
+            },
+            {
+              "qty": 1,
+              "name": "Prismatic Vista",
+              "set": "SPG",
+              "number": "38"
+            },
+            {
+              "qty": 1,
+              "name": "Rakdos Charm",
+              "set": "EOC",
+              "number": "125"
+            },
+            {
+              "qty": 1,
+              "name": "Raucous Theater",
+              "set": "MKM",
+              "number": "266"
+            },
+            {
+              "qty": 1,
+              "name": "Ravenous Robots",
+              "set": "TMT",
+              "number": "106"
+            },
+            {
+              "qty": 1,
+              "name": "Reaver Titan",
+              "set": "40K",
+              "number": "163"
+            },
+            {
+              "qty": 1,
+              "name": "Relic of Sauron",
+              "set": "HOC",
+              "number": "46"
+            },
+            {
+              "qty": 1,
+              "name": "Riverpyre Verge",
+              "set": "DFT",
+              "number": "260"
+            },
+            {
+              "qty": 1,
+              "name": "Ruin Grinder",
+              "set": "FIC",
+              "number": "297"
+            },
+            {
+              "qty": 1,
+              "name": "Scalding Tarn",
+              "set": "SPG",
+              "number": "112"
+            },
+            {
+              "qty": 1,
+              "name": "Scrap Trawler",
+              "set": "MOC",
+              "number": "373"
+            },
+            {
+              "qty": 1,
+              "name": "Scrawling Crawler",
+              "set": "FDN",
+              "number": "132"
+            },
+            {
+              "qty": 1,
+              "name": "Shadow the Hedgehog",
+              "set": "SLD",
+              "number": "2086"
+            },
+            {
+              "qty": 1,
+              "name": "Simulacrum Synthesizer",
+              "set": "MAR",
+              "number": "61"
+            },
+            {
+              "qty": 1,
+              "name": "Skeleton Shard",
+              "set": "MRD",
+              "number": "242"
+            },
+            {
+              "qty": 1,
+              "name": "Sol Ring",
+              "set": "FRC",
+              "number": "21"
+            },
+            {
+              "qty": 1,
+              "name": "Starscream, Power Hungry",
+              "set": "BOT",
+              "number": "5"
+            },
+            {
+              "qty": 1,
+              "name": "Steam Vents",
+              "set": "TRK",
+              "number": "298"
+            },
+            {
+              "qty": 1,
+              "name": "Super State",
+              "set": "SLD",
+              "number": "2081"
+            },
+            {
+              "qty": 3,
+              "name": "Swamp",
+              "set": "FRA",
+              "number": "388"
+            },
+            {
+              "qty": 1,
+              "name": "Swiftfoot Boots",
+              "set": "MBC",
+              "number": "77"
+            },
+            {
+              "qty": 1,
+              "name": "Tainted Isle",
+              "set": "DSC",
+              "number": "303"
+            },
+            {
+              "qty": 1,
+              "name": "Tainted Peak",
+              "set": "DSC",
+              "number": "304"
+            },
+            {
+              "qty": 1,
+              "name": "Talisman of Creativity",
+              "set": "FRC",
+              "number": "61"
+            },
+            {
+              "qty": 1,
+              "name": "Talisman of Dominance",
+              "set": "FRC",
+              "number": "62"
+            },
+            {
+              "qty": 1,
+              "name": "Talisman of Indulgence",
+              "set": "FRC",
+              "number": "63"
+            },
+            {
+              "qty": 1,
+              "name": "Tergrid, God of Fright",
+              "set": "KHM",
+              "number": "112"
+            },
+            {
+              "qty": 1,
+              "name": "Terminate",
+              "set": "MSC",
+              "number": "189"
+            },
+            {
+              "qty": 1,
+              "name": "The Reaver Cleaver",
+              "set": "HOC",
+              "number": "94"
+            },
+            {
+              "qty": 1,
+              "name": "The Regalia",
+              "set": "FIN",
+              "number": "267"
+            },
+            {
+              "qty": 1,
+              "name": "Their Name is Death",
+              "set": "40K",
+              "number": "62"
+            },
+            {
+              "qty": 1,
+              "name": "Thopter Spy Network",
+              "set": "DRC",
+              "number": "83"
+            },
+            {
+              "qty": 1,
+              "name": "Thought Monitor",
+              "set": "EOC",
+              "number": "79"
+            },
+            {
+              "qty": 1,
+              "name": "Thundering Falls",
+              "set": "MKM",
+              "number": "269"
+            },
+            {
+              "qty": 1,
+              "name": "Tinybones, Bauble Burglar",
+              "set": "FDN",
+              "number": "72"
+            },
+            {
+              "qty": 1,
+              "name": "Training Center",
+              "set": "CMM",
+              "number": "434"
+            },
+            {
+              "qty": 1,
+              "name": "Ultron, Artificial Malevolence",
+              "set": "MSH",
+              "number": "252"
+            },
+            {
+              "qty": 1,
+              "name": "Undercity Sewers",
+              "set": "MKM",
+              "number": "270"
+            },
+            {
+              "qty": 1,
+              "name": "Uthros, Titanic Godcore",
+              "set": "EOE",
+              "number": "260"
+            },
+            {
+              "qty": 1,
+              "name": "Waste Not",
+              "set": "M15",
+              "number": "122"
+            },
+            {
+              "qty": 1,
+              "name": "Watery Grave",
+              "set": "TRK",
+              "number": "306"
+            },
+            {
+              "qty": 1,
+              "name": "Y'shtola Rhul",
+              "set": "FIN",
+              "number": "86"
+            }
+          ],
+          "sideboard": []
+        }
+      ]
+    }
+  ]
+}

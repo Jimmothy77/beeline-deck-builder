@@ -1,0 +1,92 @@
+About
+Name Voices of HUNTR/X [Lyse Hext]
+
+Commander
+1x Lyse Hext (FIC) 88
+
+Deck
+1x Akroma's Will (SOA) 1
+1x Aligned Heart (TDC) 12
+1x Alisaie Leveilleur (FIC) 9
+1x Alphinaud Leveilleur (FIC) 33
+1x Amphibian Downpour (MH3) 51
+1x Arcane Signet (MBC) 254
+1x Archmage Emeritus (SOC) 188
+1x Archmage of Runes (FDN) 30
+1x Brotherhood Regalia (ACR) 71
+1x Case of the Ransacked Lab (MKM) 45
+1x Celestial Armor (FDN) 5
+1x Combat Tutorial (FIN) 48
+1x Command Tower (MBC) 256
+1x Confound (PLS) 22
+1x Curator's Ward (DAR) 49
+1x Cyclonic Rift (SOA) 14
+1x Deliberate (ZNR) 56
+1x Dovin's Veto (FCA) 51
+1x Emerge Unscathed (MYS1) 89
+1x Feather of Flight (BLB) 13
+1x Flooded Strand (MH3) 220
+1x Floodfarm Verge (DSK) 259
+1x Focus the Mind (TDM) 45
+1x Frantic Search (TLE) 159
+1x Glacial Fortress (FRC) 73
+1x Hallowed Fountain (TRK) 286
+1x Hermes, Overseer of Elpis (FIC) 36
+1x Hraesvelgr of the First Brood (FIC) 37
+1x Idolized (PIP) 17
+12x Island (FRA) 385
+1x Keep Safe (IKO) 56
+1x Leadership Vacuum (C19) 9
+1x Leonin Lightscribe (STX) 20
+1x Lier, Disciple of the Drowned (TDC) 157
+1x Lightfoot Technique (TDM) 14
+1x Lock and Load (OTC) 15
+1x Merchant Scroll (MB2) 167
+1x Minamo, School at Water's Edge (LTC) 369
+1x Minas Tirith (HOC) 49
+1x Modify Memory (CLB) 83
+1x Monastery Mentor (TDC) 125
+1x Monk Class (AFR) 228
+1x Monumental Henge (MH3) 222
+1x Myriad Landscape (EOC) 169
+1x Mystic Sanctuary (SOC) 388
+1x Mystical Tutor (TLE) 308
+1x Nerd Rage (PIP) 34
+1x Open the Armory (CMR) 34
+1x Otawara, Soaring City (NEO) 271
+6x Plains (FRA) 382
+1x Ponder (MAR) 13
+1x Preordain (SOA) 21
+1x Prismatic Vista (SPG) 38
+1x Proft's Eidetic Memory (MKM) 67
+1x Rebellious Strike (TDM) 20
+1x Reliquary Tower (SOC) 398
+1x Robe of Stars (SPG) 121
+1x Rogue's Passage (HOC) 212
+1x Scroll of the Masters (FRF) 163
+1x Sea of Clouds (CLB) 360
+1x Shelter (CMM) 56
+1x Show of Confidence (STX) 28
+1x Silundi Vision (ZNR) 80
+1x Sink into Stupor (MH3) 241
+1x Slip Through Space (SLD) 2870
+1x Smothering Tithe (WOT) 13
+1x Snap (WOC) 110
+1x Sol Ring (FRC) 21
+1x Songbirds' Blessing (SOC) 174
+1x Stealth Mission (WAR) 70
+1x Steel of the Godhead (DDI) 30
+1x Swiftfoot Boots (MBC) 77
+1x Sword of the Animist (MSC) 289
+1x Swords to Plowshares (FRC) 37
+1x Talisman of Progress (FRC) 64
+1x Teferi's Ageless Insight (J25) 371
+1x Tempest Technique (TDC) 16
+1x Think Twice (MSC) 787
+1x Turnabout (RVR) 452
+1x Unwind (DAR) 72
+1x View from Above (CON) 38
+1x Winged Boots (OTC) 124
+1x Wizard Class (BLC) 112
+
+

@@ -1,0 +1,100 @@
+About
+Name Knights of Silk and Void [Sidar Jabari of Zhalfir]
+
+Commander
+1x Sidar Jabari of Zhalfir (MOC) 5
+
+Deck
+1x Akroma's Will (M3C) 165
+1x Ancient Tomb (EOS) 1
+1x And They Shall Know No Fear (40K) 9
+1x Anguished Unmaking (SOC) 293
+1x Arcane Signet (MBC) 254
+1x Battle Angels of Tyr (CLB) 9
+1x Bloodthirsty Conqueror (FDN) 58
+1x Bojuka Bog (SOC) 363
+1x Breathless Knight (MH2) 187
+1x Cavalier of Dawn (SPG) 84
+1x Cavern of Souls (LCI) 269
+1x Cecil, Dark Knight (FIN) 91
+1x Chivalric Alliance (MOC) 11
+1x Clever Concealment (MSC) 125
+1x Command Tower (MBC) 256
+1x Corpse Knight (DRC) 50
+1x Cyclonic Rift (SOA) 14
+1x Dauntless Bodyguard (DAR) 14
+1x Dawn's Truce (BLB) 9
+1x Demonic Tutor (CMM) 150
+1x Dion, Bahamut's Dominant (FIN) 16
+1x Drowned Catacomb (FRC) 69
+1x Entomb (TLE) 310
+1x Exsanguinator Cavalry (MOC) 26
+1x Fellwar Stone (MBC) 74
+1x Flawless Maneuver (FRC) 25
+1x Flooded Strand (MH3) 220
+1x Forsworn Paladin (AFR) 104
+1x Glacial Fortress (FRC) 73
+1x Godless Shrine (TRK) 285
+1x Grand Crescendo (FRC) 26
+1x Guardian of Faith (SOC) 146
+1x Haakon, Stromgald Scourge (MOC) 252
+1x Hallowed Fountain (TRK) 286
+1x Haytham Kenway (ACR) 57
+1x Herald of Hoofbeats (MOC) 22
+1x Herald's Horn (M3C) 296
+1x Invasion of New Capenna (MOM) 238
+1x Invasion of New Phyrexia (MOM) 239
+1x Island (FRA) 385
+1x Isolated Chapel (FRC) 74
+1x Kindred Discovery (MSC) 150
+1x Kinsbaile Cavalier (SPG) 130
+1x Knight Exemplar (MOC) 192
+1x Knight of Dusk's Shadow (DMU) 96
+1x Knight of the White Orchid (MOC) 193
+1x Knights' Charge (MOC) 333
+1x Locthwain Lancer (MOC) 27
+1x Mana Confluence (EOS) 25
+1x Marsh Flats (SPG) 110
+1x Marshal of Zhalfir (MOM) 246
+1x Minamo, School at Water's Edge (LTC) 369
+1x Minas Tirith (HOC) 49
+1x Moonshaker Cavalry (SOC) 110
+1x Morphic Pool (CLB) 357
+1x Otawara, Soaring City (NEO) 271
+1x Paladin Danse, Steel Maverick (PIP) 20
+1x Path to Exile (MB2) 15
+1x Patriarch's Bidding (MH2) 275
+9x Plains (FRA) 382
+1x Polluted Delta (MH3) 224
+1x Raffine's Tower (SNC) 254
+1x Raise the Palisade (HOC) 18
+1x Rhystic Study (WOT) 25
+1x Rogue's Passage (HOC) 212
+1x Sea of Clouds (CLB) 360
+1x Shizo, Death's Storehouse (DMC) 233
+1x Smitten Swordmaster (MOC) 268
+1x Sol Ring (FRC) 21
+1x Summon: Knights of Round (FIN) 36
+1x Summon: Primal Odin (FIN) 121
+1x Suppressor Skyguard (CLU) 46
+1x Swamp (FRA) 388
+1x Swords to Plowshares (FRC) 37
+1x Syr Vondam, Sunstar Exemplar (EOE) 231
+1x Takenuma, Abandoned Mire (NEO) 278
+1x Talisman of Dominance (FRC) 62
+1x Talisman of Hierarchy (SOC) 358
+1x Talisman of Progress (FRC) 64
+1x Teferi's Ageless Insight (J25) 371
+1x Teferi's Protection (TLE) 7
+1x The Soul Stone (OM1) 69
+1x True Conviction (SCD) 38
+1x Unsettled Mariner (MH1) 216
+1x Valiant Knight (MOC) 214
+1x Vault of Champions (CMM) 436
+1x Virtue of Loyalty (WOE) 38
+1x Vodalian Wave-Knight (MOC) 43
+1x Void Rend (FIC) 331
+1x Watery Grave (TRK) 306
+1x Wintermoor Commander (MOC) 345
+
+

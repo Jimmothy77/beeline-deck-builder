@@ -1,0 +1,38 @@
+About
+Name Floating World — Fish of Heat
+
+
+Deck
+2x Arid Archway (OTJ) 252
+2x Claim the Firstborn (ELD) 118
+4x Cloudpost (M3C) 330
+2x Cursed Mirror (SOC) 242
+2x Desert of the Fervent (J25) 764
+2x Dreadmaw's Ire (LCI) 147
+2x Filigree Familiar (CMR) 308
+2x Forgotten Cave (J25) 766
+2x Fuel the Flames (DFT) 126
+2x Geistblast (SIR) 160
+4x Great Furnace (EOC) 161
+2x Haunted Fengraf (C18) 254
+2x Into the Fire (MOM) 144
+2x Izzet Boilerworks (M3C) 350
+2x Mirage Mirror (M3C) 300
+2x Mishra's Foundry (BRC) 265
+4x Mountain (FRA) 391
+10x Red Herring (MKM) 142
+2x Reforge the Soul (INR) 167
+2x Shreds of Sanity (SIR) 141
+2x Slash Panther (NPH) 96
+2x Smoldering Crater (C20) 313
+2x Sudden Shock (TSP) 179
+2x Temple of Epiphany (SOC) 412
+2x Thespian's Stage (M3C) 395
+2x Trash for Treasure (2XM) 148
+2x Twinferno (J25) 606
+2x Untimely Malfunction (DSK) 161
+2x Vesuva (M3C) 404
+6x Word of Seizing (CMR) 420
+2x You Find Some Prisoners (AFR) 169
+
+

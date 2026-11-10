@@ -1,0 +1,98 @@
+About
+Name Operation Strix [The Second Doctor/Donna Noble]
+
+Commander
+1x Donna Noble (WHO) 82
+1x The Second Doctor (WHO) 156
+
+Deck
+1x Aboleth Spawn (CLB) 662
+1x Academy Rector (UDS) 1
+1x Academy Ruins (DRC) 58
+1x Arcane Signet (MBC) 254
+1x Arcbond (FRF) 91
+1x Arid Mesa (SPG) 109
+1x Aura Thief (UDS) 26
+1x Azorius Chancery (DSC) 261
+1x Blasphemous Act (ECC) 89
+1x Bloodthirsty Blade (MKC) 225
+1x Bohn, Beguiling Balladeer (SLX) 30
+1x Boros Charm (FDN) 721
+1x Boros Fury-Shield (RAV) 5
+1x Brash Taunter (DSC) 161
+1x Chain Reaction (SOC) 121
+1x Comeuppance (OMB) 1
+1x Command Tower (MBC) 256
+1x Crescendo of War (CMD) 12
+1x Curse of Opulence (TDC) 209
+1x Cursed Mirror (FRC) 49
+1x Deflecting Palm (MKC) 205
+1x Deflecting Swat (TLE) 311
+1x Delney, Streetwise Lookout (MKM) 12
+1x Displacer Kitten (CLB) 63
+1x Dovin's Veto (WAR) 193
+1x Duelist's Heritage (TLE) 153
+1x Elegant Parlor (MKM) 260
+1x Everybody Lives! (WHO) 18
+1x Exotic Orchard (MBC) 79
+1x Faerie Mastermind (SOC) 114
+1x Fierce Guardianship (TLE) 307
+1x Flawless Maneuver (FRC) 25
+1x Flooded Strand (MH3) 220
+1x Floodfarm Verge (DSK) 259
+1x Generous Gift (MSC) 133
+1x Generous Plunderer (BIG) 11
+1x Ghostly Prison (TDC) 116
+1x Gideon's Sacrifice (MKC) 68
+1x Hallowed Fountain (TRK) 286
+1x Hydroelectric Specimen (MH3) 240
+1x Invert Polarity (MH3) 190
+4x Island (FRA) 385
+1x Kor Haven (LTC) 368
+1x Loran of the Third Path (FCA) 24
+1x Mangara, the Diplomat (TDC) 124
+1x Martyrdom (ALL) 10a
+1x Maze of Ith (DMR) 250
+1x Meticulous Archive (MKM) 264
+1x Misleading Signpost (WOC) 11
+1x Mistveil Plains (ARENA) 386
+1x Monologue Tax (MSC) 192
+3x Mountain (FRA) 391
+1x Narset's Reversal (TDC) 92
+1x New Way Forward (TDM) 211
+1x Olorin's Searing Light (LTC) 503
+1x Pain for All (EOE) 151
+1x Path to Exile (FRC) 30
+1x Permission Denied (REX) 17
+1x Phyrexian Vindicator (ONE) 27
+6x Plains (FRA) 382
+1x Portal Manipulator (CLU) 40
+1x Prismatic Vista (SPG) 38
+1x Propaganda (FIC) 268
+1x Reins of Power (CLB) 734
+1x Render Silent (GK2) 18
+1x Sacred Foundry (TRK) 295
+1x Scalding Tarn (SPG) 112
+1x Scavenger Grounds (MSC) 263
+1x Sea of Clouds (CLB) 360
+1x Selfless Squire (MKC) 82
+1x Smuggler's Share (MKC) 84
+1x Sol Ring (FRC) 21
+1x Spectator Seating (MSC) 268
+1x Strip Mine (ATH) 5
+1x Struggle for Project Purity (PIP) 39
+1x Sudden Impact (10E) 241
+1x Sunbillow Verge (DFT) 264
+1x Sunforger (CMR) 473
+1x Take the Bait (MKC) 43
+1x Talisman of Conviction (MSC) 217
+1x Talisman of Creativity (FRC) 61
+1x Talisman of Progress (FRC) 64
+1x Tataru Taru (FIC) 30
+1x Teferi's Protection (TLE) 7
+1x Trenzalore Clocktower (WHO) 190
+1x Trouble in Pairs (PZA) 3
+1x Wear // Tear (MOC) 343
+1x Weathered Wayfarer (LTC) 183
+
+
