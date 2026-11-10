@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   CARD_RATIO,
+  DESKTOP_THUMB_WIDTH,
+  FLYOUT_FADE_MS,
+  FLYOUT_FLIP_EASING,
+  FLYOUT_FLIP_MS,
+  FLYOUT_GROW_EASING,
+  FLYOUT_GROW_MS,
+  bezierPoints,
+  smoothFlipEasing,
   TOKEN_TILE_THRESHOLD,
   backToTopVisible,
   flipPlan,
@@ -11,7 +19,7 @@ import {
 } from "@/lib/desktop";
 
 const viewport = { width: 1440, height: 900 };
-const size = { width: 320, height: Math.floor(320 * CARD_RATIO) };
+const size = { width: 400, height: Math.floor(400 * CARD_RATIO) };
 const overlaps = (a: { left: number; right: number }, left: number, width: number) => !(left >= a.right || left + width <= a.left);
 
 describe("flyout flip plan", () => {
@@ -64,7 +72,7 @@ describe("flyout placement", () => {
     const anchor = { left: 1150, top: 300, right: 1330, bottom: 460 };
     const place = flyoutPlacement(anchor, viewport, size);
     expect(place.side).toBe("left");
-    expect(place.left).toBe(1150 - 12 - 320);
+    expect(place.left).toBe(1150 - 12 - 400);
     expect(place.left + place.width).toBeLessThanOrEqual(viewport.width - 12);
     expect(overlaps(anchor, place.left, place.width)).toBe(false);
   });
@@ -88,10 +96,46 @@ describe("flyout placement", () => {
   });
 
   it("shrinks the card to fit a short window and keeps card proportions", () => {
-    expect(flyoutSize({ width: 1440, height: 900 })).toEqual({ width: 320, height: Math.floor(320 * CARD_RATIO) });
+    expect(flyoutSize({ width: 1440, height: 900 })).toEqual({ width: 400, height: Math.floor(400 * CARD_RATIO) });
     const short = flyoutSize({ width: 1440, height: 400 });
     expect(short.height).toBeLessThanOrEqual(400 - 24);
     expect(short.width).toBe(Math.floor((400 - 24) / CARD_RATIO));
+  });
+});
+
+describe("flyout flip timing (v0.1.27)", () => {
+  // v0.1.26 turned in 900ms on cubic-bezier(0.2, 0.7, 0.2, 1), which whips through the first turn.
+  const OLD_FLIP_MS = 900;
+  const OLD_FLIP_EASING = "cubic-bezier(0.2, 0.7, 0.2, 1)";
+
+  it("is about twice as long as v0.1.26, and still settles quickly enough to stay snappy", () => {
+    expect(FLYOUT_FLIP_MS).toBe(1800);
+    expect(FLYOUT_FLIP_MS / OLD_FLIP_MS).toBe(2);
+    expect(FLYOUT_GROW_MS).toBeLessThan(FLYOUT_FLIP_MS);
+    expect(FLYOUT_FADE_MS).toBeLessThanOrEqual(200);
+  });
+
+  it("eases in and out with no whip at the start and no swing past the front", () => {
+    expect(bezierPoints(FLYOUT_FLIP_EASING)).toEqual([0.45, 0, 0.25, 1]);
+    expect(smoothFlipEasing(FLYOUT_FLIP_EASING)).toBe(true);
+    expect(smoothFlipEasing(OLD_FLIP_EASING)).toBe(false);
+    expect(smoothFlipEasing("cubic-bezier(0, 0, 1, 1)")).toBe(false);
+    expect(smoothFlipEasing("cubic-bezier(0.45, 0, 0.25, 1.3)")).toBe(false);
+    expect(smoothFlipEasing("ease")).toBe(false);
+    expect(bezierPoints(FLYOUT_GROW_EASING)).not.toBeNull();
+  });
+
+});
+
+describe("flyout size against the v0.1.27 thumbnails", () => {
+  it("stays clearly larger than the 160px desktop thumbnail", () => {
+    expect(DESKTOP_THUMB_WIDTH).toBe(160);
+    expect(flyoutSize({ width: 1440, height: 900 }).width).toBeGreaterThanOrEqual(2.5 * DESKTOP_THUMB_WIDTH);
+    for (const viewport of [{ width: 1024, height: 768 }, { width: 1280, height: 720 }, { width: 1920, height: 1080 }]) {
+      const fly = flyoutSize(viewport);
+      expect(fly.width).toBeGreaterThanOrEqual(2 * DESKTOP_THUMB_WIDTH);
+      expect(fly.height).toBeLessThanOrEqual(viewport.height - 24);
+    }
   });
 });
 

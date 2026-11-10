@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { useState } from "react";
 import type { FlipPlan, FlyoutPlacement } from "@/lib/desktop";
+import { FLYOUT_FLIP_EASING, FLYOUT_FLIP_MS, FLYOUT_GROW_EASING, FLYOUT_GROW_MS } from "@/lib/desktop";
 import { largeThumbSources, thumbSources } from "@/lib/thumb-load";
 
 /** One card the flyout can show. `dfcBack` is the chosen back face of a double-faced card. */
@@ -39,6 +40,11 @@ export function FlyoutLayer({ shown }: { shown: FlyoutShown }) {
     width: placement.width,
     height: placement.height,
     "--flyout-turn": `${plan.turns * 360}deg`,
+    // Timing comes from desktop.ts so it is tested; the reduced-motion and fade rules in index.css do not use these.
+    "--flyout-flip-ms": `${FLYOUT_FLIP_MS}ms`,
+    "--flyout-flip-ease": FLYOUT_FLIP_EASING,
+    "--flyout-grow-ms": `${FLYOUT_GROW_MS}ms`,
+    "--flyout-grow-ease": FLYOUT_GROW_EASING,
     transformOrigin: placement.side === "left" ? "right center" : placement.side === "right" ? "left center" : "center",
   } as CSSProperties;
   return (

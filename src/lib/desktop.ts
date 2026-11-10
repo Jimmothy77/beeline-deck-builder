@@ -16,13 +16,47 @@ export const REDUCED_MOTION_MEDIA = "(prefers-reduced-motion: reduce)";
 
 /** Card proportions (63 x 88 mm). */
 export const CARD_RATIO = 88 / 63;
-export const FLYOUT_MAX_WIDTH = 320;
+/** Main-deck art width at desktop widths (Tailwind `lg:w-40`). Phones keep `w-12`. */
+export const DESKTOP_THUMB_WIDTH = 160;
+export const FLYOUT_MAX_WIDTH = 400;
 export const FLYOUT_MARGIN = 12;
 export const FLYOUT_GAP = 12;
 /** Whole turns the card makes while it expands. Two turns show the back twice. */
 export const FLYOUT_TURNS = 2;
-export const FLYOUT_FLIP_MS = 900;
+/**
+ * One continuous turn of FLYOUT_TURNS x 360deg, so there is no stop or snap
+ * between the flips. v0.1.26 used 900ms with cubic-bezier(0.2, 0.7, 0.2, 1),
+ * which whips through the first turn. This is twice as long with a symmetric-ish
+ * ease-in-out: it starts gently, keeps an even speed through both turns, and
+ * slows smoothly onto the front. No overshoot, so it never swings past the front.
+ */
+export const FLYOUT_FLIP_MS = 1800;
+export const FLYOUT_FLIP_EASING = "cubic-bezier(0.45, 0, 0.25, 1)";
+/** The card grows from the thumbnail side faster than it turns, so it is readable early. */
+export const FLYOUT_GROW_MS = 600;
+export const FLYOUT_GROW_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";
 export const FLYOUT_FADE_MS = 160;
+
+/** The four control points of a `cubic-bezier(x1, y1, x2, y2)` easing, or null if it is not one. */
+export function bezierPoints(easing: string): [number, number, number, number] | null {
+  const match = /^cubic-bezier\(([^)]*)\)$/.exec(easing.trim());
+  if (!match) return null;
+  const points = match[1]!.split(",").map((part) => Number(part.trim()));
+  return points.length === 4 && points.every(Number.isFinite) ? (points as [number, number, number, number]) : null;
+}
+
+/**
+ * A flip easing is smooth when it starts and ends at zero speed and never
+ * overshoots: y1 = 0 with x1 > 0 (no whip at the start), y2 = 1 with x2 < 1
+ * (eases onto the front, no swing past it). Linear fails: it starts and stops
+ * at full speed.
+ */
+export function smoothFlipEasing(easing: string): boolean {
+  const points = bezierPoints(easing);
+  if (!points) return false;
+  const [x1, y1, x2, y2] = points;
+  return x1 > 0 && x1 <= 1 && x2 >= 0 && x2 < 1 && y1 === 0 && y2 === 1;
+}
 
 export type Rect = { left: number; top: number; right: number; bottom: number };
 export type Size = { width: number; height: number };
@@ -63,7 +97,7 @@ export function flipPlan({
   return { mode, turns, faces, backImage: dfcBack || cardback || null };
 }
 
-/** Flyout size: up to 320px wide, never taller than the viewport minus its margins. */
+/** Flyout size: up to FLYOUT_MAX_WIDTH (400px) wide, never taller than the viewport minus its margins. */
 export function flyoutSize(viewport: Size, maxWidth = FLYOUT_MAX_WIDTH, margin = FLYOUT_MARGIN): Size {
   const byHeight = Math.max(0, (viewport.height - margin * 2) / CARD_RATIO);
   const byWidth = Math.max(0, viewport.width - margin * 2);

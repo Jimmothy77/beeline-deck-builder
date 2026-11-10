@@ -233,7 +233,7 @@ export function BuilderView({
       {mains.length === 0 ? (
         <p className="text-sm text-muted-foreground">No main-deck cards match that search.</p>
       ) : (
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-[repeat(auto-fill,minmax(17rem,1fr))]">
           {mains.map((card) => (
             <CardTile
               key={card.id}
@@ -293,7 +293,7 @@ export function BuilderView({
   );
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 py-4 sm:px-6 sm:py-6 lg:max-w-7xl">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 py-4 sm:px-6 sm:py-6 lg:max-w-[96rem]">
       <div className="flex flex-wrap items-center gap-3">
         <Button ref={topRef} type="button" variant="ghost" onClick={onBack}>
           <ChevronLeft /> Decks
@@ -613,15 +613,17 @@ function CardTile({
           const backArt = back ? chosenArt(back, pair.back) : null;
           const preview: FlyoutCard = { key: `${card.id}:${index}`, front: art?.thumbId, dfcBack: backArt?.thumbId, alt: card.name };
           return (
-            <li key={`${pair.art}:${index}`} className="flex items-center gap-2 lg:flex-wrap">
-              <button type="button" {...flyout?.(preview)} onClick={() => saved && onArt(index, "front")} className="w-12 shrink-0 text-left lg:w-20" aria-label={`Choose front art ${index + 1} for ${card.name}`}>
+            <li key={`${pair.art}:${index}`} className="flex items-center gap-2 lg:flex-wrap lg:justify-center lg:gap-y-1">
+              <button type="button" {...flyout?.(preview)} onClick={() => saved && onArt(index, "front")} className="w-12 shrink-0 text-left lg:w-40" aria-label={`Choose front art ${index + 1} for ${card.name}`}>
                 <CardThumb id={art?.thumbId} alt={card.name} />
               </button>
               {back ? (
-                <button type="button" {...flyout?.(preview)} onClick={() => saved && onArt(index, "back")} className="w-12 shrink-0 text-left lg:w-20" aria-label={`Choose back art ${index + 1} for ${card.name}`}>
+                <button type="button" {...flyout?.(preview)} onClick={() => saved && onArt(index, "back")} className="w-12 shrink-0 text-left lg:w-[clamp(4rem,calc(100%_-_10.5rem),10rem)]" aria-label={`Choose back art ${index + 1} for ${card.name}`}>
                   <CardThumb id={backArt?.thumbId} alt={back.name} />
                 </button>
               ) : null}
+              {/* Desktop: the count controls go on their own line under the art, so every tile lines up. */}
+              <span aria-hidden="true" className="hidden lg:block lg:basis-full" />
               <Qty name={`${card.name} art ${index + 1}`} value={pair.qty} onChange={(next) => onQty(index, next)} />
             </li>
           );

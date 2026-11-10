@@ -20,5 +20,5 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src/lib/decklist.test.ts", "src/lib/shipped-decklists.test.ts", "src/components/banner.test.tsx", "src/lib/faces.test.ts", "src/components/home-counts.test.tsx"]
+  "include": ["src/lib/flyout-css.test.ts", "src/lib/decklist.test.ts", "src/lib/shipped-decklists.test.ts", "src/components/banner.test.tsx", "src/lib/faces.test.ts", "src/components/home-counts.test.tsx"]
 }

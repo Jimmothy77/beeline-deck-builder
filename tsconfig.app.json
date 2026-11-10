@@ -26,5 +26,5 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": ["src"],
-  "exclude": ["src/lib/public-ids.ts", "src/lib/public-ids.test.ts", "src/lib/decklist.test.ts", "src/lib/shipped-decklists.test.ts", "src/components/banner.test.tsx", "src/lib/faces.test.ts", "src/components/home-counts.test.tsx"]
+  "exclude": ["src/lib/flyout-css.test.ts", "src/lib/public-ids.ts", "src/lib/public-ids.test.ts", "src/lib/decklist.test.ts", "src/lib/shipped-decklists.test.ts", "src/components/banner.test.tsx", "src/lib/faces.test.ts", "src/components/home-counts.test.tsx"]
 }

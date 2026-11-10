@@ -8,6 +8,7 @@ import { BuilderView } from "@/components/BuilderView";
 import { freshDraft } from "@/lib/draft";
 import type { SavedDeck } from "@/lib/storage";
 import type { CardFace, CardRole, DeckCard, DeckCatalogue, Edition } from "@/lib/types";
+import { DESKTOP_THUMB_WIDTH, FLYOUT_FLIP_EASING, FLYOUT_FLIP_MS, FLYOUT_GROW_EASING, FLYOUT_GROW_MS } from "@/lib/desktop";
 
 // Made-up ids. None of them is shaped like a Drive id.
 function face(id: string, name: string): CardFace {
@@ -179,6 +180,43 @@ describe("desktop card flyout", () => {
     expect(flyout()!.querySelector('[data-face="back"] img')?.getAttribute("src")).toContain("thumb-m1");
   });
 
+  it("takes its flip timing and easing from desktop.ts", () => {
+    render();
+    hover(frontButton("Akroma"));
+    const layer = flyout()!;
+    expect(layer.style.getPropertyValue("--flyout-flip-ms")).toBe(`${FLYOUT_FLIP_MS}ms`);
+    expect(layer.style.getPropertyValue("--flyout-flip-ease")).toBe(FLYOUT_FLIP_EASING);
+    expect(layer.style.getPropertyValue("--flyout-grow-ms")).toBe(`${FLYOUT_GROW_MS}ms`);
+    expect(layer.style.getPropertyValue("--flyout-grow-ease")).toBe(FLYOUT_GROW_EASING);
+  });
+
+  it("closes at once mid-flip, and the next card starts its own flip from the beginning", () => {
+    vi.useFakeTimers();
+    try {
+      render();
+      hover(frontButton("Akroma"));
+      const first = flyout()!;
+      act(() => {
+        vi.advanceTimersByTime(FLYOUT_FLIP_MS / 2);
+      });
+      leave(frontButton("Akroma"));
+      expect(flyout()).toBeNull();
+      expect(document.querySelectorAll(".beeline-flyout")).toHaveLength(0);
+      hover(frontButton("Akroma"));
+      expect(flyout()).not.toBe(first);
+      // A fast move can deliver the next card's pointerover before this one's pointerout.
+      const again = flyout()!;
+      hover(frontButton("Arcane Signet"));
+      const next = flyout()!;
+      expect(next).not.toBe(again);
+      expect(again.isConnected).toBe(false);
+      expect(next.querySelector('[data-face="front"] img[alt="Arcane Signet"]')).not.toBeNull();
+      expect(document.querySelectorAll("[data-flyout]")).toHaveLength(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("does no flips with reduced motion", () => {
     media.reduced = true;
     render();
@@ -210,10 +248,28 @@ describe("desktop art size", () => {
     const front = frontButton("Dowsing Dagger // Lost Vale");
     const back = desktopPane().querySelector<HTMLButtonElement>('button[aria-label="Choose back art 1 for Dowsing Dagger // Lost Vale"]')!;
     for (const button of [front, back]) {
-      expect(button.className.split(" ")).toEqual(expect.arrayContaining(["w-12", "lg:w-20"]));
+      expect(button.className.split(" ")).toContain("w-12");
       expect(button.className.split(" ").filter((name) => /^w-/.test(name))).toEqual(["w-12"]);
     }
+    // v0.1.27: the front is 160px (lg:w-40, twice v0.1.26's lg:w-20).
+    expect(front.className.split(" ")).toContain(`lg:w-${DESKTOP_THUMB_WIDTH / 4}`);
+    // A double-faced card's back takes what is left of the tile beside the front, up to the same 160px, so it never pushes the tile wider.
+    expect(back.className.split(" ")).toContain("lg:w-[clamp(4rem,calc(100%_-_10.5rem),10rem)]");
     expect(front.parentElement!.className).toContain("lg:flex-wrap");
+    // The count controls go on their own line under the art at desktop width; on phones the break is display:none.
+    const brk = front.parentElement!.querySelector('span[aria-hidden="true"]')!;
+    expect(brk.className.split(" ")).toEqual(["hidden", "lg:block", "lg:basis-full"]);
+    expect(brk.nextElementSibling?.querySelector('[aria-label="More copies of Dowsing Dagger // Lost Vale art 1"]')).not.toBeNull();
+  });
+
+  it("wraps the main grid into as many 17rem columns as fit at desktop width, keeping the phone and tablet columns", () => {
+    render();
+    const grid = desktopPane().querySelector("ul")!;
+    const classes = grid.className.split(" ");
+    expect(classes).toEqual(expect.arrayContaining(["grid", "grid-cols-2", "sm:grid-cols-3", "lg:grid-cols-[repeat(auto-fill,minmax(17rem,1fr))]"]));
+    expect(classes.filter((name) => /^xl:/.test(name))).toEqual([]);
+    const page = document.querySelector("aside")!.parentElement!.parentElement!;
+    expect(page.className.split(" ")).toEqual(expect.arrayContaining(["max-w-6xl", "lg:max-w-[96rem]"]));
   });
 
   it("closes the flyout when its card leaves the list while hovered", async () => {
