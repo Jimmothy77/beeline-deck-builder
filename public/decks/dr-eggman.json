@@ -2332,6 +2332,25 @@
           ]
         },
         {
+          "id": "extra-cryptothrall-2",
+          "name": "Cryptothrall 2",
+          "role": "extra",
+          "defaultQty": 0,
+          "faces": [
+            {
+              "id": "extra-cryptothrall-2:front",
+              "name": "Cryptothrall 2",
+              "defaultArt": {
+                "id": "16xRH1MWBRq0_Ir0CVInn1Ajo2NmQT5K7",
+                "name": "Cryptothrall 2.jpg",
+                "thumbId": "16xRH1MWBRq0_Ir0CVInn1Ajo2NmQT5K7",
+                "label": "Cryptothrall 2"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
           "id": "extra-dr-eggman-2",
           "name": "Dr. Eggman 2",
           "role": "extra",
@@ -2497,6 +2516,25 @@
                 "name": "Mountain Chaos.jpg",
                 "thumbId": "1c0OW_sYRB5eHVORcU_nZBT0I3fVuXGra",
                 "label": "Mountain Chaos"
+              },
+              "alternates": []
+            }
+          ]
+        },
+        {
+          "id": "extra-scrap-trawler-2",
+          "name": "Scrap Trawler 2",
+          "role": "extra",
+          "defaultQty": 0,
+          "faces": [
+            {
+              "id": "extra-scrap-trawler-2:front",
+              "name": "Scrap Trawler 2",
+              "defaultArt": {
+                "id": "1yPjKV7rK-2UMgWQpN07JctJ8evFhH344",
+                "name": "Scrap Trawler 2.jpg",
+                "thumbId": "1yPjKV7rK-2UMgWQpN07JctJ8evFhH344",
+                "label": "Scrap Trawler 2"
               },
               "alternates": []
             }

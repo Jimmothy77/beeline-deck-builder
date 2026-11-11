@@ -6,15 +6,17 @@
  *   npx tsx scripts/build-catalogue.ts --all    every deck in public/decks/index.json
  *
  * Lists the public BeeLine folder through the embedded folder view (no sign-in), following shortcuts to
- * each deck's Standard folder. Before building, it walks the whole public root and fails if any Deluxe or
- * Partial Foil folder is reachable (naming the folder path, never an id). Paid folders are never requested,
- * so their ids cannot land in the JSON.
+ * each deck's Standard folder. Before building, it walks the whole public root as an allow-list
+ * (scripts/public-folder-names.ts) and fails on any folder named like a paid edition, any folder name not on
+ * the list, and any folder it couldn't read, naming the folder path, never an id. Paid folders are never
+ * requested, so their ids cannot land in the JSON.
  */
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { assertPublicTreeFree, buildShippedStandardTree, guardPublicTree } from "../src/lib/crawl";
+import { assertPublicTreeFree, buildShippedStandardTree, guardPublicTree, type Lister, type PublicTreeReport } from "../src/lib/crawl";
 import { catalogueFromTree, isCompleteCollectionName, isFullDeckFolderName } from "../src/lib/group";
 import type { DeckIndex, RawNode } from "../src/lib/types";
+import { PUBLIC_FOLDER_NAMES } from "./public-folder-names";
 import { PUBLIC_ROOT, listEmbedded } from "./public-root";
 
 function treeHasDeckFolder(node: RawNode): boolean {
@@ -72,10 +74,20 @@ async function buildDeck(root: string, deckQuery: string, out: string, expectId?
   for (const note of ambiguous) console.log(`  - ${note.name}: ${note.reason}`);
 }
 
+/**
+ * One walk of the whole public root before anything is built. A paid-looking folder, a folder name that
+ * isn't on the allow-list, or a folder that couldn't be read (report.unreadable, as check-public-root
+ * treats it) stops the build.
+ */
+export async function checkPublicTree(root: string, list: Lister, allowed: ReadonlySet<string> = PUBLIC_FOLDER_NAMES): Promise<PublicTreeReport> {
+  const report = await guardPublicTree(root, list, allowed);
+  assertPublicTreeFree(report);
+  return report;
+}
+
 async function main() {
   const root = arg("root", PUBLIC_ROOT);
-  // One walk of the whole public root first: any reachable Deluxe or Partial Foil folder stops the build.
-  assertPublicTreeFree(await guardPublicTree(root, (id) => listEmbedded(id)));
+  await checkPublicTree(root, (id) => listEmbedded(id));
   if (process.argv.includes("--all")) {
     // Every deck already in the index, under its own name and file.
     const index = JSON.parse(await readFile(path.join("public", "decks", "index.json"), "utf8")) as DeckIndex;
@@ -87,7 +99,9 @@ async function main() {
   await buildDeck(root, deckQuery, out);
 }
 
-main().catch((error: unknown) => {
-  console.error(error instanceof Error ? error.message : error);
-  process.exit(1);
-});
+if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.meta.filename)) {
+  main().catch((error: unknown) => {
+    console.error(error instanceof Error ? error.message : error);
+    process.exit(1);
+  });
+}

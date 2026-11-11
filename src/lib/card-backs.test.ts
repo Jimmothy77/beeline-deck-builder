@@ -6,7 +6,9 @@ import { flyoutBack } from "@/lib/desktop";
 import { backOptions, resolveBackOverride, selectionToSlots, type SavedCard } from "@/lib/selection";
 import { exportSavedJson, importSavedJson, loadSaved, writeSaved, SAVED_KEY } from "@/lib/storage";
 import { TOKEN_OVERRIDES } from "@/data/token-overrides";
-import { heuristicIsToken, isTokenCard, tokenQueryName, tokenVerdict } from "@/lib/tokens";
+import { heuristicIsToken, isTokenCard, tokenQueryName, tokenQueryNames, tokenVerdict } from "@/lib/tokens";
+import { normalizeKey } from "@/lib/names";
+import { own } from "@/lib/own";
 import type { CardFace, CardRole, DeckCard, DeckCatalogue, Edition } from "@/lib/types";
 import { buildXml, type XmlSlot } from "@/lib/xml";
 
@@ -79,6 +81,7 @@ describe("token lookup (one-time Scryfall cross-reference, committed)", () => {
   it("covers every extra and token name in the shipped decks, and the app never calls Scryfall", () => {
     const listed = new Set(TOKEN_LOOKUP_UNMATCHED);
     expect(Object.keys(TOKEN_LOOKUP).length + listed.size).toBeGreaterThan(300);
+    const unmatched = new Set(TOKEN_LOOKUP_UNMATCHED.map((name) => normalizeKey(name)));
     for (const name of readdirSync(path.join(root, "src"), { recursive: true }) as string[]) {
       if (!/\.(ts|tsx)$/.test(name) || name.endsWith(".test.ts") || name.endsWith(".test.tsx")) continue;
       expect(readFileSync(path.join(root, "src", name), "utf8"), name).not.toMatch(/api\.scryfall\.com/);
@@ -88,6 +91,9 @@ describe("token lookup (one-time Scryfall cross-reference, committed)", () => {
     for (const name of decks) {
       const deck = JSON.parse(readFileSync(path.join(root, "public/decks", name), "utf8")) as DeckCatalogue;
       for (const item of deck.editions.flatMap((ed) => ed.cards)) if (item.role !== "main" && isTokenCard(item)) tokens += 1;
+      // Every extra and token has a lookup entry (or is listed as unmatched), as token-lookup.ts --check says.
+      const missing = deck.editions.flatMap((ed) => ed.cards).filter((item) => item.role !== "main").flatMap((item) => tokenQueryNames(item)).filter((query) => normalizeKey(query) && !own(TOKEN_LOOKUP, normalizeKey(query)) && !unmatched.has(normalizeKey(query)));
+      expect(missing, name).toEqual([]);
     }
     expect(tokens).toBe(327);
   });

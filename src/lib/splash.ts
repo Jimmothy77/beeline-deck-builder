@@ -12,6 +12,8 @@
  * drawn by the app itself, which can't fail to load. A registered asset that is missing or fails (a 404,
  * an error, no "ready" message in time) skips cleanly: the splash just closes.
  */
+import { own } from "@/lib/own";
+
 export const SPLASH_KEY_PREFIX = "printabee.splash.v1.";
 
 /** sessionStorage key for one deck. */
@@ -73,7 +75,7 @@ function isSplashAsset(value: unknown): value is SplashAsset {
 /** The deck's own splash from the registry, else the fallback asset, else the generic one. */
 export function splashFor(deckId: string, registry: SplashRegistry, fallback?: SplashAsset): SplashChoice {
   // Only a well-formed entry counts (an inherited name such as "toString" isn't one).
-  const asset: unknown = registry[deckId];
+  const asset: unknown = own(registry, deckId);
   if (isSplashAsset(asset)) return asset;
   if (isSplashAsset(fallback)) return fallback;
   return { kind: "generic", durationMs: GENERIC_SPLASH_MS };

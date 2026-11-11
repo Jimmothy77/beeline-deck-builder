@@ -24,6 +24,7 @@ import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { TOKEN_LOOKUP, TOKEN_LOOKUP_UNMATCHED } from "../src/data/token-lookup";
 import { normalizeKey } from "../src/lib/names";
+import { own } from "../src/lib/own";
 import { TOKEN_OVERRIDES } from "../src/data/token-overrides";
 import { heuristicIsToken, tokenQueryNames, tokenVerdict, type TokenLookupEntry, type TokenOverride } from "../src/lib/tokens";
 import type { DeckCatalogue, DeckCard } from "../src/lib/types";
@@ -87,7 +88,8 @@ function namesOf(card: ScryCard): string[] {
 
 async function fetchLookup(): Promise<{ lookup: Record<string, TokenLookupEntry>; unmatched: string[]; requests: number }> {
   const queries = [...collectQueries().entries()];
-  const lookup: Record<string, TokenLookupEntry> = {};
+  // No prototype: a card named "Constructor" or "toString" is a key like any other.
+  const lookup: Record<string, TokenLookupEntry> = Object.create(null) as Record<string, TokenLookupEntry>;
   let requests = 0;
   for (let start = 0; start < queries.length; start += 75) {
     const batch = queries.slice(start, start + 75);
@@ -122,7 +124,7 @@ async function fetchLookup(): Promise<{ lookup: Record<string, TokenLookupEntry>
     else if (cards.length) take(cards[0]!, false);
     else if (!entry.token && !GAME_LAYOUTS.has(entry.layout)) entry.ambiguous = `only a non-game Scryfall object: ${entry.scryfall} (${entry.layout})`;
   }
-  const unmatched = queries.filter(([key]) => !lookup[key]).map(([, item]) => item.query).sort((a, b) => a.localeCompare(b));
+  const unmatched = queries.filter(([key]) => !own(lookup, key)).map(([, item]) => item.query).sort((a, b) => a.localeCompare(b));
   return { lookup, unmatched, requests };
 }
 
@@ -134,7 +136,7 @@ function writeLookup(lookup: Record<string, TokenLookupEntry>, unmatched: string
     'import type { TokenLookupEntry } from "@/lib/tokens";',
     "",
     "export const TOKEN_LOOKUP: Readonly<Record<string, TokenLookupEntry>> = {",
-    ...keys.map((key) => `  ${JSON.stringify(key)}: ${JSON.stringify(lookup[key])},`),
+    ...keys.map((key) => `  ${JSON.stringify(key)}: ${JSON.stringify(own(lookup, key))},`),
     "};",
     "",
     "/** Names Scryfall had no card for. These use the folder and name heuristic. */",
@@ -149,12 +151,12 @@ function writeLookup(lookup: Record<string, TokenLookupEntry>, unmatched: string
 function report(lookup: Readonly<Record<string, TokenLookupEntry>>, unmatchedNames: readonly string[]): string {
   const queries = collectQueries();
   const entries = [...queries.entries()];
-  const matched = entries.filter(([key]) => lookup[key]);
-  const ambiguous = matched.filter(([key]) => lookup[key]!.ambiguous);
-  const clear = matched.filter(([key]) => !lookup[key]!.ambiguous);
-  const tokens = clear.filter(([key]) => lookup[key]!.token);
-  const nonTokens = clear.filter(([key]) => !lookup[key]!.token);
-  const unmatched = entries.filter(([key]) => !lookup[key]);
+  const matched = entries.filter(([key]) => own(lookup, key));
+  const ambiguous = matched.filter(([key]) => own(lookup, key)!.ambiguous);
+  const clear = matched.filter(([key]) => !own(lookup, key)!.ambiguous);
+  const tokens = clear.filter(([key]) => own(lookup, key)!.token);
+  const nonTokens = clear.filter(([key]) => !own(lookup, key)!.token);
+  const unmatched = entries.filter(([key]) => !own(lookup, key));
   const where = (uses: Use[]) => uses.map((use) => `${use.deck}: ${use.card} [${use.role}]`).join("; ");
   const cards = shippedCards();
   const verdicts = cards.map(({ deck, deckId, card }) => ({ deck, card, verdict: tokenVerdict(card, lookup, deckId), heuristic: heuristicIsToken(card) }));
@@ -182,7 +184,7 @@ function report(lookup: Readonly<Record<string, TokenLookupEntry>>, unmatchedNam
     `== Overrides (${TOKEN_OVERRIDES.length}) ==`,
     ...TOKEN_OVERRIDES.map((item) => {
       const hit = byHand.find((use) => use.verdict.override === item);
-      const entry = lookup[normalizeKey(hit?.verdict.query ?? item.card)];
+      const entry = own(lookup, normalizeKey(hit?.verdict.query ?? item.card));
       const list = item.token ? "Token Backs" : "Alt Back";
       return `- ${hit?.deck ?? item.deck}: ${item.card} [${hit?.card.role ?? "no card"}] -> ${item.token ? "token" : "not a token"} (${list}). Heuristic: ${hit ? (hit.heuristic ? "token" : "not a token") : "-"}. Scryfall: ${entry ? `${entry.scryfall} (${entry.layout})${entry.ambiguous ? `, ambiguous: ${entry.ambiguous}` : ""}` : "no match"}.`;
     }),
@@ -191,16 +193,16 @@ function report(lookup: Readonly<Record<string, TokenLookupEntry>>, unmatchedNam
     ...disagree.map((item) => `- ${item.deck}: ${item.card.name} [${item.card.role}] heuristic ${item.heuristic ? "token" : "not a token"}, Scryfall ${item.verdict.token ? "token" : "not a token"} (${item.verdict.entry!.scryfall}, ${item.verdict.entry!.layout}, ${item.verdict.entry!.typeLine})`),
     "",
     `== Ambiguous, left to the heuristic (${ambiguousLeft.length}) ==`,
-    ...ambiguousLeft.map(([key, item]) => `- ${item.query}: ${lookup[key]!.ambiguous}. Used by ${where(item.uses)}. Heuristic: ${[...new Set(item.uses.map((use) => (use.heuristic ? "token" : "not a token")))].join(" / ")}`),
+    ...ambiguousLeft.map(([key, item]) => `- ${item.query}: ${own(lookup, key)!.ambiguous}. Used by ${where(item.uses)}. Heuristic: ${[...new Set(item.uses.map((use) => (use.heuristic ? "token" : "not a token")))].join(" / ")}`),
     "",
     `== Unmatched (${unmatched.length}) ==`,
     ...unmatched.map(([, item]) => `- ${item.query}: ${where(item.uses)}. Heuristic: ${[...new Set(item.uses.map((use) => (use.heuristic ? "token" : "not a token")))].join(" / ")}`),
     "",
     `== Matched as tokens (${tokens.length}) ==`,
-    ...tokens.map(([key, item]) => `- ${item.query} -> ${lookup[key]!.scryfall} (${lookup[key]!.layout}, ${lookup[key]!.typeLine})`),
+    ...tokens.map(([key, item]) => `- ${item.query} -> ${own(lookup, key)!.scryfall} (${own(lookup, key)!.layout}, ${own(lookup, key)!.typeLine})`),
     "",
     `== Matched as non-tokens (${nonTokens.length}) ==`,
-    ...nonTokens.map(([key, item]) => `- ${item.query} -> ${lookup[key]!.scryfall} (${lookup[key]!.layout}, ${lookup[key]!.typeLine})`),
+    ...nonTokens.map(([key, item]) => `- ${item.query} -> ${own(lookup, key)!.scryfall} (${own(lookup, key)!.layout}, ${own(lookup, key)!.typeLine})`),
     "",
   ];
   const listed = new Set(unmatchedNames.map((name) => normalizeKey(name)));
@@ -227,7 +229,7 @@ function check(): number {
     return 1;
   }
   const listed = new Set(TOKEN_LOOKUP_UNMATCHED.map((name) => normalizeKey(name)));
-  const missing = [...collectQueries().entries()].filter(([key]) => !TOKEN_LOOKUP[key] && !listed.has(key)).map(([, item]) => item.query);
+  const missing = [...collectQueries().entries()].filter(([key]) => !own(TOKEN_LOOKUP, key) && !listed.has(key)).map(([, item]) => item.query);
   if (missing.length) {
     console.error(`The token lookup has no entry for ${missing.length} name(s): ${missing.join(", ")}. Run npx tsx scripts/token-lookup.ts.`);
     return 1;

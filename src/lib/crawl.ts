@@ -1,4 +1,4 @@
-import { isCompleteCollectionName, isFullDeckFolderName, isTemplateOrFontFolder, productEditionKind } from "@/lib/group";
+import { isCompleteCollectionName, isFullDeckFolderName, isTemplateOrFontFolder, looksLikePaidName, productEditionKind } from "@/lib/group";
 import { canonicalDeckName } from "@/data/deck-aliases";
 import { decodeEntities, normalizeKey } from "@/lib/names";
 import type { RawNode } from "@/lib/types";
@@ -61,8 +61,7 @@ export async function buildShippedStandardTree(opts: {
   let editionListing: ListedFolder | null = null;
   if (!edition) {
     const shaped = listing.entries.some((entry) => entry.folder && (isFullDeckFolderName(entry.name) || normalizeKey(entry.name) === "extras" || isCompleteCollectionName(entry.name)));
-    const kind = productEditionKind(deck.name);
-    if (shaped && kind !== "deluxe" && kind !== "partial_foil") {
+    if (shaped && !paidEditionName(deck.name)) {
       edition = { id: deck.id, name: deck.name, folder: true };
       editionListing = listing;
     }
@@ -101,9 +100,9 @@ export async function buildShippedStandardTree(opts: {
   return { deckName, tree };
 }
 
+/** Deluxe, Partial Foil, or anything spelled like them (DLX, PF, Premium, foil, a non-ASCII letter). */
 function paidEditionName(name: string): boolean {
-  const kind = productEditionKind(name);
-  return kind === "deluxe" || kind === "partial_foil";
+  return looksLikePaidName(name);
 }
 
 function listingIsCardImages(listing: ListedFolder): boolean {
@@ -136,8 +135,7 @@ async function crawl(id: string, name: string, list: Lister, seen: Set<string>, 
   const children: RawNode[] = [];
   for (const entry of listing.entries) {
     if (entry.folder) {
-      const kind = productEditionKind(entry.name);
-      if (kind === "deluxe" || kind === "partial_foil") continue;
+      if (paidEditionName(entry.name)) continue;
       if (SKIP_FOLDER.test(entry.name) || isTemplateOrFontFolder(entry.name)) continue;
       children.push(await crawl(listId(entry), entry.name, list, seen));
     } else {
@@ -163,8 +161,10 @@ export type PublicTreeReport = {
   /** Folders listed, shortcuts followed. */
   folders: number;
   shortcuts: number;
-  /** Name paths of Deluxe or Partial Foil folders (never listed). */
+  /** Name paths of folders named like a paid edition (never listed). */
   paid: string[];
+  /** Name paths of folders whose name isn't on the public allow-list (never listed). */
+  unknown: string[];
   /** Name paths of folders that couldn't be listed (Restricted, gone, or a failed request). */
   unreadable: string[];
   /** Each top-level entry and the Standard folder it leads to (by name), or null when none was found. */
@@ -172,13 +172,14 @@ export type PublicTreeReport = {
 };
 
 /**
- * Walk the whole public root, following shortcuts, and record every Deluxe or Partial Foil folder by its
- * name path, matched the way the app detects editions (productEditionKind). A paid-named entry is never
- * listed; a shortcut whose own name looks free but whose target turns out paid is reported and not walked.
- * Only folder names are reported, so nothing here prints an id.
+ * Walk the public root, following shortcuts, as an allow-list. Below the root a folder (or folder
+ * shortcut) is listed only when its exact name is one of `allowed` and nothing about the name looks paid
+ * (looksLikePaidName); anything else is recorded by name path and never listed. A shortcut's own title is
+ * checked before its target is listed; the target's title, which only comes with its listing, must pass
+ * the same check before anything inside it is walked. Only names are reported, so nothing here prints an id.
  */
-export async function guardPublicTree(rootId: string, list: Lister): Promise<PublicTreeReport> {
-  const report: PublicTreeReport = { title: "", folders: 0, shortcuts: 0, paid: [], unreadable: [], decks: [] };
+export async function guardPublicTree(rootId: string, list: Lister, allowed: ReadonlySet<string>): Promise<PublicTreeReport> {
+  const report: PublicTreeReport = { title: "", folders: 0, shortcuts: 0, paid: [], unknown: [], unreadable: [], decks: [] };
   const seen = new Set<string>();
   let root: ListedFolder;
   try {
@@ -194,10 +195,13 @@ export async function guardPublicTree(rootId: string, list: Lister): Promise<Pub
     return report;
   }
   seen.add(rootId);
+  /** Where a name goes when it can't be walked, or null when it may be. */
+  const refusal = (name: string): "paid" | "unknown" | null => (paidEditionName(name) ? "paid" : allowed.has(name) ? null : "unknown");
   async function walk(entry: ListedEntry, trail: string[], deck: PublicTreeReport["decks"][number] | null): Promise<void> {
     const here = [...trail, entry.name];
-    if (paidEditionName(entry.name)) {
-      report.paid.push(here.join(" / "));
+    const refused = refusal(entry.name);
+    if (refused) {
+      report[refused].push(here.join(" / "));
       return;
     }
     const id = listId(entry);
@@ -213,8 +217,9 @@ export async function guardPublicTree(rootId: string, list: Lister): Promise<Pub
     }
     report.folders += 1;
     const title = listing.title || entry.name;
-    if (title !== entry.name && paidEditionName(title)) {
-      report.paid.push(`${here.join(" / ")} (shortcut to “${title}”)`);
+    const refusedTitle = title === entry.name ? null : refusal(title);
+    if (refusedTitle) {
+      report[refusedTitle].push(`${here.join(" / ")} (shortcut to “${title}”)`);
       return;
     }
     if (deck) {
@@ -227,7 +232,7 @@ export async function guardPublicTree(rootId: string, list: Lister): Promise<Pub
   }
   for (const entry of root.entries) {
     if (!entry.folder) continue;
-    const deck = paidEditionName(entry.name) ? null : { entry: entry.name, via: [] as string[], standard: null as string | null };
+    const deck = refusal(entry.name) ? null : { entry: entry.name, via: [] as string[], standard: null as string | null };
     if (deck) report.decks.push(deck);
     await walk(entry, [report.title], deck);
   }
@@ -242,7 +247,20 @@ function looksLikeStandard(title: string, listing: ListedFolder): boolean {
   return listingIsCardImages(listing);
 }
 
-/** Fails loudly when the walk found a paid folder; the message names paths only. */
+/** A walk of the public root that can't be trusted: unknown folder names or folders it couldn't read. */
+export class PublicTreeError extends Error {
+  constructor(lines: string[]) {
+    super(`The public root can't be checked (fix it before building):\n${lines.map((item) => `  ${item}`).join("\n")}`);
+    this.name = "PublicTreeError";
+  }
+}
+
+/**
+ * Fails loudly when the walk found a paid folder, a folder name that isn't on the allow-list, or a folder
+ * it couldn't read (an unread folder may hide anything). The message names paths only.
+ */
 export function assertPublicTreeFree(report: PublicTreeReport): void {
   if (report.paid.length) throw new PaidFolderError(report.paid);
+  const lines = [...report.unknown.map((item) => `not on the public folder allow-list: ${item}`), ...report.unreadable.map((item) => `can't list: ${item}`)];
+  if (lines.length) throw new PublicTreeError(lines);
 }

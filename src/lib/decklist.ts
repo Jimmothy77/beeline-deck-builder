@@ -1,5 +1,6 @@
 import { naturalCompare, normalizeKey, slug } from "@/lib/names";
 import type { CatalogueNote, DeckCard, Decklist, DecklistEntry, Edition } from "@/lib/types";
+import { own } from "@/lib/own";
 
 /** `decklist.txt` or `decklist - <label>.txt`, sitting directly in an edition folder. */
 export const DECKLIST_FILE = /^decklist(?:\s*-\s*(.+?))?\s*\.txt$/i;
@@ -83,8 +84,9 @@ export function parseDecklist(text: string, fileName: string): Decklist {
       sawHeader = true;
       continue;
     }
-    if (SECTION_HEADERS[header]) {
-      section = SECTION_HEADERS[header]!;
+    const named = own(SECTION_HEADERS, header);
+    if (named) {
+      section = named;
       sawHeader = true;
       continue;
     }

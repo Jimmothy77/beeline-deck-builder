@@ -2,6 +2,7 @@ import { TOKEN_LOOKUP } from "@/data/token-lookup";
 import { TOKEN_OVERRIDES } from "@/data/token-overrides";
 import { normalizeKey, parsePrintName } from "@/lib/names";
 import type { DeckCard } from "@/lib/types";
+import { own } from "@/lib/own";
 
 /**
  * Which extras are tokens. A one-time cross-reference against Scryfall
@@ -83,7 +84,7 @@ export function tokenVerdict(
   const override = tokenOverride(card, deckId, overrides);
   if (override) return { token: override.token, source: "override", query: queries[0] ?? card.name, override };
   for (const query of queries) {
-    const entry = lookup[normalizeKey(query)];
+    const entry = own(lookup, normalizeKey(query));
     if (entry && !entry.ambiguous) return { token: entry.token, source: "scryfall", query, entry };
   }
   return { token: heuristicIsToken(card), source: "heuristic", query: queries[0] ?? card.name };

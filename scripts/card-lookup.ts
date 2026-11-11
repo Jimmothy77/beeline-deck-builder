@@ -27,6 +27,7 @@ import { CARD_LOOKUP, CARD_LOOKUP_UNMATCHED } from "../src/data/card-lookup";
 import { TOKEN_LOOKUP, TOKEN_LOOKUP_UNMATCHED } from "../src/data/token-lookup";
 import { factsFor, factsFromScryfall, mergeFacts, type CardFacts, type ScryfallCard } from "../src/lib/card-facts";
 import { normalizeKey } from "../src/lib/names";
+import { own } from "../src/lib/own";
 import { tokenQueryNames } from "../src/lib/tokens";
 import type { DeckCatalogue, DeckCard } from "../src/lib/types";
 
@@ -112,7 +113,7 @@ async function fetchLookup(cacheDir: string | null) {
   const hits = new Map<string, ScryfallCard>();
   for (let start = 0; start < ask.length; start += 75) {
     const batch = ask.slice(start, start + 75);
-    const identifiers = batch.map(([key, item]) => ({ name: TOKEN_LOOKUP[key]?.scryfall ?? item.query }));
+    const identifiers = batch.map(([key, item]) => ({ name: own(TOKEN_LOOKUP, key)?.scryfall ?? item.query }));
     const { body } = await call("https://api.scryfall.com/cards/collection", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ identifiers }) }, cacheDir);
     const data = (body as { data: ScryfallCard[] }).data;
     batch.forEach(([key], index) => {
@@ -135,12 +136,13 @@ async function fetchLookup(cacheDir: string | null) {
     hits.set(key, found.body as ScryfallCard);
     fuzzy.add(key);
   }
-  const lookup: Record<string, CardFacts> = {};
+  // No prototype: a card named "Constructor" or "toString" is a key like any other.
+  const lookup: Record<string, CardFacts> = Object.create(null) as Record<string, CardFacts>;
   let searched = 0;
   for (const [key, item] of queries) {
     const hit = hits.get(key);
     if (!hit) continue;
-    const saved = TOKEN_LOOKUP[key];
+    const saved = own(TOKEN_LOOKUP, key);
     const needsSearch = isToken(hit) || !GAME_LAYOUTS.has(hit.layout) || saved?.token === true || Boolean(saved?.ambiguous);
     let candidates: ScryfallCard[] = [hit];
     if (needsSearch) {
@@ -167,7 +169,7 @@ async function fetchLookup(cacheDir: string | null) {
     }
     lookup[key] = { query: item.query, ...mergeFacts(candidates.map(factsFromScryfall)), ...(fuzzy.has(key) ? { fuzzy: true } : {}) };
   }
-  const unmatched = queries.filter(([key]) => !lookup[key]).map(([, item]) => item.query).sort((a, b) => a.localeCompare(b));
+  const unmatched = queries.filter(([key]) => !own(lookup, key)).map(([, item]) => item.query).sort((a, b) => a.localeCompare(b));
   return { lookup, unmatched, asked: ask.length, skipped: queries.length - ask.length, searched, fuzzy: fuzzy.size };
 }
 
@@ -179,7 +181,7 @@ function writeLookup(lookup: Record<string, CardFacts>, unmatched: string[]) {
     'import type { CardFacts } from "@/lib/card-facts";',
     "",
     "export const CARD_LOOKUP: Readonly<Record<string, CardFacts>> = {",
-    ...keys.map((key) => `  ${JSON.stringify(key)}: ${JSON.stringify(lookup[key])},`),
+    ...keys.map((key) => `  ${JSON.stringify(key)}: ${JSON.stringify(own(lookup, key))},`),
     "};",
     "",
     "/** Names Scryfall had no card for. The attribute filters leave these cards out; name search still finds them. */",
@@ -193,9 +195,9 @@ function writeLookup(lookup: Record<string, CardFacts>, unmatched: string[]) {
 
 function report(lookup: Readonly<Record<string, CardFacts>>, unmatchedNames: readonly string[]): string {
   const entries = [...collectQueries().entries()];
-  const matched = entries.filter(([key]) => lookup[key] && !lookup[key]!.ambiguous);
-  const ambiguous = entries.filter(([key]) => lookup[key]?.ambiguous);
-  const unmatched = entries.filter(([key]) => !lookup[key]);
+  const matched = entries.filter(([key]) => own(lookup, key) && !own(lookup, key)!.ambiguous);
+  const ambiguous = entries.filter(([key]) => own(lookup, key)?.ambiguous);
+  const unmatched = entries.filter(([key]) => !own(lookup, key));
   const cards = shippedCards();
   const status = cards.map(({ deck, card }) => ({ deck, card, status: factsFor(card, lookup).status }));
   const count = (role: DeckCard["role"] | null, which: string) => status.filter((item) => (!role || item.card.role === role) && item.status === which).length;
@@ -214,18 +216,18 @@ function report(lookup: Readonly<Record<string, CardFacts>>, unmatchedNames: rea
     "out), or the only match is not a game card. Unmatched: Scryfall has no card by that name; name search still finds it.",
     "Rarity is the rarity of the printing Scryfall returns for the name.",
     "",
-    `== Matched by a second look-up ("The <name>" exactly, or Scryfall's fuzzy name match), main-deck names only; check these by eye (${matched.filter(([key]) => lookup[key]!.fuzzy).length}) ==`,
-    ...matched.filter(([key]) => lookup[key]!.fuzzy).map(([key, item]) => `- ${item.query} -> ${lookup[key]!.scryfall}`),
+    `== Matched by a second look-up ("The <name>" exactly, or Scryfall's fuzzy name match), main-deck names only; check these by eye (${matched.filter(([key]) => own(lookup, key)!.fuzzy).length}) ==`,
+    ...matched.filter(([key]) => own(lookup, key)!.fuzzy).map(([key, item]) => `- ${item.query} -> ${own(lookup, key)!.scryfall}`),
     "",
     `== Ambiguous (${ambiguous.length}) ==`,
-    ...ambiguous.map(([key, item]) => `- ${item.query}: ${lookup[key]!.ambiguous}. Used by ${where(item.uses)}`),
+    ...ambiguous.map(([key, item]) => `- ${item.query}: ${own(lookup, key)!.ambiguous}. Used by ${where(item.uses)}`),
     "",
     `== Unmatched (${unmatched.length}) ==`,
     ...unmatched.map(([, item]) => `- ${item.query}: ${where(item.uses)}`),
     "",
     `== Matched (${matched.length}) ==`,
     ...matched.map(([key, item]) => {
-      const f = lookup[key]!;
+      const f = own(lookup, key)!;
       return `- ${item.query} -> ${f.scryfall} | ${f.typeLine ?? "-"} | ${f.colors ? f.colors.join("") || "C" : "-"} | mv ${f.cmc ?? "-"} | ${f.rarity ?? "-"}${f.power !== undefined ? ` | ${f.power}/${f.toughness}` : ""}`;
     }),
     "",
@@ -237,12 +239,12 @@ function report(lookup: Readonly<Record<string, CardFacts>>, unmatchedNames: rea
 export function check(lookup: Readonly<Record<string, CardFacts>> = CARD_LOOKUP, unmatched: readonly string[] = CARD_LOOKUP_UNMATCHED): number {
   const listed = new Set(unmatched.map((name) => normalizeKey(name)));
   const queries = collectQueries();
-  const missing = [...queries.entries()].filter(([key]) => !lookup[key] && !listed.has(key)).map(([, item]) => item.query);
+  const missing = [...queries.entries()].filter(([key]) => !own(lookup, key) && !listed.has(key)).map(([, item]) => item.query);
   if (missing.length) {
     console.error(`The card lookup has no entry for ${missing.length} name(s): ${missing.join(", ")}. Run npx tsx scripts/card-lookup.ts.`);
     return 1;
   }
-  const both = [...listed].filter((key) => lookup[key]);
+  const both = [...listed].filter((key) => own(lookup, key));
   if (both.length) {
     console.error(`The card lookup lists ${both.length} name(s) as both matched and unmatched: ${both.join(", ")}.`);
     return 1;

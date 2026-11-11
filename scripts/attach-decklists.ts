@@ -17,6 +17,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { parseDecklist, orderDecklists } from "../src/lib/decklist";
 import { pairLooseFaces } from "../src/lib/faces";
+import { own } from "../src/lib/own";
 import type { ArtFile, DeckCatalogue, Edition } from "../src/lib/types";
 
 export const SHIPPED_DECKLISTS: Record<string, string[]> = {
@@ -68,7 +69,7 @@ export function tagShippedSxfTones(edition: Edition): Edition {
 }
 
 export function withShippedLists(deck: DeckCatalogue, readList: (file: string) => string): DeckCatalogue {
-  const files = SHIPPED_DECKLISTS[deck.id];
+  const files = own(SHIPPED_DECKLISTS, deck.id);
   if (!files) throw new Error(`No deck-list entry for ${deck.id}. Add it to SHIPPED_DECKLISTS, even as an empty list.`);
   return {
     ...deck,

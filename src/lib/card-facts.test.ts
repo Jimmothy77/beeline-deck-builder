@@ -66,9 +66,10 @@ describe("the committed card lookup (src/data/card-lookup.ts)", () => {
     expect([...unmatched].filter((key) => CARD_LOOKUP[key])).toEqual([]);
   });
 
-  it("matches the counts in the report: 1241 cards matched, 73 ambiguous, 260 unmatched", () => {
+  // v0.1.34: Dr. Eggman's two new extras (Cryptothrall 2, Scrap Trawler 2) reuse names the lookup already has: +2 matched cards, no new names.
+  it("matches the counts in the report: 1243 cards matched, 73 ambiguous, 260 unmatched", () => {
     const count = (status: string, role?: string) => cards.filter((card) => (!role || card.role === role) && factsFor(card, CARD_LOOKUP).status === status).length;
-    expect([count("matched"), count("ambiguous"), count("unmatched")]).toEqual([1241, 73, 260]);
+    expect([count("matched"), count("ambiguous"), count("unmatched")]).toEqual([1243, 73, 260]);
     expect([count("matched", "main"), count("ambiguous", "main"), count("unmatched", "main")]).toEqual([1076, 0, 1]);
   });
 
@@ -94,7 +95,7 @@ describe("scripts/card-lookup.ts --check", () => {
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
     try {
       expect(check()).toBe(0);
-      expect(log.mock.calls.at(-1)?.[0]).toBe("Card lookup covers all 1136 card names (1574 cards, 1241 with Scryfall facts).");
+      expect(log.mock.calls.at(-1)?.[0]).toBe("Card lookup covers all 1136 card names (1576 cards, 1243 with Scryfall facts).");
       const { ["sol ring"]: _gone, ...without } = CARD_LOOKUP;
       expect(check(without)).toBe(1);
       expect(error.mock.calls.at(-1)?.[0]).toMatch(/^The card lookup has no entry for 1 name\(s\): Sol Ring\./);

@@ -12,23 +12,27 @@ import {
   guardPublicTree,
   listId,
   PaidFolderError,
+  PublicTreeError,
   parseEmbeddedFolder,
   type ListedFolder,
   type Lister,
 } from "@/lib/crawl";
 import { readDriveTree } from "@/lib/drive";
-import { catalogueFromTree, productEditionKind } from "@/lib/group";
+import { catalogueFromTree, looksLikePaidName, productEditionKind } from "@/lib/group";
 import { preferDeckName } from "@/lib/names";
 import { splashFor } from "@/lib/splash";
 import type { DeckIndex } from "@/lib/types";
 import { readFileSync } from "node:fs";
 import path from "node:path";
+import { checkPublicTree } from "../../scripts/build-catalogue";
 import { deckForEntry, rootProblems } from "../../scripts/check-public-root";
+import { PUBLIC_FOLDER_NAMES } from "../../scripts/public-folder-names";
 import { listEmbedded, ListingError } from "../../scripts/public-root";
 
 const root = path.resolve(import.meta.dirname, "../..");
 const shipped = (JSON.parse(readFileSync(path.join(root, "public/decks/index.json"), "utf8")) as DeckIndex).decks;
 
+const NAMES = PUBLIC_FOLDER_NAMES;
 const FOLDER = "application/vnd.google-apps.folder";
 const SHORTCUT = "application/vnd.google-apps.shortcut";
 
@@ -153,7 +157,7 @@ describe("the public-root guard", () => {
   it("passes BeeLine, follows every shortcut to a Standard folder, and never lists the Restricted parent", async () => {
     const world = beeLine();
     const { list, listed } = embeddedLister(world);
-    const report = await guardPublicTree("fakeRoot0001", list);
+    const report = await guardPublicTree("fakeRoot0001", list, NAMES);
     expect(report.paid).toEqual([]);
     expect(report.unreadable).toEqual([]);
     expect(report.shortcuts).toBe(3);
@@ -191,21 +195,21 @@ describe("the public-root guard", () => {
       "BeeLine / 10_Persona 5 / 2_P5 Deluxe Edition",
     ],
     [
-      "an innocently named shortcut to a paid folder",
+      "an allowed name on a shortcut to a paid folder",
       (world) => {
-        world.scutBonus001 = { name: "Bonus art", kind: "shortcut", target: "dlxSxf_fake" };
+        world.scutBonus001 = { name: "Extras", kind: "shortcut", target: "dlxSxf_fake" };
         world.wrapTmnt0001!.children!.push("scutBonus001");
       },
-      "BeeLine / 1_TMNT / Bonus art (shortcut to “2_Spy x Family Deluxe Edition”)",
+      "BeeLine / 1_TMNT / Extras (shortcut to “2_Spy x Family Deluxe Edition”)",
     ],
     [
-      "the deck parent itself reached through a shortcut",
+      "the deck parent itself reached through an allowed shortcut name",
       (world) => {
         delete world.parentSxf001!.restricted;
-        world.scutParent01 = { name: "SxF everything", kind: "shortcut", target: "parentSxf001" };
+        world.scutParent01 = { name: "Extras", kind: "shortcut", target: "parentSxf001" };
         world.wrapSxf00001!.children!.push("scutParent01");
       },
-      "BeeLine / 6_SxF / SxF everything / 2_Spy x Family Deluxe Edition",
+      "BeeLine / 6_SxF / Extras / 2_Spy x Family Deluxe Edition",
     ],
   ];
   for (const [label, change, expected] of cases) {
@@ -213,7 +217,7 @@ describe("the public-root guard", () => {
       const world = beeLine();
       change(world);
       const { list, listed } = embeddedLister(world);
-      const report = await guardPublicTree("fakeRoot0001", list);
+      const report = await guardPublicTree("fakeRoot0001", list, NAMES);
       expect(report.paid).toContain(expected);
       let caught: unknown;
       try {
@@ -235,43 +239,49 @@ describe("the public-root guard", () => {
   it("fails on paid editions reached through a shortcut's Deluxe-named target, and on a paid root", async () => {
     const world = beeLine();
     const { list } = embeddedLister(world);
-    const paidRoot = await guardPublicTree("dlxSxf_fake", list);
+    const paidRoot = await guardPublicTree("dlxSxf_fake", list, NAMES);
     expect(paidRoot.paid).toEqual(["2_Spy x Family Deluxe Edition"]);
     expect(() => assertPublicTreeFree(paidRoot)).toThrow(PaidFolderError);
   });
 
   it("reports unreadable folders and an unreadable root by name", async () => {
     const world = beeLine();
-    world.scutGone0001 = { name: "Old link", kind: "shortcut", target: "parentSxf001" };
+    world.scutGone0001 = { name: "Extras", kind: "shortcut", target: "parentSxf001" };
     world.wrapSxf00001!.children!.push("scutGone0001");
     const { list } = embeddedLister(world);
-    const report = await guardPublicTree("fakeRoot0001", list);
+    const report = await guardPublicTree("fakeRoot0001", list, NAMES);
     expect(report.paid).toEqual([]);
-    expect(report.unreadable).toEqual(["BeeLine / 6_SxF / Old link"]);
+    expect(report.unknown).toEqual([]);
+    expect(report.unreadable).toEqual(["BeeLine / 6_SxF / Extras"]);
     const problems = rootProblems(report, shipped.filter((deck) => ["persona-5", "tmnt", "sxf"].includes(deck.id)));
-    expect(problems).toEqual(["can't list: BeeLine / 6_SxF / Old link"]);
+    expect(problems).toEqual(["can't list: BeeLine / 6_SxF / Extras"]);
     expect(problems.join("\n")).not.toMatch(/parentSxf001|scutGone0001/);
-    const gone = await guardPublicTree("noSuchRoot01", list);
+    const gone = await guardPublicTree("noSuchRoot01", list, NAMES);
     expect(gone.unreadable).toEqual(["public root"]);
   });
 
   it("names every shipped deck missing from the root, a deck with no Standard, and one that isn't shipped", async () => {
     const world = beeLine();
-    world.wrapNew00001 = { name: "12_Brand New", kind: "folder", children: [] };
-    world.fakeRoot0001!.children!.push("wrapNew00001");
+    world.wrapNew00001 = { name: "Extras", kind: "folder", children: [] };
+    world.wrapNew00002 = { name: "12_Brand New", kind: "folder", children: [] };
+    world.fakeRoot0001!.children!.push("wrapNew00001", "wrapNew00002");
     const { list } = embeddedLister(world);
-    const report = await guardPublicTree("fakeRoot0001", list);
+    const report = await guardPublicTree("fakeRoot0001", list, NAMES);
     const problems = rootProblems(report, shipped);
-    expect(problems).toContain("12_Brand New: no Standard folder found under it");
-    expect(problems).toContain("12_Brand New: not one of the shipped decks");
+    expect(problems).toContain("Extras: no Standard folder found under it");
+    expect(problems).toContain("Extras: not one of the shipped decks");
+    // A deck folder whose name isn't on the allow-list is refused by name and never listed.
+    expect(problems).toContain("not on the public folder allow-list: BeeLine / 12_Brand New");
+    // ...and isn't counted as a deck entry either.
+    expect(problems.filter((line) => line.startsWith("12_Brand New"))).toEqual([]);
     const missing = problems.filter((line) => line.endsWith(": no entry in the public root"));
     expect(missing).toHaveLength(shipped.length - 3);
     expect(missing.join("\n")).not.toMatch(/TMNT|SxF|Persona 5/);
     // Two entries for one deck.
-    world.wrapSxf00002 = { name: "Spy x Family", kind: "folder", children: ["scutSxf00001"] };
+    world.wrapSxf00002 = { name: "1_Spy x Family Standard Edition", kind: "folder", children: ["scutSxf00001"] };
     world.fakeRoot0001!.children!.push("wrapSxf00002");
-    const twice = rootProblems(await guardPublicTree("fakeRoot0001", embeddedLister(world).list), shipped);
-    expect(twice).toContain("Spy x Family: a second entry for SxF");
+    const twice = rootProblems(await guardPublicTree("fakeRoot0001", embeddedLister(world).list, NAMES), shipped);
+    expect(twice).toContain("1_Spy x Family Standard Edition: a second entry for SxF");
   });
 
   it("matches a root entry to its deck by folder, shortcut or Standard name, aliases included", () => {
@@ -284,6 +294,119 @@ describe("the public-root guard", () => {
     expect(find("Box", [], "1_Dr. Eggman Standard Edition")).toBe("dr-eggman");
     expect(find("3.1_Horror Movie Poster Secret Lair")).toBe("horror-movie-poster-secret-lair");
     expect(find("Box")).toBeNull();
+  });
+});
+
+describe("the public-root guard is an allow-list", () => {
+  const DISGUISED = ["DLX Edition", "PF Edition", "Partial Foil Templates", "Deluxe PSD", "D\u0435luxe Edition", "Premium Edition", "Foil Tokens", "p.f. edition", "dlx", "\uff24\uff25\uff2c\uff35\uff38\uff25"];
+
+  it("reads every disguised paid name as paid, and no live public name as paid", () => {
+    for (const name of DISGUISED) expect(looksLikePaidName(name), name).toBe(true);
+    // The Cyrillic one reads as plain "dluxe edition" to the old edition match, so only the new rule catches it.
+    expect(productEditionKind("D\u0435luxe Edition")).toBeNull();
+    expect(productEditionKind("DLX Edition")).toBeNull();
+    for (const name of PUBLIC_FOLDER_NAMES) expect(looksLikePaidName(name), name).toBe(false);
+    for (const name of ["Standard Edition", "Full Deck", "Extras", "Tokens", "Card Back", "PDF Decklist"]) expect(looksLikePaidName(name), name).toBe(false);
+    // Separators are dropped before the word match, so a name that runs "p" into "f" across a space is refused
+    // too. That errs toward stopping the build; no public name does it today (checked above).
+    expect(looksLikePaidName("Top Fetch")).toBe(true);
+  });
+
+  it("keeps the allow-list to plain public names: no duplicates, no paid word, ASCII only", () => {
+    expect(PUBLIC_FOLDER_NAMES.size).toBeGreaterThan(100);
+    for (const name of PUBLIC_FOLDER_NAMES) {
+      expect(name).toBe(name.trim());
+      expect(name).toMatch(/^[\x20-\x7e]+$/);
+      expect(looksLikePaidName(name), name).toBe(false);
+    }
+    // Each name written once in the source list.
+    const listed = [...readFileSync(path.join(root, "scripts/public-folder-names.ts"), "utf8").matchAll(/^  ("(?:[^"\\]|\\.)*"),$/gm)].map((match) => JSON.parse(match[1]!) as string);
+    expect(listed).toHaveLength(PUBLIC_FOLDER_NAMES.size);
+    for (const name of ["1_X-Men Standard Edition", "Full Deck", "Extras", "Tokens", "Card Back", "10_Persona 5", "TMNT"]) {
+      expect(PUBLIC_FOLDER_NAMES.has(name), name).toBe(true);
+    }
+  });
+
+  for (const name of DISGUISED) {
+    it(`fails on “${name}” inside a deck, even if the name were on the list, and never lists it`, async () => {
+      const world = beeLine();
+      world.sneaky000001 = { name, kind: "folder", children: ["sneakyFile01"] };
+      world.sneakyFile01 = { name: "Sol Ring.png", kind: "file" };
+      world.fullSxf_fake!.children!.push("sneaky000001");
+      for (const allowed of [NAMES, new Set([...NAMES, name])]) {
+        const { list, listed } = embeddedLister(world);
+        const report = await guardPublicTree("fakeRoot0001", list, allowed);
+        const where = `BeeLine / 6_SxF / 1_Spy x Family Standard Edition / Full Deck / ${name}`;
+        expect(report.paid).toEqual([where]);
+        expect(listed).not.toContain("sneaky000001");
+        expect(() => assertPublicTreeFree(report)).toThrow(PaidFolderError);
+        expect(() => assertPublicTreeFree(report)).toThrow(where);
+      }
+    });
+  }
+
+  it("refuses a folder name that isn't on the list, by name path, without listing it", async () => {
+    const world = beeLine();
+    world.bonus0000001 = { name: "Bonus Art", kind: "folder", children: ["dlxSxf_fake"] };
+    world.stdP5_fake!.children!.push("bonus0000001");
+    const { list, listed } = embeddedLister(world);
+    const report = await guardPublicTree("fakeRoot0001", list, NAMES);
+    expect(report.paid).toEqual([]);
+    expect(report.unknown).toEqual(["BeeLine / 10_Persona 5 / 1_P5 Standard Edition / Bonus Art"]);
+    expect(listed).not.toContain("bonus0000001");
+    expect(listed).not.toContain("dlxSxf_fake");
+    expect(() => assertPublicTreeFree(report)).toThrow(PublicTreeError);
+    expect(() => assertPublicTreeFree(report)).toThrow(/not on the public folder allow-list: BeeLine \/ 10_Persona 5 \/ 1_P5 Standard Edition \/ Bonus Art/);
+  });
+
+  it("checks a shortcut's own title before listing its target, and the target's title before walking it", async () => {
+    for (const [name, field] of [["DLX Edition", "paid"], ["Bonus Art", "unknown"]] as const) {
+      const world = beeLine();
+      world.scutSneak001 = { name, kind: "shortcut", target: "stdP5_fake" };
+      world.wrapTmnt0001!.children!.push("scutSneak001");
+      const { list, listed } = embeddedLister(world);
+      // The P5 Standard folder is reached first through its own shortcut, so drop that to see this one alone.
+      world.wrapP500001!.children = [];
+      const report = await guardPublicTree("fakeRoot0001", list, NAMES);
+      expect(report[field]).toEqual([`BeeLine / 1_TMNT / ${name}`]);
+      expect(listed).not.toContain("stdP5_fake");
+    }
+    // An allowed shortcut name whose target turns out to be unlisted: listed once for its title, then not walked.
+    const world = beeLine();
+    world.oddTarget001 = { name: "Old Stuff", kind: "folder", children: ["oddInner001"] };
+    world.oddInner001 = { name: "Full Deck", kind: "folder", children: [] };
+    world.scutOdd0001 = { name: "Extras", kind: "shortcut", target: "oddTarget001" };
+    world.wrapTmnt0001!.children!.push("scutOdd0001");
+    const { list, listed } = embeddedLister(world);
+    const report = await guardPublicTree("fakeRoot0001", list, NAMES);
+    expect(report.unknown).toEqual(["BeeLine / 1_TMNT / Extras (shortcut to “Old Stuff”)"]);
+    expect(listed).toContain("oddTarget001");
+    expect(listed).not.toContain("oddInner001");
+  });
+
+  it("build-catalogue stops on a paid folder, an unlisted name, or a folder it couldn't read, before building", async () => {
+    const good = beeLine();
+    await expect(checkPublicTree("fakeRoot0001", embeddedLister(good).list)).resolves.toMatchObject({ paid: [], unknown: [], unreadable: [] });
+
+    const unreadable = beeLine();
+    unreadable.scutGone0001 = { name: "Extras", kind: "shortcut", target: "parentSxf001" };
+    unreadable.wrapSxf00001!.children!.push("scutGone0001");
+    const failed = await checkPublicTree("fakeRoot0001", embeddedLister(unreadable).list).catch((error: Error) => error);
+    expect(failed).toBeInstanceOf(PublicTreeError);
+    expect((failed as Error).message).toContain("can't list: BeeLine / 6_SxF / Extras");
+    for (const id of Object.keys(unreadable)) expect((failed as Error).message).not.toContain(id);
+
+    const rootGone = await checkPublicTree("noSuchRoot01", embeddedLister(good).list).catch((error: Error) => error);
+    expect((rootGone as Error).message).toContain("can't list: public root");
+
+    const unknown = beeLine();
+    unknown.wrapNew00002 = { name: "12_Brand New", kind: "folder", children: [] };
+    unknown.fakeRoot0001!.children!.push("wrapNew00002");
+    await expect(checkPublicTree("fakeRoot0001", embeddedLister(unknown).list)).rejects.toThrow(/not on the public folder allow-list: BeeLine \/ 12_Brand New/);
+
+    const paid = beeLine();
+    paid.wrapSxf00001!.children!.push("dlxSxf_fake");
+    await expect(checkPublicTree("fakeRoot0001", embeddedLister(paid).list)).rejects.toThrow(PaidFolderError);
   });
 });
 
@@ -319,6 +442,21 @@ describe("building a shipped catalogue from BeeLine", () => {
     const p5 = await buildShippedStandardTree({ rootId: "fakeRoot0001", deckQuery: "P5", list });
     expect(p5.deckName).toBe("Persona 5");
     expect(catalogueFromTree(p5.tree, p5.deckName).id).toBe("persona-5");
+  });
+
+  it("never crawls a folder inside Standard named like a paid edition (DLX, PF, a Cyrillic Deluxe)", async () => {
+    const world = beeLine();
+    world.dlxInStd001 = { name: "DLX Edition", kind: "folder", children: ["dlxInStdF01"] };
+    world.dlxInStdF01 = { name: "Sol Ring 9.png", kind: "file" };
+    world.pfInStd0001 = { name: "PF Edition", kind: "folder", children: [] };
+    world.cyrInStd001 = { name: "D\u0435luxe PSD", kind: "folder", children: [] };
+    world.stdP5_fake!.children!.push("dlxInStd001", "pfInStd0001", "cyrInStd001");
+    const { list, listed } = embeddedLister(world);
+    const p5 = await buildShippedStandardTree({ rootId: "fakeRoot0001", deckQuery: "Persona 5", list });
+    expect(JSON.stringify(p5.tree)).not.toContain("dlxInStdF01");
+    expect(listed).not.toContain("dlxInStd001");
+    expect(listed).not.toContain("pfInStd0001");
+    expect(listed).not.toContain("cyrInStd001");
   });
 
   it("stops before building when a paid edition sits beside the shortcut", async () => {

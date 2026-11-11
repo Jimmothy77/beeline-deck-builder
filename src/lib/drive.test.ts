@@ -79,9 +79,11 @@ describe("mocked Drive API", () => {
     expect(catalogue.editions[0]!.cards.map((card) => card.name).sort()).toEqual(["Island", "Sol Ring"]);
   });
 
-  it("surfaces an auth failure from the API", async () => {
-    const fetchImpl = async () => jsonResponse({ error: { message: "forbidden" } }, 403);
-    await expect(readDriveTree("folderRootAA", "test-api-key-value", fetchImpl)).rejects.toThrow(/refused the API key/);
+  it("surfaces a key failure from the API, and a bare 403 without blaming the key", async () => {
+    const keyBad = async () => jsonResponse({ error: { code: 400, message: "API key not valid. Please pass a valid API key.", status: "INVALID_ARGUMENT", details: [{ reason: "API_KEY_INVALID" }] } }, 400);
+    await expect(readDriveTree("folderRootAA", "test-api-key-value", keyBad)).rejects.toThrow(/refused the API key/);
+    const bare = async () => jsonResponse({ error: { message: "forbidden" } }, 403);
+    await expect(readDriveTree("folderRootAA", "test-api-key-value", bare)).rejects.toThrow(/^Google Drive refused to open the folder you pasted\.$/);
   });
 
   it("skips a shortcut diamond and still throws on a real cycle", async () => {

@@ -4,9 +4,9 @@
  * were not picked, not the review page, the player or the tools.
  *
  * It is the 40 files in Frame Lab's freeze list, FINAL.sha256 (kept here byte for byte as
- * scripts/splash-final.sha256), less splash-player.js (SPLASH_NOT_SHIPPED): 39 files, each checked
- * against that list, so `grep -v ' splash-player.js$' scripts/splash-final.sha256 | sha256sum -c`
- * passes inside public/splash/.
+ * scripts/splash-final.sha256, for provenance), less splash-player.js (SPLASH_NOT_SHIPPED): 39 files,
+ * listed in scripts/splash-shipped.sha256 (FINAL.sha256 less the player's line), so a plain
+ * `sha256sum -c ../../scripts/splash-shipped.sha256` passes inside public/splash/.
  *
  * Paths are relative to Frame Lab's folder and to public/splash/ alike (the pages load
  * ../splash-runtime.js, ../splash-base.css, ../fonts/* and ../assets/*, so the layout is kept).

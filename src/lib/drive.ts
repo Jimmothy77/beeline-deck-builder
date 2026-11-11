@@ -9,12 +9,96 @@ export const PLACEHOLDER_KEY = "YOUR_GOOGLE_API_KEY";
 
 export class DriveError extends Error {
   status: number;
-  constructor(status: number, message: string) {
+  /** Drive's own reasons for the failure (keyInvalid, insufficientFilePermissions, ...), when it gave any. */
+  reasons: string[];
+  constructor(status: number, message: string, reasons: string[] = []) {
     super(message);
     this.status = status;
+    this.reasons = reasons;
     this.name = "DriveError";
   }
 }
+
+/**
+ * Which item a request was for, in words for a message: never an id. `name` is the item's Drive name when
+ * it is known (from its own metadata or its parent's listing).
+ */
+export type DriveItem =
+  | { kind: "pasted"; name?: string }
+  | { kind: "subfolder"; name: string }
+  | { kind: "shortcut"; name: string }
+  | { kind: "linked"; name?: string; from: string }
+  | { kind: "file"; name: string };
+
+const PASTED: DriveItem = { kind: "pasted" };
+
+/** “Name”, quoted, with any id-shaped run in it blanked so a message can't carry one. */
+function quoted(name: string): string {
+  return `“${scrubIds(name.trim())}”`;
+}
+
+/** Blanks anything shaped like a Drive id or an API key. Names never need such runs. */
+function scrubIds(text: string): string {
+  return text.replace(/[A-Za-z0-9_-]{25,}/g, "…");
+}
+
+/** The item as the subject of a sentence. */
+export function describeItem(item: DriveItem): string {
+  switch (item.kind) {
+    case "pasted":
+      return item.name ? `The folder you pasted (${quoted(item.name)})` : "The folder you pasted";
+    case "subfolder":
+      return `The folder ${quoted(item.name)} inside it`;
+    case "shortcut":
+      return `The shortcut target ${quoted(item.name)}`;
+    case "linked":
+      return `The folder that New Drive Link.txt in ${quoted(item.from)} points to${item.name ? ` (${quoted(item.name)})` : ""}`;
+    case "file":
+      return `The file ${quoted(item.name)}`;
+  }
+}
+
+/** Drive's error body, as far as it can be read: its reasons, status word and message. */
+export type DriveErrorBody = { reasons: string[]; status: string; message: string };
+
+export function parseDriveError(body: string): DriveErrorBody {
+  let data: unknown;
+  try {
+    data = JSON.parse(body);
+  } catch {
+    return { reasons: [], status: "", message: "" };
+  }
+  const error = data && typeof data === "object" ? (data as { error?: unknown }).error : undefined;
+  if (!error || typeof error !== "object") return { reasons: [], status: "", message: "" };
+  const record = error as { errors?: unknown; details?: unknown; status?: unknown; message?: unknown };
+  const reasons: string[] = [];
+  for (const list of [record.errors, record.details]) {
+    if (!Array.isArray(list)) continue;
+    for (const item of list) {
+      const reason = item && typeof item === "object" ? (item as { reason?: unknown }).reason : undefined;
+      if (typeof reason === "string" && reason && !reasons.includes(reason)) reasons.push(reason);
+    }
+  }
+  return {
+    reasons,
+    status: typeof record.status === "string" ? record.status : "",
+    message: typeof record.message === "string" ? record.message : "",
+  };
+}
+
+/**
+ * The pasted link itself can't be read, not even its name. The paid edition folders are shared with
+ * "Anyone with the link"; the deck folders above them (which hold Standard, Deluxe and Partial Foil side
+ * by side) are Restricted, so this is most often a deck folder's link pasted instead of an edition's.
+ */
+export const PASTED_UNREADABLE =
+  "BeeLine can't open that link. It may be a deck folder rather than an edition folder. Paste the link to the edition folder itself (for example “P5 Partial Foil Edition”) from your order.";
+
+/** Reasons that blame the API key or its project, and only those. */
+const KEY_REASON = /^(?:API_KEY_[A-Z_]+|keyInvalid|keyExpired|badKey|ipRefererBlocked|accessNotConfigured|SERVICE_DISABLED)$/;
+const QUOTA_REASON = /rateLimit|quota|LimitExceeded|RATE_LIMIT|RESOURCE_EXHAUSTED/i;
+const NOT_SHARED_REASON = /^(?:insufficientFilePermissions|notFound)$/;
+const NOT_SHARED_TEXT = /does not have sufficient permissions|file not found/i;
 
 export type DriveFile = {
   id: string;
@@ -65,7 +149,7 @@ function keyOf(apiKey: string): string {
   return encodeURIComponent(apiKey);
 }
 
-export async function listChildren(folderId: string, apiKey: string, fetchImpl: FetchLike = fetch): Promise<DriveFile[]> {
+export async function listChildren(folderId: string, apiKey: string, fetchImpl: FetchLike = fetch, item: DriveItem = PASTED): Promise<DriveFile[]> {
   if (!/^[A-Za-z0-9_-]{10,}$/.test(folderId)) throw new Error("That folder id doesn't look like a Drive id.");
   const files: DriveFile[] = [];
   let pageToken = "";
@@ -80,10 +164,7 @@ export async function listChildren(folderId: string, apiKey: string, fetchImpl: 
     url.searchParams.set("includeItemsFromAllDrives", "true");
     if (pageToken) url.searchParams.set("pageToken", pageToken);
     const response = await fetchImpl(url.toString());
-    if (!response.ok) {
-      const body = await response.text();
-      throw new DriveError(response.status, driveFailure(response.status, body));
-    }
+    if (!response.ok) throw await failure(response, item);
     const data = (await response.json()) as { nextPageToken?: string; files?: DriveFile[] };
     files.push(...(data.files ?? []));
     pageToken = data.nextPageToken ?? "";
@@ -95,30 +176,55 @@ export async function listChildren(folderId: string, apiKey: string, fetchImpl: 
  * One file's id, name and type, and a shortcut's target. Only these fields are asked for: never
  * `parents`, so a folder's Restricted deck parent (and the paid editions beside it) is never revealed.
  */
-export async function getFileMeta(fileId: string, apiKey: string, fetchImpl: FetchLike = fetch): Promise<DriveFile> {
+export async function getFileMeta(fileId: string, apiKey: string, fetchImpl: FetchLike = fetch, item: DriveItem = PASTED): Promise<DriveFile> {
   const url = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?fields=id,name,mimeType,shortcutDetails&supportsAllDrives=true&key=${keyOf(apiKey)}`;
   const response = await fetchImpl(url);
-  if (!response.ok) throw new DriveError(response.status, driveFailure(response.status, await response.text()));
+  if (!response.ok) throw await failure(response, item);
   return (await response.json()) as DriveFile;
 }
 
-export async function downloadText(fileId: string, apiKey: string, fetchImpl: FetchLike = fetch): Promise<string> {
+export async function downloadText(fileId: string, apiKey: string, fetchImpl: FetchLike = fetch, item: DriveItem = PASTED): Promise<string> {
   const url = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media&supportsAllDrives=true&key=${keyOf(apiKey)}`;
   const response = await fetchImpl(url);
-  if (!response.ok) throw new DriveError(response.status, driveFailure(response.status, await response.text()));
+  if (!response.ok) throw await failure(response, item);
   return response.text();
 }
 
-function driveFailure(status: number, body: string): string {
-  if (status === 429 || ((status === 403 || status === 401) && /rateLimit|rate limit|userRateLimitExceeded|quotaExceeded|dailyLimitExceeded|sharingRateLimitExceeded|quota/i.test(body))) {
+/**
+ * The words for a failed Drive request. Only a key reason blames the key; an item Drive won't show is
+ * named (by name, never id) as not shared with "Anyone with the link"; a rate limit or quota, and anything
+ * else, read as before. No id or key ever reaches the message.
+ */
+export function driveFailure(status: number, body: string, item: DriveItem = PASTED): string {
+  const error = parseDriveError(body);
+  if (status === 429 || error.status === "RESOURCE_EXHAUSTED" || ((status === 403 || status === 401) && (error.reasons.some((reason) => QUOTA_REASON.test(reason)) || /rateLimit|rate limit|userRateLimitExceeded|quotaExceeded|dailyLimitExceeded|sharingRateLimitExceeded|quota/i.test(body)))) {
     return "Google Drive hit a rate limit or quota. Wait a minute and try the folder again.";
   }
-  if (status === 403 || status === 401) {
+  if (error.reasons.some((reason) => KEY_REASON.test(reason)) || /API key not valid|API key expired/i.test(error.message)) {
     return "Google Drive refused the API key. Enable the Drive API, and restrict the key to this site's address if you use HTTP referrers.";
   }
-  if (status === 404) return "That folder isn't visible to an API key. Share it so anyone with the link can view it.";
-  const snippet = body.replace(/\s+/g, " ").slice(0, 180);
+  const notShared =
+    status === 404 ||
+    ((status === 403 || status === 401) && (error.reasons.some((reason) => NOT_SHARED_REASON.test(reason)) || NOT_SHARED_TEXT.test(error.message)));
+  if (notShared && item.kind === "pasted" && !item.name) return PASTED_UNREADABLE;
+  if (notShared) {
+    return `${describeItem(item)} isn't shared as “Anyone with the link”, so it can't be opened here. Ask for it to be shared that way, or paste the link from your order again.`;
+  }
+  if (status === 401) {
+    return "Google Drive refused the API key. Enable the Drive API, and restrict the key to this site's address if you use HTTP referrers.";
+  }
+  if (status === 403) {
+    // Drive's reasons are short words (forbidden, domainPolicy); anything else is left out.
+    const why = error.reasons[0] && /^[A-Za-z_]{1,60}$/.test(error.reasons[0]) ? ` (${error.reasons[0]})` : "";
+    return `Google Drive refused to open ${describeItem(item).replace(/^The /, "the ")}${why}.`;
+  }
+  const snippet = scrubIds(body.replace(/\s+/g, " ")).slice(0, 180);
   return snippet ? `Drive returned ${status}: ${snippet}` : `Drive returned ${status}.`;
+}
+
+async function failure(response: Response, item: DriveItem): Promise<DriveError> {
+  const body = await response.text();
+  return new DriveError(response.status, driveFailure(response.status, body, item), parseDriveError(body).reasons);
 }
 
 const LINK_FILE = /^new drive link\.txt$/i;
@@ -183,19 +289,30 @@ export async function readDriveTree(folderId: string, apiKey: string, fetchImpl:
     ancestors: string[],
     insidePdfMap: boolean,
     followedLink = false,
+    item: DriveItem = PASTED,
   ): Promise<RawNode | null> {
     if (depth > 12) throw new Error("That Drive folder is nested too deeply to import.");
     if (!followedLink && ancestors.includes(id)) throw new Error("The Drive link loops back to a folder already opened.");
     const cached = cache.get(id);
     if (cached) return cached;
-    const own: DriveFile = await getFileMeta(id, apiKey, fetchImpl).catch(() => ({ id, name: fallbackName, mimeType: FOLDER }));
+    let metaRead = true;
+    const own: DriveFile = await getFileMeta(id, apiKey, fetchImpl, item).catch(() => {
+      metaRead = false;
+      return { id, name: fallbackName, mimeType: FOLDER };
+    });
     if (own.mimeType === SHORTCUT) {
       const target = own.shortcutDetails?.targetId;
       if (!target || own.shortcutDetails?.targetMimeType !== FOLDER) throw new Error("That link is a shortcut to something other than a folder.");
       if (target === id || ancestors.includes(target)) throw new Error("The Drive link loops back to a folder already opened.");
-      return resolve(target, own.name || fallbackName, hops, depth, [...ancestors, id], insidePdfMap, true);
+      return resolve(target, own.name || fallbackName, hops, depth, [...ancestors, id], insidePdfMap, true, { kind: "shortcut", name: own.name || fallbackName });
     }
     const folderName = own.name || fallbackName;
+    // The words for this folder if listing it fails: its own name once its metadata could be read.
+    const here: DriveItem =
+      item.kind === "pasted" ? (metaRead && own.name ? { kind: "pasted", name: own.name } : PASTED)
+      : item.kind === "shortcut" ? { kind: "shortcut", name: metaRead && own.name ? own.name : item.name }
+      : item.kind === "linked" ? { ...item, ...(metaRead && own.name ? { name: own.name } : {}) }
+      : item;
     if (hops === 0 && depth === 0 && !rootDecided) {
       rootDecided = true;
       const kind = productEditionKind(folderName);
@@ -204,16 +321,16 @@ export async function readDriveTree(folderId: string, apiKey: string, fetchImpl:
     }
     // A free paste never opens a paid folder, even one reached through an innocently named shortcut.
     if (depth > 0 && !partialFoilPaste && !deluxePaste && isPaidEditionName(folderName)) return null;
-    const files = await listChildren(id, apiKey, fetchImpl);
+    const files = await listChildren(id, apiKey, fetchImpl, here);
     const link = files.find((file) => LINK_FILE.test(file.name));
     if (link && hops < 3) {
-      const text = await downloadText(link.id, apiKey, fetchImpl);
+      const text = await downloadText(link.id, apiKey, fetchImpl, { kind: "file", name: link.name });
       const next = extractFolderIdFromText(text);
       if (next) {
         const chain = [...ancestors, id];
         const stripped = chain.filter((item) => item !== next);
         if (stripped.length !== chain.length) throw new Error("The Drive link loops back to a folder already opened.");
-        return resolve(next, folderName, hops + 1, depth, stripped, insidePdfMap, true);
+        return resolve(next, folderName, hops + 1, depth, stripped, insidePdfMap, true, { kind: "linked", from: folderName });
       }
     }
     const pdfMap = insidePdfMap || nameIsPdfPartialMap(folderName);
@@ -231,7 +348,7 @@ export async function readDriveTree(folderId: string, apiKey: string, fetchImpl:
         if (!partialFoilPaste && !deluxePaste && isPaidEditionName(file.name)) continue;
         if (partialFoilPaste && skipOnPartialFoilCrawl(file.name, pdfMap)) continue;
         if (deluxePaste && skipOnDeluxeCrawl(file.name)) continue;
-        const child = await resolve(childId, file.name, hops, depth + 1, nextAncestors, pdfMap || nameIsPdfPartialMap(file.name));
+        const child = await resolve(childId, file.name, hops, depth + 1, nextAncestors, pdfMap || nameIsPdfPartialMap(file.name), false, file.shortcutDetails?.targetId ? { kind: "shortcut", name: file.name } : { kind: "subfolder", name: file.name });
         if (child) children.push(child);
       } else {
         children.push({ id: file.id, name: file.name, folder: false });

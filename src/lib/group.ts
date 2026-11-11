@@ -72,6 +72,23 @@ export function productEditionKind(name: string): EditionKind | null {
   return null;
 }
 
+/** Words that mark a paid edition however they're spelled: Deluxe, DLX, Partial Foil, PF, Premium. */
+const PAID_WORDS = /foil|delux|dlx|pf|premium/;
+
+/**
+ * A folder name that may be a paid edition, for the public-root guard: productEditionKind's Deluxe or
+ * Partial Foil, any of foil / delux / dlx / pf / premium anywhere (case-insensitive, with or without
+ * separators: "DLX Edition", "P.F.", "Deluxe PSD"), or any non-ASCII letter (a Cyrillic е in "Dеluxe"
+ * reads as plain letters to the eye but not to a word match).
+ */
+export function looksLikePaidName(name: string): boolean {
+  for (const char of name) if (char.charCodeAt(0) > 0x7f && /\p{L}/u.test(char)) return true;
+  const lower = name.normalize("NFKC").toLowerCase();
+  if (PAID_WORDS.test(lower) || PAID_WORDS.test(lower.replace(/[^a-z0-9]+/g, ""))) return true;
+  const kind = productEditionKind(name);
+  return kind === "deluxe" || kind === "partial_foil";
+}
+
 /** "Standard Edition" and "1_P5 Standard Edition", not "Standard Bearer" or "Substandard". */
 export function isStandardEditionFolder(name: string): boolean {
   const spaced = name.toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();

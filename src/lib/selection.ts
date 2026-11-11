@@ -2,6 +2,7 @@ import type { ArtFile, ArtTone, CardFace, DeckCard, Edition } from "@/lib/types"
 import { queryFor } from "@/lib/names";
 import { isTokenCard } from "@/lib/tokens";
 import type { XmlSlot } from "@/lib/xml";
+import { own } from "@/lib/own";
 
 /** One chosen print of a card. A card can hold several, and they are not merged by hand. */
 export type ArtQty = {
@@ -371,7 +372,7 @@ export function activeBackOverrides(
   const out = new Map<string, BackOption>();
   if (!cardBacks) return out;
   for (const card of edition.cards) {
-    const hit = resolveBackOverride(edition, card.id, cardBacks[card.id], tokenTest);
+    const hit = resolveBackOverride(edition, card.id, own(cardBacks, card.id), tokenTest);
     if (hit) out.set(card.id, hit);
   }
   return out;

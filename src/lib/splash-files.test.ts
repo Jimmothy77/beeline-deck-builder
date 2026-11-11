@@ -1,10 +1,10 @@
-import { execSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { cpSync, existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { allowListProblems, checkSplash, contentProblems, copySplash, readManifest, SPLASH_DIR, SPLASH_MANIFEST } from "../../scripts/copy-splash";
+import { allowListProblems, checkSplash, contentProblems, copySplash, manifestProblems, readManifest, shippedManifestText, SPLASH_DIR, SPLASH_FINAL, SPLASH_MANIFEST } from "../../scripts/copy-splash";
 import { SPLASH_ALLOW_LIST, SPLASH_CSS_UNSHIPPED_URLS, SPLASH_EXCLUDED, SPLASH_EXCLUDED_DIRS, SPLASH_NOT_SHIPPED, SPLASH_PAGES } from "../../scripts/splash-files";
 import { SPLASH_ASSETS, SPLASH_FALLBACK } from "../data/splash-assets";
 
@@ -53,11 +53,13 @@ describe("splash registry", () => {
 describe("splash files", () => {
   it("allow-lists Frame Lab's 40 frozen files less the player (39), and none of the excluded ones", () => {
     expect(SPLASH_ALLOW_LIST).toHaveLength(39);
-    expect(manifest.size).toBe(40);
+    expect(manifest.size).toBe(39);
     expect(SPLASH_NOT_SHIPPED).toEqual(["splash-player.js"]);
-    expect([...manifest.keys()].filter((file) => !SPLASH_NOT_SHIPPED.includes(file)).sort()).toEqual([...SPLASH_ALLOW_LIST]);
-    // The manifest is still Frame Lab's FINAL.sha256 byte for byte; the player's line is skipped, not removed.
-    expect(createHash("sha256").update(readFileSync(SPLASH_MANIFEST)).digest("hex")).toBe("a4be742ff59092a910ec2625985eeefee48f4e0c34a8fa01883b72d17ab69c93");
+    expect([...manifest.keys()].sort()).toEqual([...SPLASH_ALLOW_LIST]);
+    // Frame Lab's FINAL.sha256 is kept byte for byte for provenance (40 lines, the player's included).
+    expect(createHash("sha256").update(readFileSync(SPLASH_FINAL)).digest("hex")).toBe("a4be742ff59092a910ec2625985eeefee48f4e0c34a8fa01883b72d17ab69c93");
+    expect(readManifest(readFileSync(SPLASH_FINAL, "utf8")).size).toBe(40);
+    expect(allowListProblems(readManifest(readFileSync(SPLASH_FINAL, "utf8")))).toEqual(["splash-player.js: not shipped, but in the manifest"]);
     expect(allowListProblems(manifest, [...SPLASH_ALLOW_LIST, "splash-player.js"])).toContain("splash-player.js: excluded, but on the allow-list");
     expect(allowListProblems(manifest)).toEqual([]);
     for (const file of ["splashes/horror.html", "splashes/horror-a.html", "splashes/horror-b.html", "fonts/fell-sc.woff2", "fonts/vt323.woff2", "index.html"]) {
@@ -67,6 +69,31 @@ describe("splash files", () => {
     expect(SPLASH_EXCLUDED_DIRS).toEqual(["review/", "tools/"]);
     expect(allowListProblems(manifest, [...SPLASH_ALLOW_LIST, "splashes/horror-a.html"])).toContain("splashes/horror-a.html: excluded, but on the allow-list");
     expect(allowListProblems(manifest, SPLASH_ALLOW_LIST.filter((file) => file !== "fonts/anton.woff2"))).toContain("fonts/anton.woff2: in the manifest, not on the allow-list");
+  });
+
+  it("checks against a derived 39-line manifest: FINAL.sha256 less the splash-player.js line, every other byte the same", () => {
+    const finalText = readFileSync(SPLASH_FINAL, "utf8");
+    const shippedText = readFileSync(SPLASH_MANIFEST, "utf8");
+    const playerLine = finalText.split("\n").filter((line) => line.endsWith("  splash-player.js"));
+    expect(playerLine).toHaveLength(1);
+    expect(shippedText).toBe(finalText.replace(`${playerLine[0]}\n`, ""));
+    expect(shippedText).toBe(shippedManifestText(finalText));
+    expect(shippedText.split("\n").filter(Boolean)).toHaveLength(39);
+    expect(shippedText).not.toContain("splash-player.js");
+    expect(manifestProblems(finalText, shippedText)).toEqual([]);
+    const drift = ["scripts/splash-shipped.sha256: not scripts/splash-final.sha256 less the splash-player.js line"];
+    expect(manifestProblems(finalText, finalText)).toEqual(drift);
+    expect(manifestProblems(finalText, shippedText.replace(/^[0-9a-f]/, (c) => (c === "0" ? "1" : "0")))).toEqual(drift);
+    expect(manifestProblems(finalText, shippedText.split("\n").slice(1).join("\n"))).toEqual(drift);
+    expect(manifestProblems(finalText, `${shippedText}\n`)).toEqual(drift);
+    expect(checkSplash(SPLASH_DIR, manifest, undefined, { final: finalText, shipped: finalText })).toContain(drift[0]);
+    expect(checkSplash(SPLASH_DIR, manifest, undefined, { final: finalText, shipped: shippedText })).toEqual([]);
+  });
+
+  it("passes a plain sha256sum -c of the shipped manifest inside public/splash/", () => {
+    const out = execFileSync("sha256sum", ["-c", SPLASH_MANIFEST], { cwd: SPLASH_DIR, encoding: "utf8" });
+    expect(out.trim().split("\n")).toHaveLength(39);
+    expect(out.trim().split("\n").every((line) => line.endsWith(": OK"))).toBe(true);
   });
 
   it("ships public/splash/ exactly as the manifest says, with the excluded files absent", () => {
@@ -152,7 +179,16 @@ describe("splash files", () => {
     expect(existsSync(path.join(built, "index.html"))).toBe(true);
     expect(existsSync(path.join(built, "splash", "splash-runtime.js"))).toBe(true);
     expect(everywhere(built)).toEqual([]);
-    if (existsSync(path.join(root, "dist"))) expect(everywhere(path.join(root, "dist"))).toEqual([]);
+    // dist/ may be mid-rebuild by another test (emptyOutDir), so a folder that vanishes while it is read is
+    // tried again; the fresh-unzip verify checks the final dist/ as well.
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      try {
+        if (existsSync(path.join(root, "dist"))) expect(everywhere(path.join(root, "dist"))).toEqual([]);
+        break;
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== "ENOENT" || attempt === 4) throw error;
+      }
+    }
     const source = fakeSource();
     writeFileSync(path.join(source, "splash-player.js"), "Frame Lab's player\n");
     const dest = temp();

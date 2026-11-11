@@ -182,6 +182,32 @@ describe("the card filter", () => {
     expect(drafts.length).toBe(saved);
   });
 
+  it("reads constructor, __proto__, toString and hasOwnProperty as plain words, never as filter keys, colors or rarities", async () => {
+    await render();
+    const saved = drafts.length;
+    const unknown = () => document.querySelector("[data-query-unknown]")?.textContent ?? null;
+    for (const word of ["constructor", "__proto__", "toString", "hasOwnProperty", "Constructor"]) {
+      search(word);
+      expect(tileNames(), word).toEqual([]);
+      expect(unknown(), word).toBeNull();
+      // A key is letters only: "__proto__:x" is a name search, the others are keys nobody knows.
+      const isKey = /^[a-z]+$/i.test(word);
+      search(`${word}:x`);
+      expect(unknown(), word).toBe(isKey ? `Not understood, so not used: ${word}:x` : null);
+      search(`c:${word}`);
+      expect(unknown(), word).toBe(`Not understood, so not used: c:${word}`);
+      search(`r:${word}`);
+      expect(unknown(), word).toBe(`Not understood, so not used: r:${word}`);
+      search(`(c:${word} or c:u)`);
+      expect(unknown(), word).toBe(`Not understood, so not used: c:${word} or c:u`);
+      search(`(${word}:a or ${word}:b)`);
+      expect(unknown(), word).toBe(isKey ? `Not understood, so not used: ${word}:a or ${word}:b` : null);
+    }
+    search("");
+    expect(tileNames()).toHaveLength(5);
+    expect(drafts.length).toBe(saved);
+  });
+
   it("still finds an unmatched card by name and marks it, and the attribute filters leave it out", async () => {
     await render();
     search("turtle");

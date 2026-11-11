@@ -28,6 +28,11 @@ import { writeSaved } from "@/lib/storage";
 import { TOUR_KEY } from "@/lib/tour";
 import type { DeckCatalogue } from "@/lib/types";
 
+// Every test here runs on a fake clock, so wall time never decides a result. The timeout only catches a
+// hang: it is generous because a machine loaded by a mutation run can make one test take tens of seconds,
+// and a test cut off by the default 5 s leaves its app mounted and fails the tests after it.
+vi.setConfig({ testTimeout: 120_000, hookTimeout: 120_000 });
+
 const root = path.resolve(import.meta.dirname, "../..");
 const deckFile = (id: string) => readFileSync(path.join(root, "public/decks", `${id}.json`), "utf8");
 const TMNT = JSON.parse(deckFile("tmnt")) as DeckCatalogue;
@@ -36,18 +41,23 @@ let host: HTMLDivElement;
 let reactRoot: Root;
 let reduced: boolean;
 
+/**
+ * Lets React and pending promises run. Under the fake clock nothing moves on its own: time only passes
+ * when a test says so, so `settle()` steps the fake clock by `ms` (0 runs only what is already due).
+ */
 async function settle(ms = 0) {
   await act(async () => {
-    await new Promise((resolve) => setTimeout(resolve, ms));
+    if (vi.isFakeTimers()) await vi.advanceTimersByTimeAsync(ms);
+    else await new Promise((resolve) => setTimeout(resolve, ms));
   });
 }
 /**
- * Fake timers that still tick with real time, so React's own scheduling and `settle()` work as usual,
- * while a splash's seconds-long timers are jumped over at once instead of waited out. Without this the
- * tests waited 2.5 s of real time each and could time out on a busy machine (a mutation run, say).
+ * Fake timers that do not tick with real time: a splash's seconds-long timers fire only when a test
+ * advances the clock (elapse), never because the machine was slow. Only the timer functions are faked, so
+ * React's scheduler (setImmediate / MessageChannel) and promises still run as usual.
  */
 function fakeClock() {
-  vi.useFakeTimers({ shouldAdvanceTime: true, toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"] });
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"] });
 }
 async function elapse(ms: number) {
   await act(async () => {
@@ -110,6 +120,8 @@ beforeEach(() => {
   host = document.createElement("div");
   document.body.appendChild(host);
   reactRoot = createRoot(host);
+  // Every test runs on the fake clock, so no splash ends because the machine was slow.
+  fakeClock();
 });
 afterEach(() => {
   act(() => reactRoot.unmount());

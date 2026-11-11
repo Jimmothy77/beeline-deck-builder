@@ -929,7 +929,7 @@ function parseCardBacks(value: unknown): { cardBacks?: Record<string, string> } 
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
   const out: Record<string, string> = {};
   for (const [cardId, fileId] of Object.entries(value as Record<string, unknown>)) {
-    if (!cardId || cardId.length > 200 || typeof fileId !== "string") continue;
+    if (!cardId || cardId.length > 200 || cardId === "__proto__" || typeof fileId !== "string") continue;
     const id = fileId.trim();
     if (id && id.length <= 200) out[cardId] = id;
   }

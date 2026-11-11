@@ -1,6 +1,7 @@
 import { normalizeKey } from "@/lib/names";
 import { tokenQueryNames } from "@/lib/tokens";
 import type { DeckCard } from "@/lib/types";
+import { own } from "@/lib/own";
 
 /**
  * Card facts for the deck filter: colors, type line, mana value, rarity,
@@ -93,7 +94,7 @@ export type ResolvedFacts = { status: FactsStatus; facts: CardFacts | null };
 export function factsFor(card: Pick<DeckCard, "name" | "faces">, lookup: Readonly<Record<string, CardFacts>>): ResolvedFacts {
   let fallback: CardFacts | null = null;
   for (const query of tokenQueryNames(card)) {
-    const entry = lookup[normalizeKey(query)];
+    const entry = own(lookup, normalizeKey(query));
     if (entry && !entry.ambiguous) return { status: "matched", facts: entry };
     if (entry && !fallback) fallback = entry;
   }

@@ -1,4 +1,5 @@
 import { COLOR_ORDER, type CardFacts, type ColorLetter, type FactsStatus } from "@/lib/card-facts";
+import { own } from "@/lib/own";
 
 /**
  * The deck view's card filter, modelled on Scryfall search. One model is
@@ -239,7 +240,8 @@ function colorLetters(value: string): ColorLetter[] | "c" | "m" | null {
   const v = value.toLowerCase();
   if (v === "c" || v === "colorless") return "c";
   if (v === "m" || v === "multicolor") return "m";
-  if (COLOR_WORDS[v]) return COLOR_WORDS[v]!;
+  const words = own(COLOR_WORDS, v);
+  if (words) return words;
   if (/^[wubrg]+$/.test(v)) return COLOR_ORDER.filter((color) => v.includes(color.toLowerCase()));
   return null;
 }
@@ -287,7 +289,7 @@ export function normalizeFilter(filter: CardFilter): CardFilter {
 
 /** "t:creature or t:instant", "c:w or c:u", "r:rare or r:mythic": one of. Other groups are not understood. */
 function applyOrGroup(filter: CardFilter, terms: Term[]): boolean {
-  const kinds = new Set(terms.map((term) => (term.key ? KEYS[term.key] : null)));
+  const kinds = new Set(terms.map((term) => (term.key ? (own(KEYS, term.key) ?? null) : null)));
   if (kinds.size !== 1 || terms.some((term) => term.op !== ":" && term.op !== "=")) return false;
   const kind = [...kinds][0];
   if (kind === "type") {
@@ -327,7 +329,7 @@ function applyOrGroup(filter: CardFilter, terms: Term[]): boolean {
 function rarityOf(value: string): Rarity | null {
   const v = value.toLowerCase();
   if ((RARITIES as readonly string[]).includes(v)) return v as Rarity;
-  return RARITY_LETTERS[v] ?? null;
+  return own(RARITY_LETTERS, v) ?? null;
 }
 
 function applyTerm(filter: CardFilter, term: Term): boolean {
@@ -336,7 +338,7 @@ function applyTerm(filter: CardFilter, term: Term): boolean {
     filter.name.push(term.value);
     return true;
   }
-  const kind = KEYS[term.key];
+  const kind = own(KEYS, term.key);
   const { op, value } = term;
   switch (kind) {
     case "name":

@@ -6,8 +6,10 @@
  *   npx tsx scripts/copy-splash.ts --check --from <folder>     and the folder still matches it too
  *
  * The allow-list (scripts/splash-files.ts) is the 40 files in Frame Lab's freeze list less
- * splash-player.js (39 files). The list's sha256 lines are kept byte for byte in
- * scripts/splash-final.sha256 (the manifest); the player's line is skipped (SPLASH_NOT_SHIPPED). Copying refuses to
+ * splash-player.js (39 files). Frame Lab's list is kept byte for byte in scripts/splash-final.sha256, for
+ * provenance; the checks use scripts/splash-shipped.sha256 (the manifest), which is that list less the
+ * player's line (SPLASH_NOT_SHIPPED), so a plain `sha256sum -c` of it passes in public/splash/ and
+ * dist/splash/. --check fails if the two ever disagree. Copying refuses to
  * run unless every source file matches the manifest, and it never copies anything else: files in
  * public/splash/ that are not on the allow-list (an old variant, say) are removed. A second run with
  * the same files writes nothing.
@@ -27,7 +29,10 @@ import { SPLASH_ALLOW_LIST, SPLASH_EXCLUDED, SPLASH_EXCLUDED_DIRS, SPLASH_MAX_FI
 
 const root = path.resolve(import.meta.dirname, "..");
 export const SPLASH_DIR = path.join(root, "public/splash");
-export const SPLASH_MANIFEST = path.join(root, "scripts/splash-final.sha256");
+/** Frame Lab's FINAL.sha256, byte for byte (40 lines). Provenance only. */
+export const SPLASH_FINAL = path.join(root, "scripts/splash-final.sha256");
+/** The 39 shipped files' lines: FINAL.sha256 less splash-player.js. What every check reads. */
+export const SPLASH_MANIFEST = path.join(root, "scripts/splash-shipped.sha256");
 
 // Built from pieces so this file never holds them as plain text itself.
 const KEY_PREFIX = ["AI", "za"].join("");
@@ -48,6 +53,19 @@ export function readManifest(text: string): Map<string, string> {
   return entries;
 }
 
+/** FINAL.sha256's text less the lines of files that are not shipped, every other byte unchanged. */
+export function shippedManifestText(finalText: string): string {
+  return finalText
+    .split(/(?<=\n)/)
+    .filter((line) => !SPLASH_NOT_SHIPPED.some((file) => line.replace(/\n$/, "").endsWith(`  ${file}`)))
+    .join("");
+}
+
+/** The shipped manifest must be exactly Frame Lab's list less the player's line. */
+export function manifestProblems(finalText: string, shippedText: string): string[] {
+  return shippedText === shippedManifestText(finalText) ? [] : ["scripts/splash-shipped.sha256: not scripts/splash-final.sha256 less the splash-player.js line"];
+}
+
 /** The allow-list itself must be sound: exactly the manifest, and nothing excluded on it. */
 export function allowListProblems(manifest: Map<string, string>, allow: readonly string[] = SPLASH_ALLOW_LIST): string[] {
   const problems: string[] = [];
@@ -55,7 +73,10 @@ export function allowListProblems(manifest: Map<string, string>, allow: readonly
     if (SPLASH_EXCLUDED.includes(file) || SPLASH_EXCLUDED_DIRS.some((dir) => file.startsWith(dir))) problems.push(`${file}: excluded, but on the allow-list`);
     if (!manifest.has(file)) problems.push(`${file}: on the allow-list, not in the manifest`);
   }
-  for (const file of manifest.keys()) if (!allow.includes(file) && !SPLASH_NOT_SHIPPED.includes(file)) problems.push(`${file}: in the manifest, not on the allow-list`);
+  for (const file of manifest.keys()) {
+    if (SPLASH_NOT_SHIPPED.includes(file)) problems.push(`${file}: not shipped, but in the manifest`);
+    else if (!allow.includes(file)) problems.push(`${file}: in the manifest, not on the allow-list`);
+  }
   return problems;
 }
 
@@ -74,7 +95,6 @@ function listFiles(dir: string, base = dir): string[] {
 export function hashProblems(dir: string, manifest: Map<string, string>): string[] {
   const problems: string[] = [];
   for (const [file, hash] of manifest) {
-    if (SPLASH_NOT_SHIPPED.includes(file)) continue;
     const full = path.join(dir, file);
     if (!existsSync(full)) problems.push(`${file}: missing`);
     else if (sha256(readFileSync(full)) !== hash) problems.push(`${file}: sha256 differs from the manifest`);
@@ -238,8 +258,9 @@ function removeEmptyDirs(dir: string) {
 }
 
 /** --check: the destination holds exactly the allow-list, every file matches the manifest, and the content checks pass. */
-export function checkSplash(dir: string, manifest: Map<string, string>, from?: string): string[] {
+export function checkSplash(dir: string, manifest: Map<string, string>, from?: string, texts?: { final: string; shipped: string }): string[] {
   return [
+    ...(texts ? manifestProblems(texts.final, texts.shipped) : []),
     ...allowListProblems(manifest),
     ...strayFiles(dir).map((file) => `${file}: not on the allow-list`),
     ...hashProblems(dir, manifest),
@@ -253,9 +274,10 @@ function main(argv: string[]) {
   const fromIndex = argv.indexOf("--from");
   const from = fromIndex >= 0 ? argv[fromIndex + 1] : undefined;
   if (fromIndex >= 0 && (!from || !statSync(from, { throwIfNoEntry: false })?.isDirectory())) throw new Error("--from needs Frame Lab's folder");
-  const manifest = readManifest(readFileSync(SPLASH_MANIFEST, "utf8"));
+  const texts = { final: readFileSync(SPLASH_FINAL, "utf8"), shipped: readFileSync(SPLASH_MANIFEST, "utf8") };
+  const manifest = readManifest(texts.shipped);
   if (check) {
-    const problems = checkSplash(SPLASH_DIR, manifest, from);
+    const problems = checkSplash(SPLASH_DIR, manifest, from, texts);
     if (problems.length) {
       console.error(`public/splash/ does not match the manifest:\n  ${problems.join("\n  ")}`);
       process.exitCode = 1;
@@ -266,6 +288,8 @@ function main(argv: string[]) {
     return;
   }
   if (!from) throw new Error("usage: copy-splash.ts --from <Frame Lab folder> | --check [--from <folder>]");
+  const drift = manifestProblems(texts.final, texts.shipped);
+  if (drift.length) throw new Error(`not copying: ${drift.join("; ")}`);
   const source = contentProblems(from);
   if (source.length) throw new Error(`not copying, the source fails its checks:\n  ${source.join("\n  ")}`);
   const result = copySplash(from, SPLASH_DIR, manifest);
