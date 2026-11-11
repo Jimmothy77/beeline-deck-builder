@@ -2730,18 +2730,6 @@
           "name": "Extras B3",
           "path": "Extras/Extras B3",
           "reason": "This folder is a group of 5 cards that are not in the main deck (Cabal Stronghold; Culling the Weak; Deadly Rollick; Orcish Bowmasters - ALT; Phyrexian Tower). They were listed as extras."
-        },
-        {
-          "level": "skipped",
-          "name": "2_Vader Deluxe Edition",
-          "path": "Vader",
-          "reason": "Paid edition. Not fetched and not included in the shipped catalogue."
-        },
-        {
-          "level": "skipped",
-          "name": "3_Vader Partial Foil Edition",
-          "path": "Vader",
-          "reason": "Paid edition. Not fetched and not included in the shipped catalogue."
         }
       ],
       "decklists": [

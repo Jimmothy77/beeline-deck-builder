@@ -135,6 +135,32 @@ export function loadIdLines(file: string): Set<string> {
   );
 }
 
+/** The gitignored file of local-only folder ids (or their SHA-256) that must never ship. */
+export const PRIVATE_IDS_FILE = ".beeline-private-ids.txt";
+
+/**
+ * SHA-256 hashes of the local, untracked list of non-Standard folder ids (deck parents, the old public
+ * root): the file named by BEELINE_PRIVATE_IDS, else `.beeline-private-ids.txt` in the repo. A line is a
+ * raw id or its 64-hex SHA-256. Nothing is read or returned when there is no such file, and the ids
+ * themselves are never kept.
+ */
+export function loadPrivateDenyHashes(root: string, env: Record<string, string | undefined> = process.env): Set<string> {
+  const file = env.BEELINE_PRIVATE_IDS || path.join(root, PRIVATE_IDS_FILE);
+  let text: string;
+  try {
+    text = readFileSync(file, "utf8");
+  } catch {
+    return new Set();
+  }
+  const hashes = new Set<string>();
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line || line.startsWith("#")) continue;
+    hashes.add(/^[0-9a-f]{64}$/i.test(line) ? line.toLowerCase() : sha256(line));
+  }
+  return hashes;
+}
+
 function hasGit(root: string): boolean {
   try {
     return lstatSync(path.join(root, ".git")).isDirectory();

@@ -41,6 +41,20 @@ async function settle(ms = 0) {
     await new Promise((resolve) => setTimeout(resolve, ms));
   });
 }
+/**
+ * Fake timers that still tick with real time, so React's own scheduling and `settle()` work as usual,
+ * while a splash's seconds-long timers are jumped over at once instead of waited out. Without this the
+ * tests waited 2.5 s of real time each and could time out on a busy machine (a mutation run, say).
+ */
+function fakeClock() {
+  vi.useFakeTimers({ shouldAdvanceTime: true, toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"] });
+}
+async function elapse(ms: number) {
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(ms);
+  });
+  await settle();
+}
 async function mount() {
   await act(async () => {
     reactRoot.render(<App />);
@@ -178,6 +192,7 @@ describe("the deck splash in the app", () => {
   });
 
   it("is skipped by a click or tap anywhere, by the Skip button, and closes on its own after it plays", async () => {
+    fakeClock();
     await mount();
     await click(button("Build"));
     await click(button("Skip"));
@@ -187,9 +202,9 @@ describe("the deck splash in the app", () => {
     await click(button("Build"));
     expect(splash()).not.toBeNull();
     await fromFrame("beeline-splash:ready");
-    await settle(SPLASH_ASSETS.tmnt!.durationMs + SPLASH_GRACE_MS - 300);
+    await elapse(SPLASH_ASSETS.tmnt!.durationMs + SPLASH_GRACE_MS - 300);
     expect(splash()).not.toBeNull();
-    await settle(400);
+    await elapse(400);
     expect(splash()).toBeNull();
     expect(total()).toMatch(/^100 cards/);
     // Frame Lab's page says when it is done.
@@ -202,6 +217,7 @@ describe("the deck splash in the app", () => {
   });
 
   it("gives focus to the deck heading when it closes, as the Build button that opened it is gone", async () => {
+    fakeClock();
     await mount();
     const build = button("Build")!;
     build.focus();
@@ -215,7 +231,7 @@ describe("the deck splash in the app", () => {
     sessionStorage.clear();
     await click(button("Decks"));
     await click(button("Build"));
-    await settle(SPLASH_READY_TIMEOUT_MS + 100);
+    await elapse(SPLASH_READY_TIMEOUT_MS + 100);
     expect(splash()).toBeNull();
     expect(document.activeElement?.hasAttribute("data-deck-heading")).toBe(true);
     expect(total()).toMatch(/^100 cards/);
@@ -234,14 +250,34 @@ describe("the deck splash in the app", () => {
     expect(splash()!.style.backgroundColor).toBe("rgb(213, 117, 40)");
   });
 
+  it("plays Persona 5's and SxF's splash for a pasted P5 or Spy x Family edition, keyed by its own deck id", async () => {
+    vi.stubGlobal("fetch", async (url: string) => {
+      const name = String(url).split("/").pop()!;
+      if (name === "index.json") return new Response(JSON.stringify({ decks: [{ id: "p5", name: "P5", file: "decks/p5.json" }, { id: "spy-x-family", name: "Spy x Family", file: "decks/spy-x-family.json" }] }));
+      if (name === "p5.json") return new Response(JSON.stringify({ ...TMNT, id: "p5", name: "P5" }));
+      return new Response(JSON.stringify({ ...TMNT, id: "spy-x-family", name: "Spy x Family" }));
+    });
+    await mount();
+    await click(button("Build"));
+    expect(frameEl()!.getAttribute("src")).toMatch(/splash\/splashes\/persona5\.html\?noskip=1$/);
+    expect(sessionKeys()).toEqual(["printabee.splash.v1.persona-5"]);
+    await press("Escape");
+    await click(button("Decks"));
+    const builds = [...document.querySelectorAll<HTMLButtonElement>("button")].filter((item) => item.textContent?.trim() === "Build");
+    await click(builds[1]);
+    expect(frameEl()!.getAttribute("src")).toMatch(/splash\/splashes\/sxf\.html\?noskip=1$/);
+    expect(splash()!.getAttribute("aria-label")).toBe("Spy x Family: opening");
+  });
+
   it("shows a still frame with reduced motion, and it ends on its own", async () => {
     reduced = true;
+    fakeClock();
     await mount();
     await click(button("Build"));
     expect(splash()!.dataset.splashMotion).toBe("still");
     expect(frameEl()!.getAttribute("src")).toMatch(/splash\/splashes\/tmnt\.html\?noskip=1&poster=1$/);
     await fromFrame("beeline-splash:ready");
-    await settle(SPLASH_STATIC_MS + 100);
+    await elapse(SPLASH_STATIC_MS + 100);
     expect(splash()).toBeNull();
   });
 

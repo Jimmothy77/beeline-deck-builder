@@ -3,8 +3,10 @@
  * scripts/copy-splash.ts). Nothing else from Frame Lab's folder is ever copied: not the variants that
  * were not picked, not the review page, the player or the tools.
  *
- * It is exactly the 40 files in Frame Lab's freeze list, FINAL.sha256 (kept here byte for byte as
- * scripts/splash-final.sha256), so `sha256sum -c` of that list passes inside public/splash/.
+ * It is the 40 files in Frame Lab's freeze list, FINAL.sha256 (kept here byte for byte as
+ * scripts/splash-final.sha256), less splash-player.js (SPLASH_NOT_SHIPPED): 39 files, each checked
+ * against that list, so `grep -v ' splash-player.js$' scripts/splash-final.sha256 | sha256sum -c`
+ * passes inside public/splash/.
  *
  * Paths are relative to Frame Lab's folder and to public/splash/ alike (the pages load
  * ../splash-runtime.js, ../splash-base.css, ../fonts/* and ../assets/*, so the layout is kept).
@@ -26,14 +28,8 @@ export const SPLASH_PAGES = [
   "splashes/beeline.html",
 ] as const;
 
-/**
- * What the pages load: the shared runtime and CSS, the fonts they use, and the fallback's images. Plus
- * splash-player.js, which Frame Lab's freeze list (FINAL.sha256) includes: it is shipped so the copy
- * verifies byte for byte against that list, but the app never loads it (src/components/Splash.tsx plays
- * the pages itself; the player would keep "seen" in localStorage under a key outside printabee.*).
- */
+/** What the pages load: the shared runtime and CSS, the fonts they use, and the fallback's images. */
 export const SPLASH_SHARED = [
-  "splash-player.js",
   "splash-runtime.js",
   "splash-base.css",
   "assets/bee.svg",
@@ -66,13 +62,24 @@ export const SPLASH_SHARED = [
 export const SPLASH_ALLOW_LIST: readonly string[] = [...SPLASH_PAGES, ...SPLASH_SHARED].sort();
 
 /**
+ * Entries of Frame Lab's freeze list that are deliberately not shipped. splash-player.js is Frame Lab's
+ * own player: the app plays the pages itself (src/components/Splash.tsx), and the player would keep a
+ * "seen" flag in localStorage under a key outside printabee.*. It was shipped but never loaded up to
+ * v0.1.32; from v0.1.33 it isn't copied at all. Its manifest line is skipped, not deleted, so the
+ * manifest stays Frame Lab's file byte for byte.
+ */
+export const SPLASH_NOT_SHIPPED: readonly string[] = ["splash-player.js"];
+
+/**
  * Files in Frame Lab's folder that must never be copied. The allow-list alone already keeps them out;
  * this list is checked too, so adding one of them to the allow-list by mistake fails loudly.
  * - splashes/horror.html, horror-a.html, horror-b.html: Horror options not picked (horror-c was).
  * - fonts/vt323.woff2, fonts/fell-sc.woff2: used only by the options not picked and the review page.
  * - index.html, README.md, review/, tools/: the review page, notes, renders and review tooling.
+ * - splash-player.js: Frame Lab's player, never used (see SPLASH_NOT_SHIPPED).
  */
 export const SPLASH_EXCLUDED: readonly string[] = [
+  "splash-player.js",
   "splashes/horror.html",
   "splashes/horror-a.html",
   "splashes/horror-b.html",
@@ -83,6 +90,14 @@ export const SPLASH_EXCLUDED: readonly string[] = [
   "FINAL.md",
   "FINAL.sha256",
 ];
+/**
+ * url()s in the frozen splash CSS allowed to point at files not shipped: none. Up to Frame Lab's first
+ * v0.1.33 freeze, splash-base.css declared "BL VT323" and "BL Fell" (fonts/vt323.woff2,
+ * fonts/fell-sc.woff2), used only by the Horror alternates not picked; Frame Lab re-froze without them
+ * (FINAL.sha256 a4be742f…), so every url() must now resolve to a shipped file.
+ */
+export const SPLASH_CSS_UNSHIPPED_URLS: readonly string[] = [];
+
 /** Whole folders that are never copied. */
 export const SPLASH_EXCLUDED_DIRS: readonly string[] = ["review/", "tools/"];
 

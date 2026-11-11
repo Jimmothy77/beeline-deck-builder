@@ -4062,18 +4062,6 @@
           "name": "Hydroelectric Specimen (Melinda Desmond, Former First Lady) // Hydroelectric Laboratory (Exclusive Circle)",
           "path": "",
           "reason": "Paired face 1_1 with face 1_2 so the back is printed with its front and is not counted as its own card."
-        },
-        {
-          "level": "skipped",
-          "name": "2_Spy x Family Deluxe Edition",
-          "path": "SxF",
-          "reason": "Paid edition. Not fetched and not included in the shipped catalogue."
-        },
-        {
-          "level": "skipped",
-          "name": "3_Spy x Family Partial Foil Edition",
-          "path": "SxF",
-          "reason": "Paid edition. Not fetched and not included in the shipped catalogue."
         }
       ],
       "decklists": [

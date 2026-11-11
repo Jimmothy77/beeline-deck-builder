@@ -4,9 +4,10 @@ import { HomeView, type DeckChoice } from "@/components/HomeView";
 import { Splash } from "@/components/Splash";
 import { Tour, TourButton, TourPrompt, type TourViewResult } from "@/components/Tour";
 import { SPLASH_ASSETS, SPLASH_FALLBACK } from "@/data/splash-assets";
+import { canonicalDeckId } from "@/data/deck-aliases";
 import { treatmentsFor } from "@/data/treatments";
 import { bundledDecklistsFor, freshDraft } from "@/lib/draft";
-import { assertApiKey, parentFolderName, parseDriveFolderId, readConfigKey, readDecklistTexts, readDriveTree } from "@/lib/drive";
+import { assertApiKey, parseDriveFolderId, readConfigKey, readDecklistTexts, readDriveTree } from "@/lib/drive";
 import { downloadText, publicUrl, xmlFilename } from "@/lib/download";
 import { artIdsOf, assignPartialFoilThumbs, catalogueFromTree, pdfIdsInEdition } from "@/lib/group";
 import { preferDeckName } from "@/lib/names";
@@ -220,10 +221,13 @@ export default function App() {
    * The tour's preview deck never calls this, and the splash isn't drawn while the tour is open.
    */
   function openDeckSplash(deckId: string, deckName: string) {
+    // A pasted "P5 …" or "Spy x Family …" edition is its own deck (p5, spy-x-family) but plays, and is
+    // remembered as, the shipped deck's splash (persona-5, sxf).
+    const splashDeck = canonicalDeckId(deckId);
     const store = sessionStore();
-    if (!shouldPlaySplash(store, deckId)) return;
-    if (!rememberSplash(store, deckId)) return;
-    setSplash({ deckName, choice: splashFor(deckId, SPLASH_ASSETS, SPLASH_FALLBACK), reducedMotion: reducedMotion() });
+    if (!shouldPlaySplash(store, splashDeck)) return;
+    if (!rememberSplash(store, splashDeck)) return;
+    setSplash({ deckName, choice: splashFor(splashDeck, SPLASH_ASSETS, SPLASH_FALLBACK), reducedMotion: reducedMotion() });
   }
 
   /** Shows a tour step's view. The deck view uses the deck being built; with none, it opens the first deck as an unsaved preview. */
@@ -265,9 +269,10 @@ export default function App() {
       const folderId = parseDriveFolderId(url);
       if (!folderId) throw new Error("Paste a Google Drive folder link, the kind on a Ko-fi order page.");
       const tree = await readDriveTree(folderId, apiKey);
-      const parent = await parentFolderName(folderId, apiKey).catch(() => null);
       const decklistTexts = await readDecklistTexts(tree, apiKey);
-      const deckName = preferDeckName(tree.name, parent);
+      // The folder's own name decides the deck ("2_P5 Deluxe Edition" → P5). Its parent is never asked
+      // for: the deck parents are Restricted, and asking would name the paid folders beside it.
+      const deckName = preferDeckName(tree.name);
       const catalogue = assignPartialFoilThumbs(
         catalogueFromTree(tree, deckName, [], { decklistTexts, bundledDecklists: bundledDecklistsFor(shipped, deckName) }),
         [...shipped, ...unlocked.map((item) => item.catalogue)],

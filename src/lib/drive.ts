@@ -3,6 +3,7 @@ import { isDecklistFile } from "@/lib/decklist";
 import type { RawNode } from "@/lib/types";
 
 const FOLDER = "application/vnd.google-apps.folder";
+const SHORTCUT = "application/vnd.google-apps.shortcut";
 const FILE_FIELDS = "nextPageToken,files(id,name,mimeType,shortcutDetails)";
 export const PLACEHOLDER_KEY = "YOUR_GOOGLE_API_KEY";
 
@@ -90,11 +91,15 @@ export async function listChildren(folderId: string, apiKey: string, fetchImpl: 
   return files;
 }
 
-export async function getFileMeta(fileId: string, apiKey: string, fetchImpl: FetchLike = fetch): Promise<{ id: string; name: string; mimeType: string }> {
-  const url = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?fields=id,name,mimeType&supportsAllDrives=true&key=${keyOf(apiKey)}`;
+/**
+ * One file's id, name and type, and a shortcut's target. Only these fields are asked for: never
+ * `parents`, so a folder's Restricted deck parent (and the paid editions beside it) is never revealed.
+ */
+export async function getFileMeta(fileId: string, apiKey: string, fetchImpl: FetchLike = fetch): Promise<DriveFile> {
+  const url = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?fields=id,name,mimeType,shortcutDetails&supportsAllDrives=true&key=${keyOf(apiKey)}`;
   const response = await fetchImpl(url);
   if (!response.ok) throw new DriveError(response.status, driveFailure(response.status, await response.text()));
-  return (await response.json()) as { id: string; name: string; mimeType: string };
+  return (await response.json()) as DriveFile;
 }
 
 export async function downloadText(fileId: string, apiKey: string, fetchImpl: FetchLike = fetch): Promise<string> {
@@ -149,25 +154,26 @@ function editionCrawlOrder(name: string): number {
   return 3;
 }
 
-/**
- * List a folder recursively. A `New Drive Link.txt` replaces that folder with
- * the newer folder it points at (up to three hops).
- */
-export async function parentFolderName(folderId: string, apiKey: string, fetchImpl: FetchLike = fetch): Promise<string | null> {
-  const url = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(folderId)}?fields=parents&supportsAllDrives=true&key=${keyOf(apiKey)}`;
-  const response = await fetchImpl(url);
-  if (!response.ok) return null;
-  const data = (await response.json()) as { parents?: string[] };
-  const parent = data.parents?.[0];
-  if (!parent) return null;
-  const meta = await getFileMeta(parent, apiKey, fetchImpl).catch(() => null);
-  return meta?.name ?? null;
+function isPaidEditionName(name: string): boolean {
+  const kind = productEditionKind(name);
+  return kind === "deluxe" || kind === "partial_foil";
 }
 
+/**
+ * List a folder recursively. A `New Drive Link.txt` replaces that folder with
+ * the newer folder it points at (up to three hops). A pasted shortcut is
+ * followed to its target.
+ *
+ * Only a pasted Deluxe or Partial Foil folder (the link on a Ko-fi order) opens
+ * paid editions. Any other paste (the public BeeLine folder, a deck's shortcut,
+ * a Standard folder) never lists a Deluxe or Partial Foil folder inside it, so
+ * it yields Standard only.
+ */
 export async function readDriveTree(folderId: string, apiKey: string, fetchImpl: FetchLike = fetch): Promise<RawNode> {
   const cache = new Map<string, RawNode>();
   let partialFoilPaste = false;
   let deluxePaste = false;
+  let rootDecided = false;
 
   async function resolve(
     id: string,
@@ -182,13 +188,22 @@ export async function readDriveTree(folderId: string, apiKey: string, fetchImpl:
     if (!followedLink && ancestors.includes(id)) throw new Error("The Drive link loops back to a folder already opened.");
     const cached = cache.get(id);
     if (cached) return cached;
-    const own = await getFileMeta(id, apiKey, fetchImpl).catch(() => ({ id, name: fallbackName, mimeType: FOLDER }));
+    const own: DriveFile = await getFileMeta(id, apiKey, fetchImpl).catch(() => ({ id, name: fallbackName, mimeType: FOLDER }));
+    if (own.mimeType === SHORTCUT) {
+      const target = own.shortcutDetails?.targetId;
+      if (!target || own.shortcutDetails?.targetMimeType !== FOLDER) throw new Error("That link is a shortcut to something other than a folder.");
+      if (target === id || ancestors.includes(target)) throw new Error("The Drive link loops back to a folder already opened.");
+      return resolve(target, own.name || fallbackName, hops, depth, [...ancestors, id], insidePdfMap, true);
+    }
     const folderName = own.name || fallbackName;
-    if (hops === 0 && depth === 0) {
+    if (hops === 0 && depth === 0 && !rootDecided) {
+      rootDecided = true;
       const kind = productEditionKind(folderName);
       if (kind === "partial_foil") partialFoilPaste = true;
       if (kind === "deluxe") deluxePaste = true;
     }
+    // A free paste never opens a paid folder, even one reached through an innocently named shortcut.
+    if (depth > 0 && !partialFoilPaste && !deluxePaste && isPaidEditionName(folderName)) return null;
     const files = await listChildren(id, apiKey, fetchImpl);
     const link = files.find((file) => LINK_FILE.test(file.name));
     if (link && hops < 3) {
@@ -213,6 +228,7 @@ export async function readDriveTree(folderId: string, apiKey: string, fetchImpl:
       const mime = file.shortcutDetails?.targetMimeType || file.mimeType;
       const childId = file.shortcutDetails?.targetId || file.id;
       if (mime === FOLDER) {
+        if (!partialFoilPaste && !deluxePaste && isPaidEditionName(file.name)) continue;
         if (partialFoilPaste && skipOnPartialFoilCrawl(file.name, pdfMap)) continue;
         if (deluxePaste && skipOnDeluxeCrawl(file.name)) continue;
         const child = await resolve(childId, file.name, hops, depth + 1, nextAncestors, pdfMap || nameIsPdfPartialMap(file.name));

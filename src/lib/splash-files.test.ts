@@ -1,9 +1,11 @@
+import { execSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { cpSync, existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { allowListProblems, checkSplash, contentProblems, copySplash, readManifest, SPLASH_DIR, SPLASH_MANIFEST } from "../../scripts/copy-splash";
-import { SPLASH_ALLOW_LIST, SPLASH_EXCLUDED, SPLASH_EXCLUDED_DIRS, SPLASH_PAGES } from "../../scripts/splash-files";
+import { SPLASH_ALLOW_LIST, SPLASH_CSS_UNSHIPPED_URLS, SPLASH_EXCLUDED, SPLASH_EXCLUDED_DIRS, SPLASH_NOT_SHIPPED, SPLASH_PAGES } from "../../scripts/splash-files";
 import { SPLASH_ASSETS, SPLASH_FALLBACK } from "../data/splash-assets";
 
 const root = path.resolve(import.meta.dirname, "../..");
@@ -49,9 +51,14 @@ describe("splash registry", () => {
 });
 
 describe("splash files", () => {
-  it("allow-lists exactly Frame Lab's 40 frozen files, and none of the excluded ones", () => {
-    expect(SPLASH_ALLOW_LIST).toHaveLength(40);
-    expect([...manifest.keys()].sort()).toEqual([...SPLASH_ALLOW_LIST]);
+  it("allow-lists Frame Lab's 40 frozen files less the player (39), and none of the excluded ones", () => {
+    expect(SPLASH_ALLOW_LIST).toHaveLength(39);
+    expect(manifest.size).toBe(40);
+    expect(SPLASH_NOT_SHIPPED).toEqual(["splash-player.js"]);
+    expect([...manifest.keys()].filter((file) => !SPLASH_NOT_SHIPPED.includes(file)).sort()).toEqual([...SPLASH_ALLOW_LIST]);
+    // The manifest is still Frame Lab's FINAL.sha256 byte for byte; the player's line is skipped, not removed.
+    expect(createHash("sha256").update(readFileSync(SPLASH_MANIFEST)).digest("hex")).toBe("a4be742ff59092a910ec2625985eeefee48f4e0c34a8fa01883b72d17ab69c93");
+    expect(allowListProblems(manifest, [...SPLASH_ALLOW_LIST, "splash-player.js"])).toContain("splash-player.js: excluded, but on the allow-list");
     expect(allowListProblems(manifest)).toEqual([]);
     for (const file of ["splashes/horror.html", "splashes/horror-a.html", "splashes/horror-b.html", "fonts/fell-sc.woff2", "fonts/vt323.woff2", "index.html"]) {
       expect(SPLASH_EXCLUDED).toContain(file);
@@ -73,7 +80,8 @@ describe("splash files", () => {
     const source = fakeSource();
     const dest = temp();
     const first = copySplash(source, dest, manifest);
-    expect(first.written).toHaveLength(40);
+    expect(first.written).toHaveLength(39);
+    expect(first.written).not.toContain("splash-player.js");
     expect(listAll(dest)).toEqual([...SPLASH_ALLOW_LIST]);
     const second = copySplash(source, dest, manifest);
     expect(second).toEqual({ written: [], unchanged: [...SPLASH_ALLOW_LIST], removed: [] });
@@ -120,7 +128,8 @@ describe("splash files", () => {
     edit("xmen.html", (html) => html.replace("BL Bangers", "BL Fell").replace("</body>", '<img src="../assets/extra.png">\n</body>'));
     edit("sxf.html", (html) => html.replace('data-duration="2200"', 'data-duration="2900"'));
     const css = path.join(dest, "splash-base.css");
-    writeFileSync(css, readFileSync(css, "utf8").replace("url(fonts/russo.woff2)", "url(../fonts/russo.woff2)"));
+    // A font declared but not shipped (like the BL Fell of Frame Lab's earlier freeze).
+    writeFileSync(css, readFileSync(css, "utf8").replace("url(fonts/russo.woff2)", "url(../fonts/russo.woff2)") + '@font-face{font-family:"BL Fell";src:url(fonts/fell-sc.woff2) format("woff2");font-display:block}\n');
     const problems = contentProblems(dest).join("\n");
     // The font path bug of Frame Lab's first freeze: relative to splash-base.css, ../fonts leaves the folder.
     expect(problems).toMatch(/splash-base\.css: refers to \.\.\/fonts\/russo\.woff2, outside the splash folder/);
@@ -132,6 +141,63 @@ describe("splash files", () => {
     expect(problems).toMatch(/splashes\/xmen\.html: uses BL Fell \(fonts\/fell-sc\.woff2\), not on the allow-list/);
     expect(problems).toMatch(/splashes\/xmen\.html: refers to assets\/extra\.png, not on the allow-list/);
     expect(problems).toMatch(/splashes\/sxf\.html: registry durationMs 2200, page data-duration 2900/);
+  });
+
+  it("ships no splash-player.js in public/ or dist/, and an upgrade's copy removes an old one", { timeout: 60_000 }, () => {
+    const everywhere = (dir: string): string[] => (existsSync(dir) ? listAll(dir).filter((file) => path.posix.basename(file) === "splash-player.js") : []);
+    expect(everywhere(path.join(root, "public"))).toEqual([]);
+    // A build of its own, so another test rebuilding dist/ at the same time can't race it.
+    const built = temp();
+    execSync(`npx vite build --outDir "${built}" --emptyOutDir`, { cwd: root, stdio: "pipe", timeout: 60_000 });
+    expect(existsSync(path.join(built, "index.html"))).toBe(true);
+    expect(existsSync(path.join(built, "splash", "splash-runtime.js"))).toBe(true);
+    expect(everywhere(built)).toEqual([]);
+    if (existsSync(path.join(root, "dist"))) expect(everywhere(path.join(root, "dist"))).toEqual([]);
+    const source = fakeSource();
+    writeFileSync(path.join(source, "splash-player.js"), "Frame Lab's player\n");
+    const dest = temp();
+    copySplash(source, dest, manifest);
+    writeFileSync(path.join(dest, "splash-player.js"), "left over from v0.1.32\n");
+    expect(checkSplash(dest, manifest)).toContain("splash-player.js: not on the allow-list");
+    const again = copySplash(source, dest, manifest);
+    expect(again.removed).toEqual(["splash-player.js"]);
+    expect(existsSync(path.join(dest, "splash-player.js"))).toBe(false);
+    expect(checkSplash(dest, manifest)).toEqual([]);
+  });
+
+  it("resolves every url() in the shipped splash CSS to a shipped file, with no exceptions", () => {
+    // Every stylesheet and inline style the splash ships, with the folder its relative urls resolve from.
+    const sheets: { file: string; css: string }[] = [];
+    for (const file of SPLASH_ALLOW_LIST) {
+      const text = readFileSync(path.join(SPLASH_DIR, file), "utf8");
+      if (file.endsWith(".css")) sheets.push({ file, css: text });
+      if (file.endsWith(".html")) {
+        for (const match of text.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/gi)) sheets.push({ file, css: match[1]! });
+        for (const match of text.matchAll(/\sstyle="([^"]*)"/gi)) sheets.push({ file, css: match[1]! });
+      }
+    }
+    expect(sheets.some((sheet) => sheet.file === "splash-base.css")).toBe(true);
+    const unresolved: string[] = [];
+    let urls = 0;
+    for (const { file, css } of sheets) {
+      for (const match of css.matchAll(/url\(\s*(['"]?)([^'")]+)\1\s*\)/g)) {
+        const ref = match[2]!.trim();
+        if (ref.startsWith("data:") || ref.startsWith("#")) continue;
+        urls += 1;
+        const target = path.posix.normalize(path.posix.join(path.posix.dirname(file), ref.split(/[?#]/)[0]!));
+        if (target.startsWith("../") || !SPLASH_ALLOW_LIST.includes(target) || !existsSync(path.join(SPLASH_DIR, target))) unresolved.push(target);
+      }
+    }
+    expect(SPLASH_CSS_UNSHIPPED_URLS).toEqual([]);
+    expect(unresolved).toEqual([]);
+    // Every @font-face in splash-base.css loads a shipped font, and every shipped font is declared.
+    const css = readFileSync(path.join(SPLASH_DIR, "splash-base.css"), "utf8");
+    const declared = [...css.matchAll(/@font-face\{[^}]*?url\(\s*['"]?([^'")]+)/g)].map((match) => path.posix.normalize(match[1]!));
+    const shippedFonts = SPLASH_ALLOW_LIST.filter((file) => file.startsWith("fonts/"));
+    expect(declared).toHaveLength(22);
+    expect(urls).toBe(22);
+    expect([...new Set(declared)].sort()).toEqual(shippedFonts);
+    expect(css).not.toMatch(/BL VT323|BL Fell|vt323|fell-sc/);
   });
 
   it("never loads Frame Lab's player: the app plays the pages itself", () => {

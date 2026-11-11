@@ -6,7 +6,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { catalogueFromTree } from "@/lib/group";
 import { slug } from "@/lib/names";
-import { SCAN_CHUNK, classifyDriveId, driveIdsIn, hasDeniedWindow, loadIdLines, scanForForeignDriveIds, sha256 } from "@/lib/public-ids";
+import { PRIVATE_IDS_FILE, SCAN_CHUNK, classifyDriveId, driveIdsIn, hasDeniedWindow, loadIdLines, loadPrivateDenyHashes, scanForForeignDriveIds, sha256 } from "@/lib/public-ids";
 import type { RawNode } from "@/lib/types";
 
 const root = path.resolve(import.meta.dirname, "../..");
@@ -17,7 +17,7 @@ const id44 = `1${"c".repeat(43)}`;
 /** The local Art Picker archive holds upstream Drive file ids. Leave the file where the user put it. */
 function scanRepo(allowed: Set<string>, denied: Set<string>, extra: string[] = []) {
   return scanForForeignDriveIds(root, allowed, denied, extra, {
-    exclude: (relative) => relative.split(path.sep).join("/") === "uploads/MPC_Art_Picker_v2.7.2_00a4.zip",
+    exclude: (relative) => ["uploads/MPC_Art_Picker_v2.7.2_00a4.zip", PRIVATE_IDS_FILE].includes(relative.split(path.sep).join("/")),
   });
 }
 
@@ -447,9 +447,38 @@ describe("public drive id allow-list", () => {
     const denied = loadIdLines(path.join(root, "src/lib/drive-deny-list.txt"));
     expect(allowed.size).toBeGreaterThan(200);
     expect(denied.size).toBeGreaterThan(0);
+    // Deck parents and the old public root come only from a local, untracked file (BEELINE_PRIVATE_IDS or
+    // .beeline-private-ids.txt); without one this checks the committed deny list alone.
+    const privateHashes = loadPrivateDenyHashes(root);
+    for (const hash of privateHashes) denied.add(hash);
+    expect([...allowed].filter((id) => privateHashes.has(sha256(id)))).toHaveLength(0);
     const foreign = scanRepo(allowed, denied, [path.join(root, "dist")]);
     expect(foreign).toEqual([]);
   }, 60_000);
+
+  it("reads the private list as raw ids or hashes, from the env file or the gitignored file, and keeps no id", () => {
+    const raw = `1${"p".repeat(32)}`;
+    const hashed = `1${"q".repeat(32)}`;
+    const dir = mkdtempSync(path.join(tmpdir(), "beeline-private-"));
+    try {
+      const file = path.join(dir, "ids.txt");
+      writeFileSync(file, `# deck parents\n${raw}\n\n${sha256(hashed).toUpperCase()}\n`);
+      const hashes = loadPrivateDenyHashes(dir, { BEELINE_PRIVATE_IDS: file });
+      expect([...hashes].sort()).toEqual([sha256(raw), sha256(hashed)].sort());
+      expect(JSON.stringify([...hashes])).not.toContain(raw);
+      expect(loadPrivateDenyHashes(dir, {})).toEqual(new Set());
+      writeFileSync(path.join(dir, PRIVATE_IDS_FILE), `${raw}\n`);
+      expect(loadPrivateDenyHashes(dir, {})).toEqual(new Set([sha256(raw)]));
+      // A private id that turns up in shipped files fails the scan without printing it.
+      writeFileSync(path.join(dir, "leak.json"), `{"folder":"${raw}"}`);
+      const hits = scanForForeignDriveIds(dir, new Set(), loadPrivateDenyHashes(dir, {}), [], { exclude: (relative) => relative === PRIVATE_IDS_FILE });
+      expect(hits.some((line) => line.includes("leak.json") && line.includes("matches a paid folder id"))).toBe(true);
+      expect(hits.join("\n")).not.toContain(raw);
+      expect(readFileSync(path.join(root, ".gitignore"), "utf8").split(/\r?\n/)).toContain(PRIVATE_IDS_FILE);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
 });
 
 describe("SxF and Floating World default totals", () => {

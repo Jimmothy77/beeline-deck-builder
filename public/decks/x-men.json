@@ -3966,12 +3966,6 @@
           "name": "Extra",
           "path": "Extras/Extra",
           "reason": "This folder is a group of 3 cards that are not in the main deck (Atla Palani, Nest Tender; Reminder Token; Vivien on the Hunt (Genesis)). They were listed as extras."
-        },
-        {
-          "level": "skipped",
-          "name": "2_X-Men Deluxe Edition",
-          "path": "X-Men",
-          "reason": "Paid edition. Not fetched and not included in the shipped catalogue."
         }
       ],
       "decklists": [

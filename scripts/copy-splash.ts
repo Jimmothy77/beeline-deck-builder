@@ -5,8 +5,9 @@
  *   npx tsx scripts/copy-splash.ts --check                     public/splash/ matches the manifest
  *   npx tsx scripts/copy-splash.ts --check --from <folder>     and the folder still matches it too
  *
- * The allow-list (scripts/splash-files.ts) is exactly the 40 files in Frame Lab's freeze list, whose
- * sha256 lines are kept byte for byte in scripts/splash-final.sha256 (the manifest). Copying refuses to
+ * The allow-list (scripts/splash-files.ts) is the 40 files in Frame Lab's freeze list less
+ * splash-player.js (39 files). The list's sha256 lines are kept byte for byte in
+ * scripts/splash-final.sha256 (the manifest); the player's line is skipped (SPLASH_NOT_SHIPPED). Copying refuses to
  * run unless every source file matches the manifest, and it never copies anything else: files in
  * public/splash/ that are not on the allow-list (an old variant, say) are removed. A second run with
  * the same files writes nothing.
@@ -22,7 +23,7 @@ import path from "node:path";
 import { SPLASH_ASSETS, SPLASH_FALLBACK } from "../src/data/splash-assets";
 import { driveIdsIn } from "../src/lib/public-ids";
 import type { SplashAsset } from "../src/lib/splash";
-import { SPLASH_ALLOW_LIST, SPLASH_EXCLUDED, SPLASH_EXCLUDED_DIRS, SPLASH_MAX_FILE_BYTES, SPLASH_MAX_TOTAL_BYTES, SPLASH_PAGES } from "./splash-files";
+import { SPLASH_ALLOW_LIST, SPLASH_EXCLUDED, SPLASH_EXCLUDED_DIRS, SPLASH_MAX_FILE_BYTES, SPLASH_MAX_TOTAL_BYTES, SPLASH_NOT_SHIPPED, SPLASH_PAGES } from "./splash-files";
 
 const root = path.resolve(import.meta.dirname, "..");
 export const SPLASH_DIR = path.join(root, "public/splash");
@@ -54,7 +55,7 @@ export function allowListProblems(manifest: Map<string, string>, allow: readonly
     if (SPLASH_EXCLUDED.includes(file) || SPLASH_EXCLUDED_DIRS.some((dir) => file.startsWith(dir))) problems.push(`${file}: excluded, but on the allow-list`);
     if (!manifest.has(file)) problems.push(`${file}: on the allow-list, not in the manifest`);
   }
-  for (const file of manifest.keys()) if (!allow.includes(file)) problems.push(`${file}: in the manifest, not on the allow-list`);
+  for (const file of manifest.keys()) if (!allow.includes(file) && !SPLASH_NOT_SHIPPED.includes(file)) problems.push(`${file}: in the manifest, not on the allow-list`);
   return problems;
 }
 
@@ -73,6 +74,7 @@ function listFiles(dir: string, base = dir): string[] {
 export function hashProblems(dir: string, manifest: Map<string, string>): string[] {
   const problems: string[] = [];
   for (const [file, hash] of manifest) {
+    if (SPLASH_NOT_SHIPPED.includes(file)) continue;
     const full = path.join(dir, file);
     if (!existsSync(full)) problems.push(`${file}: missing`);
     else if (sha256(readFileSync(full)) !== hash) problems.push(`${file}: sha256 differs from the manifest`);

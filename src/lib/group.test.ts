@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildShippedStandardTree, parseEmbeddedFolder, type ListedFolder, type Lister } from "@/lib/crawl";
+import { PaidFolderError, buildShippedStandardTree, parseEmbeddedFolder, type ListedFolder, type Lister } from "@/lib/crawl";
 import { artIdsOf, catalogueFromTree, groupPartialFoilEdition, isTemplateOrFontFolder, pdfIdsInEdition, productEditionKind } from "@/lib/group";
 import { cleanDeckName, preferDeckName } from "@/lib/names";
 import { designedSelection, randomizeUnlocked, selectAllCards, selectionToSlots } from "@/lib/selection";
@@ -329,11 +329,20 @@ describe("shipped crawl never requests paid folders", () => {
       if (!found) throw new Error(`refusing to list ${id}`);
       return found;
     };
-    const built = await buildShippedStandardTree({ rootId: "rootFolder01", deckQuery: "silksong", list });
+    // The old layout (paid editions beside Standard) now stops the build, naming the paths, never the ids.
+    const failed = await buildShippedStandardTree({ rootId: "rootFolder01", deckQuery: "silksong", list }).catch((error: Error) => error);
+    expect(failed).toBeInstanceOf(PaidFolderError);
+    expect((failed as PaidFolderError).paths).toEqual(["Decks / 3_Silksong / 2_Silksong Deluxe Edition", "Decks / 3_Silksong / 3_Silksong Partial Foil Edition"]);
+    expect((failed as Error).message).not.toMatch(/deluxeFolder1|partialFoil1|deckSilksong/);
     expect(requested).not.toContain("deluxeFolder1");
     expect(requested).not.toContain("partialFoil1");
     expect(requested).not.toContain("deckVader0001");
-    expect(built.skipped).toEqual(["2_Silksong Deluxe Edition", "3_Silksong Partial Foil Edition"]);
+    // Without them, the same deck builds from Standard only.
+    const free: Lister = async (id) => {
+      const found = await list(id);
+      return id === "deckSilksong" ? { ...found, entries: found.entries.filter((entry) => !/Deluxe|Partial/.test(entry.name)) } : found;
+    };
+    const built = await buildShippedStandardTree({ rootId: "rootFolder01", deckQuery: "silksong", list: free });
     expect(built.deckName).toBe("Silksong");
     const ids = JSON.stringify(built.tree);
     expect(ids).not.toContain("deluxeFolder1");
@@ -809,7 +818,6 @@ describe("free standard layouts that are not named Standard", () => {
           title: "1_TMNT",
           entries: [
             { id: "tmntInner001", name: "TMNT", folder: true },
-            { id: "tmntDeluxe01", name: "2_TMNT Deluxe Edition", folder: true },
           ],
         },
         tmntInner001: {
@@ -827,7 +835,6 @@ describe("free standard layouts that are not named Standard", () => {
       return found;
     };
     const built = await buildShippedStandardTree({ rootId: "rootFolder01", deckQuery: "tmnt", list });
-    expect(requested).not.toContain("tmntDeluxe01");
     expect(requested).toContain("tmntInner001");
     expect(built.deckName).toBe("TMNT");
     const edition = catalogueFromTree(built.tree, built.deckName).editions[0]!;

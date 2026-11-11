@@ -1,8 +1,18 @@
 import { isCompleteCollectionName, isFullDeckFolderName, isTemplateOrFontFolder, productEditionKind } from "@/lib/group";
+import { canonicalDeckName } from "@/data/deck-aliases";
 import { decodeEntities, normalizeKey } from "@/lib/names";
 import type { RawNode } from "@/lib/types";
 
-export type ListedEntry = { id: string; name: string; folder: boolean };
+/**
+ * One entry of a public folder listing. A Drive shortcut keeps its own id in `id`; `targetId` is the
+ * folder or file it points at, which is what gets listed.
+ */
+export type ListedEntry = { id: string; name: string; folder: boolean; shortcut?: true; targetId?: string };
+
+/** The id to list for an entry: a shortcut's target, else the entry itself. */
+export function listId(entry: ListedEntry): string {
+  return entry.targetId ?? entry.id;
+}
 
 export type ListedFolder = { title: string; entries: ListedEntry[] };
 
@@ -17,7 +27,14 @@ export function parseEmbeddedFolder(html: string): ListedFolder {
     const rawName = part.match(/class="flip-entry-title">([^<]*)<\/div>/)?.[1] ?? "";
     const head = part.slice(0, 2500);
     const folder = head.includes("/folders/") || head.includes('aria-label="Folder"');
-    return { id, name: decodeEntities(rawName).trim(), folder };
+    const entry: ListedEntry = { id, name: decodeEntities(rawName).trim(), folder };
+    // A shortcut is drawn with Drive's shortcut icon, and its link opens the target.
+    if (head.includes("drive-shortcut-icon")) {
+      const target = head.match(/href="https:\/\/drive\.google\.com\/(?:drive\/(?:u\/\d+\/)?folders\/|file\/d\/)([A-Za-z0-9_-]+)/)?.[1];
+      entry.shortcut = true;
+      if (target && target !== id) entry.targetId = target;
+    }
+    return entry;
   });
   return { title, entries: entries.filter((entry) => entry.id && entry.name) };
 }
@@ -25,20 +42,20 @@ export function parseEmbeddedFolder(html: string): ListedFolder {
 export type Lister = (id: string) => Promise<ListedFolder>;
 
 /**
- * Crawl only the free Standard edition. Deluxe and Partial Foil siblings are
- * recorded by name and never requested.
+ * Crawl only the free Standard edition, through shortcuts. The public root holds one entry per deck: a
+ * folder holding a shortcut to the deck's Standard folder, or that shortcut itself. A Deluxe or Partial
+ * Foil folder anywhere on the way is an error (see guardPublicTree); it is never requested.
  */
 export async function buildShippedStandardTree(opts: {
   rootId: string;
   deckQuery: string;
   list: Lister;
-}): Promise<{ deckName: string; tree: RawNode; skipped: string[] }> {
+}): Promise<{ deckName: string; tree: RawNode }> {
   const root = await opts.list(opts.rootId);
   const deck = findDeckFolder(root.title, opts.rootId, root.entries, opts.deckQuery);
-  const listing = deck.id === opts.rootId ? root : await opts.list(deck.id);
-  const skipped = listing.entries
-    .filter((entry) => entry.folder && (productEditionKind(entry.name) === "deluxe" || productEditionKind(entry.name) === "partial_foil"))
-    .map((entry) => entry.name);
+  const listing = deck.id === opts.rootId ? root : await opts.list(listId(deck));
+  const paid = listing.entries.filter((entry) => entry.folder && paidEditionName(entry.name)).map((entry) => `${root.title || "public root"} / ${deck.name} / ${entry.name}`);
+  if (paid.length) throw new PaidFolderError(paid);
   const standards = listing.entries.filter((entry) => entry.folder && productEditionKind(entry.name) === "standard");
   let edition = standards[0];
   let editionListing: ListedFolder | null = null;
@@ -55,7 +72,7 @@ export async function buildShippedStandardTree(opts: {
     const holders: ListedEntry[] = [];
     let imageSet: { entry: ListedEntry; listing: ListedFolder } | null = null;
     for (const entry of plain) {
-      const child = await opts.list(entry.id);
+      const child = await opts.list(listId(entry));
       const holdsDeck = child.entries.some((item) => item.folder && (isFullDeckFolderName(item.name) || isCompleteCollectionName(item.name)));
       if (holdsDeck) holders.push(entry);
       else if (!imageSet && listingIsCardImages(child)) imageSet = { entry, listing: child };
@@ -77,9 +94,11 @@ export async function buildShippedStandardTree(opts: {
     throw new Error(`More than one Standard folder in “${deck.name}”: ${standards.map((entry) => entry.name).join(", ")}.`);
   }
   const seen = new Set<string>();
-  const tree = await crawl(edition.id, edition.name, opts.list, seen, editionListing);
-  const deckName = cleanFrom(deck.name);
-  return { deckName, tree, skipped };
+  const tree = await crawl(listId(edition), edition.name, opts.list, seen, editionListing);
+  // The deck's own folder name ("3_Silksong", or a shortcut's "1_Spy x Family Standard Edition"), cleaned,
+  // then mapped to the shipped deck's name ("SxF") so deck ids stay the same.
+  const deckName = canonicalDeckName(cleanFrom(deck.name));
+  return { deckName, tree };
 }
 
 function paidEditionName(name: string): boolean {
@@ -120,10 +139,110 @@ async function crawl(id: string, name: string, list: Lister, seen: Set<string>, 
       const kind = productEditionKind(entry.name);
       if (kind === "deluxe" || kind === "partial_foil") continue;
       if (SKIP_FOLDER.test(entry.name) || isTemplateOrFontFolder(entry.name)) continue;
-      children.push(await crawl(entry.id, entry.name, list, seen));
+      children.push(await crawl(listId(entry), entry.name, list, seen));
     } else {
       children.push({ id: entry.id, name: entry.name, folder: false });
     }
   }
   return { id, name: listing.title || name, folder: true, children };
+}
+
+/** A Deluxe or Partial Foil folder showed up under the public root. The message names paths, never ids. */
+export class PaidFolderError extends Error {
+  paths: string[];
+  constructor(paths: string[]) {
+    super(`Paid edition folder${paths.length === 1 ? "" : "s"} under the public root (move ${paths.length === 1 ? "it" : "them"} out before building):\n${paths.map((item) => `  ${item}`).join("\n")}`);
+    this.name = "PaidFolderError";
+    this.paths = paths;
+  }
+}
+
+export type PublicTreeReport = {
+  /** The root folder's title. */
+  title: string;
+  /** Folders listed, shortcuts followed. */
+  folders: number;
+  shortcuts: number;
+  /** Name paths of Deluxe or Partial Foil folders (never listed). */
+  paid: string[];
+  /** Name paths of folders that couldn't be listed (Restricted, gone, or a failed request). */
+  unreadable: string[];
+  /** Each top-level entry and the Standard folder it leads to (by name), or null when none was found. */
+  decks: { entry: string; via: string[]; standard: string | null }[];
+};
+
+/**
+ * Walk the whole public root, following shortcuts, and record every Deluxe or Partial Foil folder by its
+ * name path, matched the way the app detects editions (productEditionKind). A paid-named entry is never
+ * listed; a shortcut whose own name looks free but whose target turns out paid is reported and not walked.
+ * Only folder names are reported, so nothing here prints an id.
+ */
+export async function guardPublicTree(rootId: string, list: Lister): Promise<PublicTreeReport> {
+  const report: PublicTreeReport = { title: "", folders: 0, shortcuts: 0, paid: [], unreadable: [], decks: [] };
+  const seen = new Set<string>();
+  let root: ListedFolder;
+  try {
+    root = await list(rootId);
+  } catch {
+    report.unreadable.push("public root");
+    return report;
+  }
+  report.folders += 1;
+  report.title = root.title || "public root";
+  if (paidEditionName(report.title)) {
+    report.paid.push(report.title);
+    return report;
+  }
+  seen.add(rootId);
+  async function walk(entry: ListedEntry, trail: string[], deck: PublicTreeReport["decks"][number] | null): Promise<void> {
+    const here = [...trail, entry.name];
+    if (paidEditionName(entry.name)) {
+      report.paid.push(here.join(" / "));
+      return;
+    }
+    const id = listId(entry);
+    if (entry.shortcut) report.shortcuts += 1;
+    if (seen.has(id)) return;
+    seen.add(id);
+    let listing: ListedFolder;
+    try {
+      listing = await list(id);
+    } catch {
+      report.unreadable.push(here.join(" / "));
+      return;
+    }
+    report.folders += 1;
+    const title = listing.title || entry.name;
+    if (title !== entry.name && paidEditionName(title)) {
+      report.paid.push(`${here.join(" / ")} (shortcut to “${title}”)`);
+      return;
+    }
+    if (deck) {
+      if (entry.shortcut) deck.via.push(entry.name);
+      if (!deck.standard && looksLikeStandard(title, listing)) deck.standard = title;
+    }
+    for (const child of listing.entries) {
+      if (child.folder) await walk(child, here, deck);
+    }
+  }
+  for (const entry of root.entries) {
+    if (!entry.folder) continue;
+    const deck = paidEditionName(entry.name) ? null : { entry: entry.name, via: [] as string[], standard: null as string | null };
+    if (deck) report.decks.push(deck);
+    await walk(entry, [report.title], deck);
+  }
+  return report;
+}
+
+/** A Standard edition folder, or a deck folder that holds the cards itself (TMNT, Horror). */
+function looksLikeStandard(title: string, listing: ListedFolder): boolean {
+  if (productEditionKind(title) === "standard") return true;
+  const folders = listing.entries.filter((entry) => entry.folder);
+  if (folders.some((entry) => isFullDeckFolderName(entry.name) || isCompleteCollectionName(entry.name))) return true;
+  return listingIsCardImages(listing);
+}
+
+/** Fails loudly when the walk found a paid folder; the message names paths only. */
+export function assertPublicTreeFree(report: PublicTreeReport): void {
+  if (report.paid.length) throw new PaidFolderError(report.paid);
 }

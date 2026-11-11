@@ -419,22 +419,37 @@ describe("mocked Drive API", () => {
     };
 
     for (const order of ["deluxe-first", "partial-first"] as const) {
+      // A free paste of the whole deck folder yields Standard only: the paid folders beside it,
+      // and shortcuts to them, are never listed (since v0.1.33).
       const { fetchImpl, listed } = pack(order);
       const tree = await readDriveTree("packOrder009", "test-api-key-value", fetchImpl);
       const flat = JSON.stringify(tree);
       expect(flat).toContain("stdSol000009");
-      expect(flat).toContain("deluxeSol009");
-      expect(flat).toContain("bearerFile09");
-      expect(flat).toContain("substdFile09");
-      if (order === "partial-first") {
-        expect(flat).toContain("colorPdf00009");
-        expect(flat).toContain("bwPdf00000009");
-      }
+      expect(flat).not.toContain("deluxeSol009");
+      expect(flat).not.toContain("colorPdf00009");
+      expect(listed).not.toContain("deluxeFold09");
+      expect(listed).not.toContain("partialFold9");
       expect(listed.filter((id) => id === "stdFolder009")).toHaveLength(1);
-      expect(listed.indexOf("stdFolder009")).toBeLessThan(listed.indexOf("deluxeFold09"));
       const catalogue = catalogueFromTree(tree);
+      expect(catalogue.editions.every((edition) => edition.printType === "standard")).toBe(true);
       expect(catalogue.editions.some((edition) => edition.cards.some((card) => card.faces[0]?.defaultArt?.id === "stdSol000009"))).toBe(true);
-      expect(catalogue.editions.some((edition) => edition.cards.some((card) => card.faces[0]?.defaultArt?.id === "deluxeSol009"))).toBe(true);
+
+      // Pasting the Deluxe folder itself (the Ko-fi link) unlocks it, and its shortcut back to Standard
+      // is listed once.
+      const direct = pack(order);
+      const deluxeFlat = JSON.stringify(await readDriveTree("deluxeFold09", "test-api-key-value", direct.fetchImpl));
+      expect(deluxeFlat).toContain("deluxeSol009");
+      expect(deluxeFlat).toContain("bearerFile09");
+      expect(deluxeFlat).toContain("substdFile09");
+      expect(direct.listed.filter((id) => id === "stdFolder009").length).toBeLessThanOrEqual(1);
+      expect(direct.listed).not.toContain("partialFold9");
+      if (order === "partial-first") {
+        const foil = pack(order);
+        const foilFlat = JSON.stringify(await readDriveTree("partialFold9", "test-api-key-value", foil.fetchImpl));
+        expect(foilFlat).toContain("colorPdf00009");
+        expect(foilFlat).toContain("bwPdf00000009");
+        expect(foil.listed).not.toContain("deluxeFold09");
+      }
     }
     const partial = pack("partial-first");
     const partialTree = JSON.stringify(await readDriveTree("partialFold9", "test-api-key-value", partial.fetchImpl));

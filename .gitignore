@@ -11,6 +11,7 @@ node_modules
 dist
 uploads
 .printabee-id-scan-*
+.beeline-private-ids.txt
 dist-ssr
 *.local
 *.tsbuildinfo
