@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { BuilderBoundary, BuilderView } from "@/components/BuilderView";
 import { HomeView, type DeckChoice } from "@/components/HomeView";
+import { Tour, TourButton, TourPrompt, type TourViewResult } from "@/components/Tour";
 import { treatmentsFor } from "@/data/treatments";
 import { bundledDecklistsFor, freshDraft } from "@/lib/draft";
 import { assertApiKey, parentFolderName, parseDriveFolderId, readConfigKey, readDecklistTexts, readDriveTree } from "@/lib/drive";
@@ -26,6 +27,7 @@ import {
   type SavedDeck,
   type UnlockedPack,
 } from "@/lib/storage";
+import { rememberTourAnswer, shouldOfferTour, TOUR_STEPS, type TourView } from "@/lib/tour";
 import type { DeckCatalogue, DeckIndex, Edition } from "@/lib/types";
 import { assertIdsAllowed, splitExportByPrintType } from "@/lib/xml";
 
@@ -49,6 +51,10 @@ export default function App() {
   const [session, setSession] = useState<SavedDeck | null>(null);
   const [unlockBusy, setUnlockBusy] = useState(false);
   const [legacyBackup, setLegacyBackup] = useState(false);
+  const [offerTour, setOfferTour] = useState(() => shouldOfferTour(localStorage));
+  const [touring, setTouring] = useState(false);
+  /** Where the tour started, and whether it opened a deck to show the deck view (put back when it ends). */
+  const tourStart = useRef<{ view: "home" | "builder"; session: SavedDeck | null; opened: string | null }>({ view: "home", session: null, opened: null });
 
   useEffect(() => {
     let cancel = false;
@@ -179,6 +185,42 @@ export default function App() {
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not export that deck.");
     }
+  }
+
+  function startTour() {
+    tourStart.current = { view, session, opened: null };
+    setTouring(true);
+  }
+
+  /** Shows a tour step's view. The deck view uses the deck being built; with none, it opens the first deck as an unsaved preview. */
+  function showTourView(target: TourView): TourViewResult {
+    if (target === "home") {
+      setView("home");
+      return { ok: true };
+    }
+    const opened = tourStart.current.opened;
+    if (opened) {
+      setView("builder");
+      return { ok: true, note: `The tour opened ${opened} to show this. Nothing is saved, and you go back where you were when the tour ends.` };
+    }
+    const current = session ? locate(session) : null;
+    if (current && "edition" in current) {
+      setView("builder");
+      return { ok: true };
+    }
+    const first = foil[0] ?? partial[0];
+    if (!first) return { ok: false };
+    tourStart.current.opened = first.deck.name;
+    setSession(freshDraft(first.deck, first.edition));
+    setView("builder");
+    return { ok: true, note: `The tour opened ${first.deck.name} to show this. Nothing is saved, and you go back where you were when the tour ends.` };
+  }
+
+  function endTour() {
+    const start = tourStart.current;
+    setTouring(false);
+    if (start.opened) setSession(start.session);
+    setView(start.view);
   }
 
   async function unlock(url: string) {
@@ -314,6 +356,23 @@ export default function App() {
           }}
         />
       )}
+      {!loading && offerTour && !touring ? (
+        <TourPrompt
+          onTake={() => {
+            rememberTourAnswer(localStorage, "taken");
+            setOfferTour(false);
+            startTour();
+          }}
+          onDecline={() => {
+            rememberTourAnswer(localStorage, "declined");
+            setOfferTour(false);
+            setToast("No problem. The Tour button in the corner shows it any time.");
+          }}
+        />
+      ) : null}
+      {/* Stays mounted under the tour, so focus can go back to it when the tour ends. */}
+      {!loading ? <TourButton onClick={startTour} /> : null}
+      {touring ? <Tour steps={TOUR_STEPS} onNeedView={showTourView} onClose={endTour} /> : null}
       {toast && (
         <p role="status" className="fixed top-4 right-4 left-4 z-50 mx-auto max-w-md rounded-2xl border border-primary/40 bg-card px-4 py-3 text-sm shadow-2xl sm:left-auto">
           {toast}

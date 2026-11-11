@@ -55,6 +55,10 @@ Choosing a deck loads it as designed (one copy of each main-deck card on the art
 - save the deck, keep several, and export each as its own XML
 - export or import the saved-deck list as JSON
 
+### The tour
+
+On the first visit BeeLine asks "New to BeeLine? Want a quick tour?" with **Take the tour** and **No thanks**. The answer is stored under `printabee.tour.v1` (`taken` or `declined`), so the question never comes back on its own; Esc counts as No thanks. The **Tour** button in the bottom-left corner replays it any time. Six steps highlight the real controls with a short caption and Back, Next and Skip tour; Esc closes it at any point. The steps: pick a deck; unlock a paid deck with the Drive folder link from the Ko-fi order; click a card's art to swap its front and back (Card Back, Alt Back, Token Backs); the search box (`t:creature c:g mv<=3`); the Filters panel; Clear all and Clear shown. The deck-view steps use the deck being built; with none, the tour opens the first deck as an unsaved preview and closes it again at the end. The tour never changes a count or a saved deck, keeps keyboard focus inside its caption, and gives focus back when it closes. A control that isn't on screen (the phone's Add cards tab is open, say) gets its caption in the middle of the screen instead.
+
 ### Filtering the deck view
 
 The search box takes plain words (all must be in the card's name, as before) and Scryfall-style terms; **Filters** opens the same filter as controls, and the controls write the query back into the box. Terms that are not understood are listed under the box and not used.
@@ -70,7 +74,7 @@ The search box takes plain words (all must be in the card's name, as before) and
 | power / toughness | `pow>=3`, `tou<2`, ranges as for mana value | Power, Toughness |
 | quick toggles | `qty>0` (or `is:indeck`), `is:dfc`, `is:token` (or `is:extra`), `is:basic` | Show only chips |
 
-Terms are joined with "and"; `or` works inside one kind of term (types, colors, rarities). Parentheses group, nothing more. Color, type, mana value, rarity, rules text, power and toughness come from `src/data/card-lookup.ts`, a one-time cross-reference of every card name in the shipped decks against Scryfall's public API (the app never calls Scryfall; the lookup loads as its own file the first time the deck view opens). A double-faced card has both faces' colors, type lines and rules text, the front's power and toughness, and matches a type on either face. Rarity is that of the printing Scryfall returns for the name. A name Scryfall has no card for is **unmatched**, and a name several different Scryfall cards share (most tokens) is **ambiguous** and keeps only the facts they agree on. While filtering, such cards carry an "unmatched" or "ambiguous" marker; name search and the quick toggles still find them, but a filter on a fact they lack leaves them out, and the line under the box says how many were left out that way.
+Terms are joined with "and"; `or` works inside one kind of term (types, colors, rarities). Parentheses group, nothing more. Color, type, mana value, rarity, rules text, power and toughness come from `src/data/card-lookup.ts`, a one-time cross-reference of every card name in the shipped decks against Scryfall's public API (the app never calls Scryfall; the lookup loads as its own file the first time the deck view opens). A double-faced card has both faces' colors, type lines and rules text, the front's power and toughness, and matches a type on either face. Rarity is that of the printing Scryfall returns for the name. A name Scryfall has no card for is **unmatched**, and a name several different Scryfall cards share (most tokens) is **ambiguous** and keeps only the facts they agree on. While filtering, such cards carry an "unmatched" or "ambiguous" marker; name search and the quick toggles still find them, but a filter on a fact they lack leaves them out, and the line under the box says how many were left out that way. If the card data file can't load (a dropped connection, say), the box says so with a **Try again** link, and those filters are set aside rather than hiding every card: the list shows every card that matches the rest of the search.
 
 Treatments live in `src/data/treatments.ts`. Foil / Non-Foil offers the White Holo and Standard Holo finishes. Partial Foil offers only the Standard Holo finishes. Add a row to offer another one. Choosing a treatment sets `<foil>true</foil>`. Stock is `(S30) Standard Smooth`, the same default as the Art Picker.
 
@@ -168,7 +172,8 @@ To create the key:
 1. In Google Cloud, enable the **Google Drive API**.
 2. Create an API key. Restrict it to that API.
 3. Restrict the websites that can use it (HTTP referrers). Include the GitHub Pages origin, and `http://127.0.0.1:4178/*` if you want to try unlock locally.
-4. Paste the key into `public/config.js`.
+4. For the GitHub Pages site, add it as a repository secret named `GOOGLE_API_KEY` (**Settings → Secrets and variables → Actions → New repository secret**). The Pages workflow writes it into the built `dist/config.js` at deploy time (see GitHub Pages below). Leave `public/config.js` as the placeholder: never commit the key.
+5. For a local build or the local zip, paste the key into the built `config.js` (`dist/config.js`, or `site\config.js` in the local zip), or run `GOOGLE_API_KEY=… npx tsx scripts/write-config.ts dist/config.js` after `npm run build`.
 
 The key is visible to anyone who can load the page. The referrer restriction is what stops other sites from using it. Do not use a key that can do anything besides read Drive.
 
@@ -186,7 +191,9 @@ Suggested repository name: `beeline-deck-builder`. The site would then live at `
 
 1. creates the repository and pushes this tree,
 2. sets **Settings → Pages → Source** to **GitHub Actions**,
-3. replaces the placeholder in `public/config.js` with a browser key restricted to the Drive API and to the referrers `https://<owner>.github.io/beeline-deck-builder/*` and `http://127.0.0.1:4178/*` (local dev and preview).
+3. adds the repository secret `GOOGLE_API_KEY`: a browser key restricted to the Drive API and to the referrers `https://<owner>.github.io/beeline-deck-builder/*` and `http://127.0.0.1:4178/*` (local dev and preview).
+
+After `npm run build`, the workflow's "Write the Google API key into dist/config.js" step runs `npx tsx scripts/write-config.ts dist/config.js` with the secret in the `GOOGLE_API_KEY` environment variable. The script replaces only the `googleApiKey: "YOUR_GOOGLE_API_KEY",` line, writing the key as a JSON string literal, so the file keeps the format the app reads. It never prints the key (its only output is one line saying whether it wrote a key or kept the placeholder), and the workflow passes the secret only through `env`, never on a command line, with no `echo`, `cat` or `set -x`. A key with spaces or line breaks fails the step without being shown. Without the secret, `dist/config.js` keeps the placeholder and paid unlock stays off. `public/config.js` in the repository is always the placeholder. `src/lib/deploy-config.test.ts` checks the workflow text and does a dry run of the step with a fake key.
 
 The key stays out of the bundle, so it can also be edited in the deployed `config.js`. Never commit a paid Drive file or folder id; `npm test` checks every id in the repo and in `dist/` against the allow list.
 
@@ -205,6 +212,7 @@ Vitest covers:
 - deck lists: file names and labels, both line formats, the shipped lists, list counts and every never-zero rule, folder fallbacks, Spy x Family Color and Black and White
 - the banner copy, the shop link, the stacking rules, and the bee's flight path
 - Clear all, Clear shown and their Undo; the deck filter's matching, the query box and the controls; the card lookup
+- the first-run tour (the remembered answer, replay, Esc, focus, a missing control, no count or save changes); the deploy-time key step (workflow text and a dry run with a fake key)
 
 Which extras are tokens comes from a one-time cross-reference of every extra and token name in the shipped decks against Scryfall's public API, committed as `src/data/token-lookup.ts`. The app never calls Scryfall. A name is a token when Scryfall's card has the layout token, double_faced_token or emblem, or "Token" in its type line. Names Scryfall has no card for, names that are both a token and a game card, and names whose only match is an art card or vanguard use the old rule (a Tokens folder, or a name starting with "Token"). `npx tsx scripts/token-lookup.ts` asks Scryfall again (about 165 requests, 8 a second) and rewrites the lookup; `--report <file>` writes the report from the committed lookup; `--check` fails when a shipped name has no entry or when a hand override matches no card. A few cards are decided by hand in `src/data/token-overrides.ts` (deck id and exact card name; the script never rewrites it), and those win over Scryfall and the old rule: Persona 5's Raphael, Thor and Titania, Silksong's Blood (Infection) and Vader's Shapeshifter 1-9 are tokens, and Persona 5's Lands (the Forest 3 art) is not. Nothing else uses the lookup: the Tokens and Extras lists still follow the folders.
 
@@ -235,6 +243,9 @@ src/lib/card-filter.ts    deck filter and its query syntax
 src/lib/clear.ts          Clear all / Clear shown
 src/data/card-lookup.ts   static Scryfall card facts (generated)
 scripts/card-lookup.ts
+src/components/Tour.tsx   first-run prompt, Tour button, coach marks
+src/lib/tour.ts           tour steps and the printabee.tour.v1 flag
+scripts/write-config.ts   writes the GOOGLE_API_KEY secret into dist/config.js at deploy time
 src/lib/decklist.ts       deck list parsing and counts
 src/lib/flight.ts         banner bee path
 decklists/                shipped deck list text files

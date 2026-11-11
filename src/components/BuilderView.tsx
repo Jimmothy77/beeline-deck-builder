@@ -25,7 +25,7 @@ import { treatmentsFor } from "@/data/treatments";
 import { usesSideTile } from "@/lib/desktop";
 import { downloadText, xmlFilename } from "@/lib/download";
 import { factsFor, type FactsStatus } from "@/lib/card-facts";
-import { attributeFilters, EMPTY_FILTER, formatQuery, isFilterActive, matchCard, parseQuery, type CardFilter, type FilterResult } from "@/lib/card-filter";
+import { attributeFilters, EMPTY_FILTER, formatQuery, isFilterActive, matchCard, parseQuery, withoutAttributeFilters, type CardFilter, type FilterResult } from "@/lib/card-filter";
 import { clearCounts, clearMessage, clearSummary, type ClearScope } from "@/lib/clear";
 import { decklistNotes, findDecklist, isBasicCard, withDecklist } from "@/lib/decklist";
 import { artIdsOf, pdfIdsInEdition } from "@/lib/group";
@@ -68,6 +68,8 @@ function withCardBack(draft: SavedDeck, cardId: string, fileId: string | null): 
 }
 
 /** "color", "color or type", "color, type or mana value". */
+/** "the color filter is", "the color and type filters are". */
+const unusedFacts = (items: string[]) => `the ${items.length < 2 ? items.join("") : `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`} ${items.length === 1 ? "filter is" : "filters are"}`;
 const orList = (items: string[]) => (items.length < 2 ? items.join("") : `${items.slice(0, -1).join(", ")} or ${items[items.length - 1]}`);
 
 /** The time a change is saved with. Called from event handlers only. */
@@ -158,10 +160,11 @@ export function BuilderView({
   const topRef = useRef<HTMLButtonElement | null>(null);
   // The search box reads a Scryfall-style query; plain words search card names, as before.
   const parsed = useMemo(() => parseQuery(query), [query]);
-  const filter = parsed.filter;
+  const { lookup, failed: lookupFailed, retry: retryLookup } = useCardLookup();
+  const needsFacts = attributeFilters(parsed.filter).length > 0;
+  // If the card data couldn't load, the filters that need it are not applied (rather than hiding every card); the note under the box says so.
+  const filter = useMemo(() => (lookupFailed ? withoutAttributeFilters(parsed.filter) : parsed.filter), [lookupFailed, parsed.filter]);
   const filtering = isFilterActive(filter);
-  const needsFacts = attributeFilters(filter).length > 0;
-  const lookup = useCardLookup();
   const results = useMemo(() => {
     const out = new Map<string, { result: FilterResult; status: FactsStatus }>();
     for (const card of edition.cards) {
@@ -510,7 +513,7 @@ export function BuilderView({
         <Button type="button" variant="secondary" onClick={runRandom}>
           <Dices /> Random
         </Button>
-        <Button type="button" variant="outline" disabled={allSummary.copies === 0} title="Set every card in this deck to 0, tokens and extras too. You can undo it." onClick={() => runClear("all")}>
+        <Button type="button" variant="outline" data-tour="clear" disabled={allSummary.copies === 0} title="Set every card in this deck to 0, tokens and extras too. You can undo it." onClick={() => runClear("all")}>
           <Eraser /> Clear all
         </Button>
         {filtering ? (
@@ -554,8 +557,17 @@ export function BuilderView({
             Not understood, so not used: {parsed.unknown.join(", ")}
           </p>
         ) : null}
-        {needsFacts && !lookup ? <p className="text-xs text-muted-foreground">Loading card data…</p> : null}
-        {filtersOpen ? <CardFilterPanel filter={filter} onChange={setFilter} onReset={() => setQuery(formatQuery(EMPTY_FILTER))} /> : null}
+        {lookupFailed ? (
+          <p className="text-xs text-amber-200" role="status" data-lookup-failed="">
+            The card data couldn't load, so {needsFacts ? `${unusedFacts(attributeFilters(parsed.filter))} not applied: the list shows every card that matches the rest of the search` : "the color, type, mana value, rarity, rules text, power and toughness filters can't be used right now"}.{" "}
+            <button type="button" className="underline" onClick={retryLookup}>
+              Try again
+            </button>
+          </p>
+        ) : needsFacts && !lookup ? (
+          <p className="text-xs text-muted-foreground">Loading card data…</p>
+        ) : null}
+        {filtersOpen ? <CardFilterPanel filter={parsed.filter} onChange={setFilter} onReset={() => setQuery(formatQuery(EMPTY_FILTER))} /> : null}
       </div>
 
       <div className="hidden gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_20rem]">

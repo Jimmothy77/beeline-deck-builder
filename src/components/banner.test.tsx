@@ -87,6 +87,6 @@ describe("rebrand", () => {
       expect(body, file).not.toMatch(new RegExp(["ja", "mes"].join(""), "i"));
     }
     expect(readFileSync(path.join(root, "index.html"), "utf8")).toContain("<title>BeeLine Deck Builder</title>");
-    expect(JSON.parse(readFileSync(path.join(root, "package.json"), "utf8"))).toMatchObject({ name: "beeline-deck-builder", version: "0.1.29" });
+    expect(JSON.parse(readFileSync(path.join(root, "package.json"), "utf8"))).toMatchObject({ name: "beeline-deck-builder", version: "0.1.30" });
   });
 });

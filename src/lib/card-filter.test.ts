@@ -43,6 +43,18 @@ describe("the deck filter's query box", () => {
     expect(isFilterActive(parseQuery("  ").filter)).toBe(false);
   });
 
+  it("drops an unfinished t:\" or any empty quoted value, and writes the query back without it", () => {
+    for (const query of ['t:"', 'o:""', '""', 't:" "', 'name:"', 'type:"']) {
+      expect(parseQuery(query), query).toEqual({ filter: EMPTY_FILTER, unknown: [] });
+      expect(formatQuery(parseQuery(query).filter), query).toBe("");
+    }
+    expect(parseQuery('sol t:"')).toEqual({ filter: f({ name: ["sol"] }), unknown: [] });
+    expect(parseQuery('t:creature or t:"').filter).toEqual(f({ types: ["creature"] }));
+    expect(formatQuery(parseQuery('c:g t:"gob').filter)).toBe("c:g t:gob");
+    // Empty text from the controls is never written as a bare "t:" or "o:" (which would read back as a name search).
+    expect(formatQuery(f({ typeText: [""], oracle: [" "], name: [""] }))).toBe("");
+  });
+
   it("lists what it doesn't understand and leaves it out", () => {
     expect(parseQuery("foo:bar t:creature mv<=x c:purple is:commander (t:creature or c:w)").unknown).toEqual(["foo:bar", "mv<=x", "c:purple", "is:commander", "t:creature or c:w"]);
     // An "or" group needs one kind of term and plain ":" or "=".

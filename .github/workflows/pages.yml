@@ -28,6 +28,13 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+      # The Google API key goes into the built site only; public/config.js in the repository keeps the placeholder.
+      # It comes from the GOOGLE_API_KEY repository secret through env, never on the command line, and the script
+      # never prints it. Without the secret, dist/config.js keeps the placeholder and paid unlock stays off.
+      - name: Write the Google API key into dist/config.js
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        run: npx tsx scripts/write-config.ts dist/config.js
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

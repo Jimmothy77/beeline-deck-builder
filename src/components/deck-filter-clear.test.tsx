@@ -9,7 +9,7 @@ import { freshDraft } from "@/lib/draft";
 import { selectionToSlots } from "@/lib/selection";
 import type { SavedDeck } from "@/lib/storage";
 import type { CardFace, CardRole, DeckCard, DeckCatalogue, Edition } from "@/lib/types";
-import { loadCardLookup } from "@/lib/use-card-lookup";
+import { loadCardLookup, setCardLookupImportForTests } from "@/lib/use-card-lookup";
 
 // Made-up ids. None of them is shaped like a Drive id. The names are real cards, so the committed card lookup knows them,
 // except Turtle Van, which Scryfall has no card for.
@@ -237,5 +237,58 @@ describe("Clear shown", () => {
     click(button("Clear all"));
     expect(last().cards).toEqual([]);
     expect(status()).toContain("Cleared all: 8 copies of 5 cards set to 0. Every card in this deck is at 0 now, tokens and extras too.");
+  });
+});
+
+describe("when the card data can't load", () => {
+  afterEach(() => setCardLookupImportForTests(null));
+
+  it("says so instead of 'Loading card data…', keeps the attribute filters from hiding every card, and loads on Try again", async () => {
+    let fail = true;
+    const real = () => import("@/data/card-lookup");
+    setCardLookupImportForTests(() => (fail ? Promise.reject(new Error("chunk failed")) : real()));
+    await act(async () => {
+      root.render(<Harness />);
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    search("t:artifact");
+    const note = () => document.querySelector("[data-lookup-failed]")?.textContent ?? null;
+    expect(note()).toBe("The card data couldn't load, so the type filter is not applied: the list shows every card that matches the rest of the search. Try again");
+    expect(document.body.textContent).not.toContain("Loading card data…");
+    // Not "0 shown": the type part is set aside, so every main card is still listed.
+    expect(tileNames()).toHaveLength(5);
+    search("t:artifact sol");
+    expect(tileNames()).toEqual(["Sol Ring (Bracelet of Hope)"]);
+    search("c:u mv<=3");
+    expect(note()).toContain("the color and mana value filters are not applied");
+    search("");
+    expect(note()).toBe("The card data couldn't load, so the color, type, mana value, rarity, rules text, power and toughness filters can't be used right now. Try again");
+    // The failed load was not cached: Try again loads it.
+    fail = false;
+    await act(async () => {
+      button("Try again")!.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      await loadCardLookup();
+    });
+    expect(note()).toBeNull();
+    search("t:artifact mv<=2");
+    expect(tileNames()).toEqual(["Sol Ring (Bracelet of Hope)", "Arcane Signet"]);
+    expect(drafts).toEqual([]);
+  });
+
+  it("forgets a failed load, so the next call tries the import again", async () => {
+    const calls: string[] = [];
+    setCardLookupImportForTests(() => {
+      calls.push("import");
+      return calls.length === 1 ? Promise.reject(new Error("offline")) : import("@/data/card-lookup");
+    });
+    await expect(loadCardLookup()).rejects.toThrow("offline");
+    const lookup = await loadCardLookup();
+    expect(lookup["sol ring"]).toBeDefined();
+    expect(calls).toEqual(["import", "import"]);
+    await loadCardLookup();
+    expect(calls).toHaveLength(2);
   });
 });

@@ -78,6 +78,11 @@ export function attributeFilters(filter: CardFilter): string[] {
   return out;
 }
 
+/** The same filter without the parts that need Scryfall facts (used when the card data couldn't load). */
+export function withoutAttributeFilters(filter: CardFilter): CardFilter {
+  return { ...filter, colors: [], colorMode: "any", colorless: false, multicolor: false, types: [], typeMode: "any", typeText: [], mv: null, rarities: [], oracle: [], power: null, toughness: null };
+}
+
 export function isFilterActive(filter: CardFilter): boolean {
   return Boolean(filter.name.length || attributeFilters(filter).length || filter.inDeck || filter.dfc || filter.tokenExtra || filter.basics);
 }
@@ -242,7 +247,8 @@ function colorLetters(value: string): ColorLetter[] | "c" | "m" | null {
 export function parseQuery(text: string): ParsedQuery {
   const filter: CardFilter = structuredClone(EMPTY_FILTER);
   const unknown: string[] = [];
-  const tokens = tokenize(text);
+  // An empty value (an unfinished t:" or a bare "") means nothing yet: it is dropped, not listed as not understood.
+  const tokens = tokenize(text).filter((token) => typeof token === "string" || token.value.trim() !== "");
   // Collect plain terms and "or" groups (a run of terms joined by "or", with or without parentheses).
   const items: Term[][] = [];
   let pendingOr = false;
@@ -420,7 +426,8 @@ function formatNumber(key: string, test: NumTest): string {
 
 /** The query text for a filter. parseQuery(formatQuery(filter)) gives the same filter back. */
 export function formatQuery(filter: CardFilter): string {
-  const parts: string[] = [...filter.name.map(quote)];
+  const filled = (list: string[]) => list.filter((value) => value.trim() !== "");
+  const parts: string[] = [...filled(filter.name).map(quote)];
   const letters = filter.colors.map((color) => color.toLowerCase()).join("");
   if (filter.colors.length) {
     if (filter.colorMode === "any" && filter.colors.length > 1) parts.push(`(${[...filter.colors.map((color) => `c:${color.toLowerCase()}`), ...(filter.colorless ? ["c:c"] : [])].join(" or ")})`);
@@ -432,11 +439,11 @@ export function formatQuery(filter: CardFilter): string {
   if (filter.multicolor) parts.push("c:m");
   if (filter.types.length > 1 && filter.typeMode === "any") parts.push(`(${filter.types.map((type) => `t:${type}`).join(" or ")})`);
   else parts.push(...filter.types.map((type) => `t:${type}`));
-  parts.push(...filter.typeText.map((text) => `t:${quote(text)}`));
+  parts.push(...filled(filter.typeText).map((text) => `t:${quote(text)}`));
   if (filter.mv) parts.push(formatNumber("mv", filter.mv));
   if (filter.rarities.length > 1) parts.push(`(${filter.rarities.map((rarity) => `r:${rarity}`).join(" or ")})`);
   else parts.push(...filter.rarities.map((rarity) => `r:${rarity}`));
-  parts.push(...filter.oracle.map((text) => `o:${quote(text)}`));
+  parts.push(...filled(filter.oracle).map((text) => `o:${quote(text)}`));
   if (filter.power) parts.push(formatNumber("pow", filter.power));
   if (filter.toughness) parts.push(formatNumber("tou", filter.toughness));
   if (filter.inDeck) parts.push("qty>0");

@@ -80,7 +80,7 @@ export function HomeView({
       {loading ? (
         <p className="text-sm text-muted-foreground">Loading the decks…</p>
       ) : (
-        <div className="grid gap-5 lg:grid-cols-2">
+        <div className="grid gap-5 lg:grid-cols-2" data-tour="decks">
           <DeckSection
             title="Foil / Non-Foil"
             kicker="Standard files"
@@ -100,7 +100,7 @@ export function HomeView({
         </div>
       )}
 
-      <section className="rounded-3xl border border-border bg-card/80 p-5 sm:p-6">
+      <section className="rounded-3xl border border-border bg-card/80 p-5 sm:p-6" data-tour="unlock">
         <div className="flex items-start gap-3">
           <FolderKey className="mt-0.5 size-5 text-primary" aria-hidden="true" />
           <div>
