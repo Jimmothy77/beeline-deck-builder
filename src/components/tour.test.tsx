@@ -10,7 +10,8 @@ import App from "@/App";
 import { Tour } from "@/components/Tour";
 import { freshDraft } from "@/lib/draft";
 import { writeSaved } from "@/lib/storage";
-import { shouldOfferTour, TOUR_KEY, TOUR_STEPS } from "@/lib/tour";
+import { splashKey } from "@/lib/splash";
+import { shouldOfferTour, TOUR_IN_DECK_INTRO, TOUR_KEY, TOUR_STEPS } from "@/lib/tour";
 import type { DeckCatalogue } from "@/lib/types";
 
 const root = path.resolve(import.meta.dirname, "../..");
@@ -58,6 +59,10 @@ const otherKeys = () => Object.fromEntries(Object.keys(localStorage).filter((key
 beforeEach(() => {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   localStorage.clear();
+  sessionStorage.clear();
+  // The deck splash has its own tests (splash.test.tsx); here both decks have already had theirs this session.
+  sessionStorage.setItem(splashKey("tmnt"), "1");
+  sessionStorage.setItem(splashKey("x-men"), "1");
   vi.stubGlobal("matchMedia", (query: string) => ({ matches: query.includes("min-width"), media: query, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}, onchange: null, dispatchEvent: () => false }));
   window.scrollTo = vi.fn() as unknown as typeof window.scrollTo;
   vi.stubGlobal("fetch", async (url: string) => {
@@ -153,26 +158,98 @@ describe("the tour", () => {
     expect(document.body.textContent).toContain("My TMNT");
   });
 
-  it("replays from the Tour button in the middle of a deck, then returns to it with every count as it was", async () => {
+  it("replays from the Tour button in the middle of a deck with only the deck steps, keeping the search, the Clear undo and every count", async () => {
     localStorage.setItem(TOUR_KEY, "declined");
     await mount();
     await click(button("Build"));
     await click(document.querySelector('button[aria-label^="More copies of"]'));
     expect(total()).toMatch(/^101 cards/);
+    await click(button("Clear all"));
+    expect(total()).toMatch(/^0 cards/);
+    expect(button("Undo Clear all")).toBeTruthy();
+    const search = document.querySelector<HTMLInputElement>('input[aria-label="Search this deck"]')!;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(search, "turtle");
+      search.dispatchEvent(new Event("input", { bubbles: true }));
+    });
     const before = otherKeys();
     await click(button("Take the tour"));
-    expect(stepId()).toBe("deck");
-    expect(inBuilder()).toBe(false);
-    await click(button("Next"));
-    await click(button("Next"));
+    // It starts on the deck steps and never goes to the deck list, so the deck view is never unmounted.
+    expect(stepId()).toBe("art");
+    expect(document.querySelector("[data-tour-step]")!.textContent).toContain("Step 1 of 4");
+    expect(document.querySelector("[data-tour-intro]")!.textContent).toBe(TOUR_IN_DECK_INTRO);
+    const seen = [stepId()];
+    for (let i = 0; i < 3; i += 1) {
+      await click(button("Next"));
+      expect(inBuilder()).toBe(true);
+      expect(document.querySelector('input[aria-label="Search this deck"]')).toBe(search);
+      seen.push(stepId());
+    }
+    expect(seen).toEqual(["art", "search", "filters", "clear"]);
+    expect(document.querySelector("[data-tour-intro]")).toBeNull();
+    await click(button("Done"));
     expect(inBuilder()).toBe(true);
-    expect(document.querySelector("[data-tour-note]")).toBeNull();
+    expect(document.querySelector('input[aria-label="Search this deck"]')).toBe(search);
+    expect(search.value).toBe("turtle");
+    expect(button("Undo Clear all")).toBeTruthy();
+    await click(button("Undo Clear all"));
     expect(total()).toMatch(/^101 cards/);
-    await click(button("Skip tour"));
-    expect(inBuilder()).toBe(true);
-    expect(total()).toMatch(/^101 cards/);
-    expect(otherKeys()).toEqual(before);
     expect(localStorage.getItem(TOUR_KEY)).toBe("declined");
+    expect(Object.keys(otherKeys())).toEqual(Object.keys(before));
+  });
+
+  it("starts at step 1 with all six steps from the deck list", async () => {
+    localStorage.setItem(TOUR_KEY, "declined");
+    await mount();
+    await click(button("Take the tour"));
+    expect(stepId()).toBe("deck");
+    expect(document.querySelector("[data-tour-step]")!.textContent).toContain("Step 1 of 6");
+    expect(document.querySelector("[data-tour-intro]")).toBeNull();
+  });
+
+  it("keeps Tab and Enter away from Clear all and Save: the page is inert, a backdrop press keeps focus, and focus can't leave the caption", async () => {
+    localStorage.setItem(TOUR_KEY, "declined");
+    await mount();
+    await click(button("Build"));
+    const before = total();
+    const savedBefore = otherKeys();
+    await click(button("Take the tour"));
+    const caption = document.querySelector("[data-tour-step]")!;
+    // Everything but the tour's own overlay is inert.
+    expect(host.hasAttribute("inert")).toBe(true);
+    const overlay = document.querySelector("[data-tour-overlay]")!;
+    expect(overlay.hasAttribute("inert")).toBe(false);
+    // Pressing the backdrop doesn't take focus to <body>.
+    const backdrop = document.querySelector("[data-tour-backdrop]")!;
+    const down = new MouseEvent("mousedown", { bubbles: true, cancelable: true });
+    await act(async () => backdrop.dispatchEvent(down));
+    expect(down.defaultPrevented).toBe(true);
+    expect(caption.contains(document.activeElement)).toBe(true);
+    // Even if focus does land on the page (a browser without inert), it goes straight back to the caption.
+    const clearAll = button("Clear all")!;
+    const save = button("Save")!;
+    await act(async () => clearAll.focus());
+    expect(caption.contains(document.activeElement)).toBe(true);
+    await act(async () => save.focus());
+    expect(caption.contains(document.activeElement)).toBe(true);
+    // Focus on <body>: Tab and Enter go to the caption, not the page.
+    await act(async () => (document.activeElement as HTMLElement).blur());
+    expect(document.activeElement).toBe(document.body);
+    const tab = new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true });
+    await act(async () => document.body.dispatchEvent(tab));
+    expect(tab.defaultPrevented).toBe(true);
+    expect(caption.contains(document.activeElement)).toBe(true);
+    await act(async () => (document.activeElement as HTMLElement).blur());
+    const enter = new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true });
+    await act(async () => document.body.dispatchEvent(enter));
+    expect(enter.defaultPrevented).toBe(true);
+    expect(total()).toBe(before);
+    expect(button("Undo Clear all")).toBeUndefined();
+    await press("Escape");
+    // Closed: the page is reachable again and nothing changed.
+    expect(host.hasAttribute("inert")).toBe(false);
+    expect(total()).toBe(before);
+    expect(otherKeys()).toEqual(savedBefore);
   });
 
   it("shows the deck you were building for the deck-view steps, then goes back to the deck list where the tour started", async () => {
@@ -217,6 +294,21 @@ describe("the tour", () => {
     expect(pageSaw).not.toHaveBeenCalled();
     expect(inBuilder()).toBe(false);
     expect(document.activeElement?.getAttribute("data-tour-button")).toBe("");
+  });
+
+  it("stays out of the way on a phone: the Tour button sits at the end of the page there, floating only from sm up", async () => {
+    localStorage.setItem(TOUR_KEY, "declined");
+    await mount();
+    await click(button("Build"));
+    const tour = document.querySelector<HTMLElement>("[data-tour-button]")!;
+    const classes = tour.className.split(" ");
+    // In the normal flow below sm (so it can't cover a card tile), fixed in the corner from sm up.
+    expect(classes).toEqual(expect.arrayContaining(["relative", "sm:fixed", "sm:bottom-4", "sm:left-4"]));
+    expect(classes).not.toContain("fixed");
+    expect(classes.filter((name) => /^(bottom|left|z)-/.test(name))).toEqual([]);
+    // After the page content, not inside it.
+    expect(tour.parentElement).toBe(host.firstElementChild);
+    expect(tour.previousElementSibling?.contains(document.querySelector('input[aria-label="Search this deck"]'))).toBe(true);
   });
 
   it("keeps Tab inside the caption", async () => {

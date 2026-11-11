@@ -156,7 +156,7 @@ export function BuilderView({
   // Hand token decisions (src/data/token-overrides.ts) are per deck, so the deck id goes with every token test.
   const tokenTest = useCallback((card: DeckCard) => isTokenCard(card, deckId), [deckId]);
   const overrides = useMemo(() => activeBackOverrides(edition, draft.cardBacks, tokenTest), [edition, draft.cardBacks, tokenTest]);
-  const flyout = useCardFlyout(back?.thumbId);
+  const flyout = useCardFlyout();
   const topRef = useRef<HTMLButtonElement | null>(null);
   // The search box reads a Scryfall-style query; plain words search card names, as before.
   const parsed = useMemo(() => parseQuery(query), [query]);
@@ -419,7 +419,7 @@ export function BuilderView({
         </Button>
         <div className="min-w-0 flex-1">
           <p className="text-xs tracking-[0.16em] text-primary uppercase">{sectionLabel}</p>
-          <h1 className="font-heading truncate text-3xl sm:text-4xl">
+          <h1 className="font-heading truncate text-3xl outline-none sm:text-4xl" tabIndex={-1} data-deck-heading="">
             {draft.deckName} <span className="text-muted-foreground">{edition.name}</span>
           </h1>
         </div>
@@ -563,6 +563,7 @@ export function BuilderView({
             <button type="button" className="underline" onClick={retryLookup}>
               Try again
             </button>
+            , or reload the page if that doesn't work.
           </p>
         ) : needsFacts && !lookup ? (
           <p className="text-xs text-muted-foreground">Loading card data…</p>

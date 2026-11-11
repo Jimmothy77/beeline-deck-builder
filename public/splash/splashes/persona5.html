@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en" data-slug="persona5" data-duration="2200" data-poster="1650">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Persona 5 — BeeLine splash</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../splash-base.css">
+<style>
+  body{background:#0a0a0a}
+  .stage{background:#d6000f}
+  .dots{position:absolute;inset:0;background:radial-gradient(circle,rgba(0,0,0,.28) 0 1.6px,transparent 2px) 0 0/9px 9px;
+    -webkit-mask:linear-gradient(135deg,#000,transparent 70%);mask:linear-gradient(135deg,#000,transparent 70%)}
+  .shard{position:absolute;inset:0;width:100%;height:100%}
+  .sh{transform-box:view-box;animation:shard .34s var(--d) cubic-bezier(.2,.9,.2,1)}
+  @keyframes shard{from{transform:translate(var(--x),var(--y)) rotate(var(--r))}to{transform:none}}
+  .slash{position:absolute;left:-30%;right:-30%;top:48%;height:calc(var(--U)*2.9);margin-top:calc(var(--U)*-1.45);background:#fff;transform:rotate(-9.5deg) scaleX(0);transform-origin:50% 50%;
+    clip-path:polygon(0 14%,100% 0,100% 86%,0 100%);animation:slash .26s .26s cubic-bezier(.7,0,.2,1)}
+  @keyframes slash{from{transform:rotate(var(--rot,-9.5deg)) scaleX(0)}to{transform:rotate(var(--rot,-9.5deg)) scaleX(1)}}
+  .slash2{background:#0a0a0a;height:calc(var(--U)*2.2);margin-top:calc(var(--U)*-1.05);--rot:-7deg;animation-delay:.34s;clip-path:polygon(0 8%,100% 0,100% 94%,0 100%)}
+  .ransom{position:absolute;left:50%;top:48%;transform:translate(calc(-50% - var(--U)*1.25),-50%) rotate(-7deg);display:flex;align-items:center;gap:min(.6vw,.8vh);white-space:nowrap}
+  .ransom b{display:inline-block;font-weight:400;padding:.06em .12em .02em;line-height:1;font-size:var(--fs);box-shadow:.05em .06em 0 rgba(0,0,0,.65);
+    animation:pop .22s var(--d) cubic-bezier(.3,1.8,.5,1);transform:rotate(var(--r)) translateY(var(--ty))}
+  @keyframes pop{from{opacity:0;transform:scale(2.4) rotate(calc(var(--r) * -3))}to{opacity:1;transform:rotate(var(--r)) translateY(var(--ty))}}
+  .stage{--U:min(9.6vw,12vh)}
+  .five{position:absolute;left:50%;top:48%;width:calc(var(--U)*2.6);height:calc(var(--U)*2.6);margin:calc(var(--U)*-1.55) 0 0 calc(var(--U)*1.95);animation:five .3s 1.08s cubic-bezier(.3,1.7,.5,1)}
+  @keyframes five{from{opacity:0;transform:scale(0) rotate(-160deg)}to{opacity:1;transform:rotate(8deg)}}
+  .five svg{width:100%;height:100%}
+  .five span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:400 calc(var(--U)*1.5)/1 "BL Anton",sans-serif;color:#d6000f;transform:rotate(-6deg)}
+  .tape{position:absolute;left:50%;top:48%;margin-top:calc(var(--U)*1.35);transform:translateX(-50%) rotate(-7deg);white-space:nowrap;background:#0a0a0a;color:#fff;
+    font:400 calc(var(--U)*.32)/1 "BL Elite",monospace;letter-spacing:.18em;padding:.55em 1.1em;clip-path:polygon(1% 0,100% 6%,99% 100%,0 92%);animation:tape .3s 1.3s cubic-bezier(.2,.8,.2,1)}
+  @keyframes tape{from{clip-path:polygon(1% 0,1% 6%,0 100%,0 92%)}to{clip-path:polygon(1% 0,100% 6%,99% 100%,0 92%)}}
+  .star{position:absolute;width:var(--s);height:var(--s);left:var(--x);top:var(--y);animation:spin 2.2s var(--d) cubic-bezier(.2,.8,.3,1)}
+  .star svg{width:100%;height:100%}
+  @keyframes spin{from{opacity:0;transform:scale(0) rotate(-200deg)}20%{opacity:1}to{opacity:1;transform:scale(1) rotate(30deg)}}
+  .flash{position:absolute;inset:0;background:#fff;animation:fl .18s .3s linear}
+  @keyframes fl{0%{opacity:0}30%{opacity:.8}100%{opacity:0}}
+</style>
+</head>
+<body>
+<main class="stage" aria-label="Persona 5 deck intro">
+  <div class="dots"></div>
+  <svg class="shard" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true">
+    <g transform="translate(0 0) scale(.72) translate(0 0)"><polygon class="sh" style="--d:0s;--x:-500px;--y:-300px;--r:-20deg" points="0,0 560,0 380,90 470,160 160,250 260,330 0,420" fill="#0a0a0a"/></g>
+    <g transform="translate(1000 1000) scale(.72) translate(-1000 -1000)"><polygon class="sh" style="--d:.06s;--x:500px;--y:400px;--r:25deg" points="1000,1000 420,1000 620,900 520,840 840,720 760,640 1000,560" fill="#0a0a0a"/></g>
+    <g transform="translate(1000 0) scale(.72) translate(-1000 0)"><polygon class="sh" style="--d:.1s;--x:400px;--y:-400px;--r:15deg" points="1000,0 1000,330 860,240 900,380 700,170 760,120 640,0" fill="#0a0a0a"/></g>
+    <g transform="translate(0 1000) scale(.72) translate(0 -1000)"><polygon class="sh" style="--d:.14s;--x:-400px;--y:300px;--r:-30deg" points="0,1000 0,700 120,780 100,640 300,860 240,900 340,1000" fill="#0a0a0a"/></g>
+    <g transform="translate(0 0) scale(.72) translate(0 0)"><polyline class="sh" style="--d:.12s;--x:-500px;--y:-300px;--r:-20deg" points="0,440 280,340 180,260 490,170 400,100 590,0" fill="none" stroke="#fff" stroke-width="5"/></g>
+    <g transform="translate(1000 1000) scale(.72) translate(-1000 -1000)"><polyline class="sh" style="--d:.16s;--x:500px;--y:400px;--r:25deg" points="1000,540 740,630 820,710 500,830 600,890 400,1000" fill="none" stroke="#fff" stroke-width="5"/></g>
+  </svg>
+  <div class="slash"></div>
+  <div class="slash slash2"></div>
+  <div id="stars"></div>
+  <div class="ransom" id="ransom"></div>
+  <div class="five"><svg viewBox="-50 -50 100 100"><path id="starP" fill="#0a0a0a" stroke="#fff" stroke-width="3"/></svg><span>5</span></div>
+  <div class="tape">YOUR DECK HAS BEEN STOLEN</div>
+  <div class="flash"></div>
+</main>
+<script>
+(function(){let s=29;const r=()=>(s=(s*16807)%2147483647)/2147483647;
+  const F=["'BL Anton'","'BL Abril'","'BL Bungee'","'BL Elite'","'BL Playfair'","'BL Archivo'","'BL BlackOps'","'BL Oswald'"];
+  const S=[['#fff','#0a0a0a'],['#0a0a0a','#fff'],['#d6000f','#fff'],['#fff','#d6000f'],['#0a0a0a','#d6000f'],['#f4f0e6','#0a0a0a']];
+  const word='PERSONA';let h='';
+  [...word].forEach((ch,i)=>{const f=F[(i*3+1)%F.length],st=S[(i*5+2)%S.length];
+    h+=`<b style="font-family:${f};background:${st[0]};color:${st[1]};--fs:calc(var(--U)*${(.85+r()*.4).toFixed(2)});--r:${(-10+r()*20).toFixed(1)}deg;--ty:${(-8+r()*16).toFixed(0)}%;--d:${(.5+i*.07).toFixed(2)}s">${ch}</b>`;});
+  document.getElementById('ransom').innerHTML=h;
+  // jagged star
+  let d='';const N=10;for(let i=0;i<N;i++){const a=-Math.PI/2+i*Math.PI/N*2/2*1;}
+  const pts=[];for(let i=0;i<20;i++){const a=-Math.PI/2+i*Math.PI/10;const R=i%2?22+((i*7)%5)*2:46-((i*3)%4)*3;pts.push((R*Math.cos(a)).toFixed(1)+','+(R*Math.sin(a)).toFixed(1));}
+  const P='M'+pts.join('L')+'Z';document.getElementById('starP').setAttribute('d',P);
+  let st='';[[6,62,9,.3],[84,14,7,.38],[78,72,11,.44],[14,16,6,.5],[90,48,5,.56]].forEach(([x,y,sz,dl])=>{st+=`<div class="star" style="--x:${x}%;--y:${y}%;--s:${sz}vmin;--d:${dl}s"><svg viewBox="-50 -50 100 100"><path d="${P}" fill="${dl>.4?'#fff':'#0a0a0a'}" stroke="#0a0a0a" stroke-width="3"/></svg></div>`;});
+  document.getElementById('stars').innerHTML=st;})();
+</script>
+<script src="../splash-runtime.js"></script>
+</body>
+</html>

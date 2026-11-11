@@ -153,8 +153,9 @@ describe("per-card back in the card editor", () => {
     expect(tile.querySelector("[data-custom-back]")!.textContent).toBe("Back: Token 2");
     expect(desktopPane().querySelectorAll("[data-custom-back]")).toHaveLength(1);
     hover(frontButton("Akroma"));
-    expect(flyout()!.dataset.flyoutMode).toBe("custom");
+    expect(flyout()!.dataset.flyoutBack).toBe("custom");
     expect(flyout()!.querySelector('[data-face="back"] img')?.getAttribute("src")).toContain("thumb-t2");
+    expect(flyout()!.querySelector("[data-flyout-label]")!.textContent).toBe("Chosen back");
     leave(frontButton("Akroma"));
     click(frontButton("Akroma"));
     expect(kindButton("Token Backs").getAttribute("aria-pressed")).toBe("true");
@@ -175,7 +176,8 @@ describe("per-card back in the card editor", () => {
     const backThumb = desktopPane().querySelector('button[aria-label="Choose back art 1 for Dowsing Dagger // Lost Vale"]')!;
     expect(backThumb.textContent).toBe("Card Back 2");
     hover(frontButton("Dowsing Dagger // Lost Vale"));
-    expect(flyout()!.dataset.flyoutMode).toBe("custom");
+    expect(flyout()!.dataset.flyoutBack).toBe("custom");
+    expect(flyout()!.querySelectorAll('[data-face="back"]')).toHaveLength(1);
     leave(frontButton("Dowsing Dagger // Lost Vale"));
     click(frontButton("Dowsing Dagger // Lost Vale"));
     click([...section().querySelectorAll("button")].find((item) => item.textContent === "Use its own back face")!);

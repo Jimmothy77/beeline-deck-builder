@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BuilderBoundary, BuilderView } from "@/components/BuilderView";
 import { HomeView, type DeckChoice } from "@/components/HomeView";
+import { Splash } from "@/components/Splash";
 import { Tour, TourButton, TourPrompt, type TourViewResult } from "@/components/Tour";
+import { SPLASH_ASSETS, SPLASH_FALLBACK } from "@/data/splash-assets";
 import { treatmentsFor } from "@/data/treatments";
 import { bundledDecklistsFor, freshDraft } from "@/lib/draft";
 import { assertApiKey, parentFolderName, parseDriveFolderId, readConfigKey, readDecklistTexts, readDriveTree } from "@/lib/drive";
@@ -27,9 +29,21 @@ import {
   type SavedDeck,
   type UnlockedPack,
 } from "@/lib/storage";
-import { rememberTourAnswer, shouldOfferTour, TOUR_STEPS, type TourView } from "@/lib/tour";
+import { rememberSplash, shouldPlaySplash, splashFor, type SplashChoice } from "@/lib/splash";
+import { rememberTourAnswer, shouldOfferTour, TOUR_IN_DECK_INTRO, TOUR_STEPS, type TourStep, type TourView } from "@/lib/tour";
 import type { DeckCatalogue, DeckIndex, Edition } from "@/lib/types";
 import { assertIdsAllowed, splitExportByPrintType } from "@/lib/xml";
+
+/** sessionStorage, or null where it can't even be reached (some privacy modes throw on access). */
+function sessionStore(): Storage | null {
+  try {
+    return window.sessionStorage;
+  } catch {
+    return null;
+  }
+}
+
+const reducedMotion = () => typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 function keyReady(): boolean {
   try {
@@ -55,6 +69,10 @@ export default function App() {
   const [touring, setTouring] = useState(false);
   /** Where the tour started, and whether it opened a deck to show the deck view (put back when it ends). */
   const tourStart = useRef<{ view: "home" | "builder"; session: SavedDeck | null; opened: string | null }>({ view: "home", session: null, opened: null });
+  const [tourSteps, setTourSteps] = useState<TourStep[]>(TOUR_STEPS);
+  const [tourIntro, setTourIntro] = useState<string | null>(null);
+  /** The deck splash showing now, if any. */
+  const [splash, setSplash] = useState<{ deckName: string; choice: SplashChoice; reducedMotion: boolean } | null>(null);
 
   useEffect(() => {
     let cancel = false;
@@ -189,7 +207,23 @@ export default function App() {
 
   function startTour() {
     tourStart.current = { view, session, opened: null };
+    // Started in a deck: only the deck-view steps, so the deck view stays mounted and keeps its search,
+    // its Clear undo and everything else. Going to the deck list would unmount it.
+    const inDeck = building !== null;
+    setTourSteps(inDeck ? TOUR_STEPS.filter((step) => step.view === "builder") : TOUR_STEPS);
+    setTourIntro(inDeck ? TOUR_IN_DECK_INTRO : null);
     setTouring(true);
+  }
+
+  /**
+   * Plays the deck's splash the first time it is opened this session (Build, a saved deck, Continue).
+   * The tour's preview deck never calls this, and the splash isn't drawn while the tour is open.
+   */
+  function openDeckSplash(deckId: string, deckName: string) {
+    const store = sessionStore();
+    if (!shouldPlaySplash(store, deckId)) return;
+    if (!rememberSplash(store, deckId)) return;
+    setSplash({ deckName, choice: splashFor(deckId, SPLASH_ASSETS, SPLASH_FALLBACK), reducedMotion: reducedMotion() });
   }
 
   /** Shows a tour step's view. The deck view uses the deck being built; with none, it opens the first deck as an unsaved preview. */
@@ -301,8 +335,13 @@ export default function App() {
             setError(null);
             setSession(freshDraft(choice.deck, choice.edition));
             setView("builder");
+            openDeckSplash(choice.deck.id, choice.deck.name);
           }}
-          onContinue={() => session && setView("builder")}
+          onContinue={() => {
+            if (!session) return;
+            setView("builder");
+            openDeckSplash(session.deckId, session.deckName);
+          }}
           onUnlock={(url) => void unlock(url)}
           onForgetUnlocks={() => {
             try {
@@ -322,6 +361,7 @@ export default function App() {
             setError(null);
             setSession(found.saved);
             setView("builder");
+            openDeckSplash(found.deck.id, found.deck.name);
             if (found.note) setToast(found.note);
           }}
           onDeleteSaved={(id) => remember(saved.filter((deck) => deck.id !== id))}
@@ -356,7 +396,7 @@ export default function App() {
           }}
         />
       )}
-      {!loading && offerTour && !touring ? (
+      {!loading && offerTour && !touring && !splash ? (
         <TourPrompt
           onTake={() => {
             rememberTourAnswer(localStorage, "taken");
@@ -366,13 +406,15 @@ export default function App() {
           onDecline={() => {
             rememberTourAnswer(localStorage, "declined");
             setOfferTour(false);
-            setToast("No problem. The Tour button in the corner shows it any time.");
+            setToast("No problem. The Tour button at the bottom left shows it any time.");
           }}
         />
       ) : null}
       {/* Stays mounted under the tour, so focus can go back to it when the tour ends. */}
       {!loading ? <TourButton onClick={startTour} /> : null}
-      {touring ? <Tour steps={TOUR_STEPS} onNeedView={showTourView} onClose={endTour} /> : null}
+      {touring ? <Tour steps={tourSteps} intro={tourIntro} onNeedView={showTourView} onClose={endTour} /> : null}
+      {/* The splash comes first: the first-run prompt waits under it, and the tour can't start while it shows. */}
+      {splash && !touring ? <Splash deckName={splash.deckName} choice={splash.choice} reducedMotion={splash.reducedMotion} onDone={() => setSplash(null)} /> : null}
       {toast && (
         <p role="status" className="fixed top-4 right-4 left-4 z-50 mx-auto max-w-md rounded-2xl border border-primary/40 bg-card px-4 py-3 text-sm shadow-2xl sm:left-auto">
           {toast}

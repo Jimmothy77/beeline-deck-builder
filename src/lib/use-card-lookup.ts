@@ -17,7 +17,11 @@ export function setCardLookupImportForTests(next: (() => Promise<{ CARD_LOOKUP: 
 
 /**
  * Loads the static card facts (src/data/card-lookup.ts) as its own file, once. Never calls Scryfall.
- * A failed load (a dropped connection, a stale deploy) is not cached: the next call tries again.
+ * A failed load (a dropped connection, a stale deploy) is not cached here: the next call tries again.
+ * Try again imports the same chunk URL, and some browsers keep a failed module import for the life of
+ * the page, so the note under the search box also says to reload the page, which always fetches afresh.
+ * (Moving the facts to a JSON fetch would avoid that, but it would change the generated file, its
+ * --check and the build; v0.1.31 keeps the chunk and the message says what to do.)
  */
 export function loadCardLookup(): Promise<Lookup> {
   loading ??= importLookup()

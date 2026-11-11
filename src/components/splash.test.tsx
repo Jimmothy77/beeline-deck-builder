@@ -1,0 +1,358 @@
+/**
+ * @vitest-environment jsdom
+ */
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { act } from "react";
+import { createRoot, type Root } from "react-dom/client";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import App from "@/App";
+import { Splash, type SplashEnd } from "@/components/Splash";
+import { SPLASH_ASSETS, SPLASH_FALLBACK } from "@/data/splash-assets";
+import { freshDraft } from "@/lib/draft";
+import {
+  frameUrl,
+  GENERIC_SPLASH_MS,
+  rememberSplash,
+  shouldPlaySplash,
+  SPLASH_KEY_PREFIX,
+  SPLASH_GRACE_MS,
+  SPLASH_READY_TIMEOUT_MS,
+  SPLASH_STATIC_MS,
+  splashFor,
+  splashKey,
+  splashLimitMs,
+  type SplashChoice,
+} from "@/lib/splash";
+import { writeSaved } from "@/lib/storage";
+import { TOUR_KEY } from "@/lib/tour";
+import type { DeckCatalogue } from "@/lib/types";
+
+const root = path.resolve(import.meta.dirname, "../..");
+const deckFile = (id: string) => readFileSync(path.join(root, "public/decks", `${id}.json`), "utf8");
+const TMNT = JSON.parse(deckFile("tmnt")) as DeckCatalogue;
+
+let host: HTMLDivElement;
+let reactRoot: Root;
+let reduced: boolean;
+
+async function settle(ms = 0) {
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, ms));
+  });
+}
+async function mount() {
+  await act(async () => {
+    reactRoot.render(<App />);
+  });
+  for (let i = 0; i < 5; i += 1) await settle();
+}
+const button = (text: string) => [...document.querySelectorAll<HTMLButtonElement>("button")].find((item) => item.textContent?.trim() === text || item.getAttribute("aria-label") === text);
+async function click(element: Element | null | undefined) {
+  if (!element) throw new Error("nothing to click");
+  await act(async () => (element as HTMLElement).click());
+  await settle();
+}
+async function press(key: string, target: EventTarget = document.activeElement ?? document.body) {
+  await act(async () => {
+    target.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true }));
+  });
+  await settle();
+}
+const splash = () => document.querySelector<HTMLElement>("[data-splash]");
+const inBuilder = () => Boolean(document.querySelector('input[aria-label="Search this deck"]'));
+const total = () => [...document.querySelectorAll("p")].find((item) => /^\d+ cards?/.test(item.textContent?.trim() ?? ""))?.textContent?.trim() ?? null;
+const localKeys = () => Object.fromEntries(Object.keys(localStorage).sort().map((key) => [key, localStorage.getItem(key)]));
+const sessionKeys = () => Object.keys(sessionStorage).sort();
+const frameEl = () => document.querySelector<HTMLIFrameElement>("[data-splash] iframe");
+/** What Frame Lab's page posts to the app, from inside the splash's own frame. */
+async function fromFrame(type: string) {
+  await act(async () => window.dispatchEvent(new MessageEvent("message", { data: { type }, source: frameEl()!.contentWindow })));
+  await settle();
+}
+
+beforeEach(() => {
+  (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+  localStorage.clear();
+  sessionStorage.clear();
+  localStorage.setItem(TOUR_KEY, "declined");
+  reduced = false;
+  vi.stubGlobal("matchMedia", (query: string) => ({
+    matches: query.includes("min-width") ? true : query.includes("reduced-motion") ? reduced : false,
+    media: query,
+    addEventListener() {},
+    removeEventListener() {},
+    addListener() {},
+    removeListener() {},
+    onchange: null,
+    dispatchEvent: () => false,
+  }));
+  window.scrollTo = vi.fn() as unknown as typeof window.scrollTo;
+  vi.stubGlobal("fetch", async (url: string) => {
+    const name = String(url).split("/").pop()!;
+    if (name === "index.json") return new Response(JSON.stringify({ decks: [{ id: "tmnt", name: "TMNT", file: "decks/tmnt.json" }, { id: "x-men", name: "X-Men", file: "decks/x-men.json" }] }));
+    return new Response(deckFile(name.replace(/\.json$/, "")));
+  });
+  host = document.createElement("div");
+  document.body.appendChild(host);
+  reactRoot = createRoot(host);
+});
+afterEach(() => {
+  act(() => reactRoot.unmount());
+  host.remove();
+  document.body.innerHTML = "";
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+});
+
+describe("splash bookkeeping", () => {
+  it("keys each deck on its own in sessionStorage, and doesn't play when sessionStorage can't be used", () => {
+    expect(splashKey("tmnt")).toBe("printabee.splash.v1.tmnt");
+    expect(SPLASH_KEY_PREFIX.startsWith("printabee.")).toBe(true);
+    const store = new Map<string, string>();
+    const fake = { getItem: (key: string) => store.get(key) ?? null, setItem: (key: string, value: string) => void store.set(key, value) };
+    expect(shouldPlaySplash(fake, "tmnt")).toBe(true);
+    expect(rememberSplash(fake, "tmnt")).toBe(true);
+    expect(shouldPlaySplash(fake, "tmnt")).toBe(false);
+    expect(shouldPlaySplash(fake, "x-men")).toBe(true);
+    const broken = { getItem: () => { throw new Error("blocked"); }, setItem: () => { throw new Error("blocked"); } };
+    expect(shouldPlaySplash(broken, "tmnt")).toBe(false);
+    expect(rememberSplash(broken, "tmnt")).toBe(false);
+    expect(shouldPlaySplash(null, "tmnt")).toBe(false);
+    expect(shouldPlaySplash(fake, "")).toBe(false);
+  });
+
+  it("uses the deck's registry entry, else the BeeLine fallback, else the generic splash; Frame Lab's pages load without their own Skip", () => {
+    expect(splashFor("vader", SPLASH_ASSETS, SPLASH_FALLBACK)).toEqual(SPLASH_ASSETS.vader);
+    expect(splashFor("horror-movie-poster-secret-lair", SPLASH_ASSETS, SPLASH_FALLBACK)).toMatchObject({ kind: "frame", src: "splash/splashes/horror-c.html" });
+    expect(splashFor("silksong", SPLASH_ASSETS, SPLASH_FALLBACK)).toMatchObject({ kind: "frame", src: "splash/splashes/silksong.html" });
+    expect(splashFor("a-deck-added-later", SPLASH_ASSETS, SPLASH_FALLBACK)).toEqual(SPLASH_FALLBACK);
+    expect(SPLASH_FALLBACK).toMatchObject({ kind: "frame", src: "splash/splashes/beeline.html" });
+    const registry = { vader: { kind: "frame", src: "splash/vader.html", durationMs: 2200, label: "Vader" } } as const;
+    expect(splashFor("vader", registry)).toEqual(registry.vader);
+    expect(splashFor("tmnt", registry)).toEqual({ kind: "generic", durationMs: GENERIC_SPLASH_MS });
+    expect(splashFor("toString", registry)).toEqual({ kind: "generic", durationMs: GENERIC_SPLASH_MS });
+    expect(splashFor("toString", registry, SPLASH_FALLBACK)).toEqual(SPLASH_FALLBACK);
+    expect(splashFor("bad", { bad: { kind: "image", src: "", durationMs: 1000, label: "x" } })).toEqual({ kind: "generic", durationMs: GENERIC_SPLASH_MS });
+    expect(splashFor("bad", {}, { kind: "frame", src: "", durationMs: 1000, label: "x" })).toEqual({ kind: "generic", durationMs: GENERIC_SPLASH_MS });
+    expect(frameUrl("splash/vader.html", true)).toBe("splash/vader.html?noskip=1&poster=1");
+    expect(frameUrl("splash/vader.html?x=1", true)).toBe("splash/vader.html?x=1&noskip=1&poster=1");
+    expect(frameUrl("splash/vader.html", false)).toBe("splash/vader.html?noskip=1");
+    expect(splashLimitMs({ kind: "generic", durationMs: GENERIC_SPLASH_MS }, true)).toBe(SPLASH_STATIC_MS);
+    expect(splashLimitMs(registry.vader, false)).toBeGreaterThan(2200);
+  });
+});
+
+describe("the deck splash in the app", () => {
+  it("plays once per deck per session when a deck is built, over the open deck, and changes no count or save", async () => {
+    await mount();
+    const before = localKeys();
+    await click(button("Build"));
+    expect(splash()).not.toBeNull();
+    expect(splash()!.dataset.splashKind).toBe("frame");
+    expect(splash()!.getAttribute("aria-label")).toBe("TMNT: opening");
+    expect(frameEl()!.getAttribute("src")).toMatch(/splash\/splashes\/tmnt\.html\?noskip=1$/);
+    expect(frameEl()!.getAttribute("sandbox")).toBe("allow-scripts");
+    // The page's own backdrop colour shows while it loads.
+    expect(splash()!.style.backgroundColor).toBe("rgb(11, 18, 13)");
+    expect(sessionKeys()).toEqual(["printabee.splash.v1.tmnt"]);
+    // The deck view is already open underneath.
+    expect(inBuilder()).toBe(true);
+    expect(document.activeElement?.hasAttribute("data-splash-skip")).toBe(true);
+    await press("Escape");
+    expect(splash()).toBeNull();
+    expect(total()).toMatch(/^100 cards/);
+    await click(button("Decks"));
+    await click(button("Build"));
+    expect(splash()).toBeNull();
+    await click(button("Decks"));
+    const builds = [...document.querySelectorAll<HTMLButtonElement>("button")].filter((item) => item.textContent?.trim() === "Build");
+    await click(builds[1]);
+    expect(splash()).not.toBeNull();
+    expect(splash()!.getAttribute("aria-label")).toBe("X-Men: opening");
+    expect(frameEl()!.getAttribute("src")).toMatch(/splash\/splashes\/xmen\.html\?noskip=1$/);
+    await click(splash());
+    expect(splash()).toBeNull();
+    expect(sessionKeys()).toEqual(["printabee.splash.v1.tmnt", "printabee.splash.v1.x-men"]);
+    expect(localKeys()).toEqual(before);
+  });
+
+  it("is skipped by a click or tap anywhere, by the Skip button, and closes on its own after it plays", async () => {
+    await mount();
+    await click(button("Build"));
+    await click(button("Skip"));
+    expect(splash()).toBeNull();
+    sessionStorage.clear();
+    await click(button("Decks"));
+    await click(button("Build"));
+    expect(splash()).not.toBeNull();
+    await fromFrame("beeline-splash:ready");
+    await settle(SPLASH_ASSETS.tmnt!.durationMs + SPLASH_GRACE_MS - 300);
+    expect(splash()).not.toBeNull();
+    await settle(400);
+    expect(splash()).toBeNull();
+    expect(total()).toMatch(/^100 cards/);
+    // Frame Lab's page says when it is done.
+    sessionStorage.clear();
+    await click(button("Decks"));
+    await click(button("Build"));
+    await fromFrame("beeline-splash:ready");
+    await fromFrame("beeline-splash:end");
+    expect(splash()).toBeNull();
+  });
+
+  it("gives focus to the deck heading when it closes, as the Build button that opened it is gone", async () => {
+    await mount();
+    const build = button("Build")!;
+    build.focus();
+    await click(build);
+    expect(build.isConnected).toBe(false);
+    await press("Escape");
+    expect(splash()).toBeNull();
+    expect(document.activeElement?.hasAttribute("data-deck-heading")).toBe(true);
+    expect(document.activeElement?.textContent).toContain("TMNT");
+    // A missing page closes it too, with focus in the same place.
+    sessionStorage.clear();
+    await click(button("Decks"));
+    await click(button("Build"));
+    await settle(SPLASH_READY_TIMEOUT_MS + 100);
+    expect(splash()).toBeNull();
+    expect(document.activeElement?.hasAttribute("data-deck-heading")).toBe(true);
+    expect(total()).toMatch(/^100 cards/);
+  });
+
+  it("plays Frame Lab's BeeLine splash for a deck without its own", async () => {
+    vi.stubGlobal("fetch", async (url: string) => {
+      const name = String(url).split("/").pop()!;
+      if (name === "index.json") return new Response(JSON.stringify({ decks: [{ id: "tmnt-reissue", name: "TMNT reissue", file: "decks/tmnt.json" }] }));
+      return new Response(JSON.stringify({ ...TMNT, id: "tmnt-reissue", name: "TMNT reissue" }));
+    });
+    await mount();
+    await click(button("Build"));
+    expect(splash()).not.toBeNull();
+    expect(frameEl()!.getAttribute("src")).toMatch(/splash\/splashes\/beeline\.html\?noskip=1$/);
+    expect(splash()!.style.backgroundColor).toBe("rgb(213, 117, 40)");
+  });
+
+  it("shows a still frame with reduced motion, and it ends on its own", async () => {
+    reduced = true;
+    await mount();
+    await click(button("Build"));
+    expect(splash()!.dataset.splashMotion).toBe("still");
+    expect(frameEl()!.getAttribute("src")).toMatch(/splash\/splashes\/tmnt\.html\?noskip=1&poster=1$/);
+    await fromFrame("beeline-splash:ready");
+    await settle(SPLASH_STATIC_MS + 100);
+    expect(splash()).toBeNull();
+  });
+
+  it("plays for a saved deck and for Continue, once per deck", async () => {
+    writeSaved(localStorage, [{ ...freshDraft(TMNT, TMNT.editions[0]!, "saved-1", new Date("2026-11-01T00:00:00Z")), name: "My TMNT" }]);
+    await mount();
+    const open = [...document.querySelectorAll<HTMLButtonElement>("button")].find((item) => /^Open/.test(item.textContent?.trim() ?? "") || item.getAttribute("aria-label")?.startsWith("Open My TMNT"));
+    await click(open);
+    expect(inBuilder()).toBe(true);
+    expect(splash()).not.toBeNull();
+    await press("Escape");
+    await click(button("Decks"));
+    await click(button("Continue"));
+    expect(splash()).toBeNull();
+    sessionStorage.clear();
+    await click(button("Decks"));
+    await click(button("Continue"));
+    expect(splash()).not.toBeNull();
+  });
+
+  it("keeps Tab, Enter and clicks away from the page while it shows", async () => {
+    await mount();
+    await click(button("Build"));
+    const skip = document.querySelector<HTMLElement>("[data-splash-skip]")!;
+    expect(host.hasAttribute("inert")).toBe(true);
+    await act(async () => button("Clear all")!.focus());
+    expect(document.activeElement).toBe(skip);
+    await act(async () => button("Save")!.focus());
+    expect(document.activeElement).toBe(skip);
+    // Skip is the only control: Tab on it stays put instead of leaving for the browser and coming back.
+    const tab = new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true });
+    await act(async () => skip.dispatchEvent(tab));
+    expect(tab.defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(skip);
+    await act(async () => skip.blur());
+    const enter = new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true });
+    await act(async () => document.body.dispatchEvent(enter));
+    expect(enter.defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(skip);
+    expect(button("Undo Clear all")).toBeUndefined();
+    await press("Escape");
+    expect(host.hasAttribute("inert")).toBe(false);
+    expect(total()).toMatch(/^100 cards/);
+  });
+
+  it("waits for the tour: never plays for the tour's preview deck, and the first-run prompt waits under it", async () => {
+    await mount();
+    await click(button("Take the tour"));
+    await click(button("Next"));
+    await click(button("Next"));
+    expect(inBuilder()).toBe(true);
+    expect(splash()).toBeNull();
+    expect(sessionKeys()).toEqual([]);
+    await press("Escape");
+    // First visit: the prompt is up when the deck is opened; it waits until the splash is gone.
+    localStorage.removeItem(TOUR_KEY);
+    act(() => reactRoot.unmount());
+    reactRoot = createRoot(host);
+    await mount();
+    expect(document.querySelector("[data-tour-prompt]")).not.toBeNull();
+    await click(button("Build"));
+    expect(splash()).not.toBeNull();
+    expect(document.querySelector("[data-tour-prompt]")).toBeNull();
+    await press("Escape");
+    expect(document.querySelector("[data-tour-prompt]")).not.toBeNull();
+  });
+});
+
+describe("splash assets", () => {
+  function renderSplash(choice: SplashChoice, onDone: (end: SplashEnd) => void, reducedMotion = false) {
+    act(() => reactRoot.render(<Splash deckName="Vader" choice={choice} reducedMotion={reducedMotion} onDone={onDone} />));
+  }
+  const frame: SplashChoice = { kind: "frame", src: "splash/vader.html", durationMs: 2200, label: "Vader" };
+
+  it("skips a frame splash that never says it is ready (missing file)", () => {
+    vi.useFakeTimers();
+    const done = vi.fn();
+    renderSplash(frame, done);
+    expect(document.querySelector("iframe")!.getAttribute("sandbox")).toBe("allow-scripts");
+    act(() => vi.advanceTimersByTime(SPLASH_READY_TIMEOUT_MS - 1));
+    expect(done).not.toHaveBeenCalled();
+    act(() => vi.advanceTimersByTime(1));
+    expect(done).toHaveBeenCalledWith("failed");
+    expect(done).toHaveBeenCalledTimes(1);
+  });
+
+  it("plays a frame splash once it is ready, ends on its end message, and ignores messages from anywhere else", () => {
+    vi.useFakeTimers();
+    const done = vi.fn();
+    renderSplash(frame, done);
+    const iframe = document.querySelector("iframe")!;
+    act(() => window.dispatchEvent(new MessageEvent("message", { data: { type: "beeline-splash:end" }, source: window })));
+    expect(done).not.toHaveBeenCalled();
+    act(() => window.dispatchEvent(new MessageEvent("message", { data: { type: "beeline-splash:ready" }, source: iframe.contentWindow })));
+    act(() => vi.advanceTimersByTime(SPLASH_READY_TIMEOUT_MS + 10));
+    expect(done).not.toHaveBeenCalled();
+    act(() => window.dispatchEvent(new MessageEvent("message", { data: { type: "beeline-splash:end" }, source: iframe.contentWindow })));
+    expect(done).toHaveBeenCalledWith("complete");
+  });
+
+  it("loads a frame splash on its poster frame with reduced motion", () => {
+    renderSplash(frame, vi.fn(), true);
+    expect(document.querySelector("iframe")!.getAttribute("src")).toMatch(/splash\/vader\.html\?noskip=1&poster=1$/);
+  });
+
+  it("skips an image splash that fails to load", () => {
+    const done = vi.fn();
+    renderSplash({ kind: "image", src: "splash/missing.webp", durationMs: 1800, label: "Vader" }, done);
+    act(() => {
+      document.querySelector("[data-splash-asset]")!.dispatchEvent(new Event("error"));
+    });
+    expect(done).toHaveBeenCalledWith("failed");
+  });
+});

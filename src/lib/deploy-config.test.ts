@@ -95,6 +95,14 @@ describe("scripts/write-config.ts", () => {
       expect(out).toBe("config.js: Wrote the Google API key from the GOOGLE_API_KEY secret into config.js.\n");
       expect(out).not.toContain("fake-key");
       expect(keyIn(readFileSync(file, "utf8"))).toBe(FAKE);
+      // In GitHub Actions a missing secret is a ::warning:: annotation; a set one is the same plain line, never the key.
+      writeFileSync(file, template);
+      expect(run({ GITHUB_ACTIONS: "true" })).toBe("::warning title=Paid unlock is off::GOOGLE_API_KEY is not set, so config.js keeps the placeholder and paid unlock stays off.\n");
+      expect(readFileSync(file, "utf8")).toBe(template);
+      const ci = run({ GITHUB_ACTIONS: "true", GOOGLE_API_KEY: FAKE });
+      expect(ci).toBe("config.js: Wrote the Google API key from the GOOGLE_API_KEY secret into config.js.\n");
+      expect(ci).not.toContain("fake-key");
+      expect(ci).not.toContain("::warning");
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

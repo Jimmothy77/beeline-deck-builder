@@ -255,7 +255,7 @@ describe("when the card data can't load", () => {
     });
     search("t:artifact");
     const note = () => document.querySelector("[data-lookup-failed]")?.textContent ?? null;
-    expect(note()).toBe("The card data couldn't load, so the type filter is not applied: the list shows every card that matches the rest of the search. Try again");
+    expect(note()).toBe("The card data couldn't load, so the type filter is not applied: the list shows every card that matches the rest of the search. Try again, or reload the page if that doesn't work.");
     expect(document.body.textContent).not.toContain("Loading card data…");
     // Not "0 shown": the type part is set aside, so every main card is still listed.
     expect(tileNames()).toHaveLength(5);
@@ -264,7 +264,7 @@ describe("when the card data can't load", () => {
     search("c:u mv<=3");
     expect(note()).toContain("the color and mana value filters are not applied");
     search("");
-    expect(note()).toBe("The card data couldn't load, so the color, type, mana value, rarity, rules text, power and toughness filters can't be used right now. Try again");
+    expect(note()).toBe("The card data couldn't load, so the color, type, mana value, rarity, rules text, power and toughness filters can't be used right now. Try again, or reload the page if that doesn't work.");
     // The failed load was not cached: Try again loads it.
     fail = false;
     await act(async () => {

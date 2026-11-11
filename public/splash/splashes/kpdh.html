@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en" data-slug="kpdh" data-duration="2200" data-poster="1650">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>KPDH — BeeLine splash</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../splash-base.css">
+<style>
+  body{background:#0b0315}
+  .stage{background:radial-gradient(90vmax 60vmax at 50% 105%,#5a1170 0%,#2a0942 35%,#12041f 65%,#07020d 100%)}
+  .beams{position:absolute;left:0;right:0;top:-4vh;height:115vh;mix-blend-mode:screen}
+  .beam{position:absolute;top:0;left:var(--x);width:min(34vw,40vh);height:100%;margin-left:min(-17vw,-20vh);transform-origin:50% 0;
+    background:linear-gradient(180deg,var(--c) 0%,color-mix(in srgb,var(--c) 40%,transparent) 40%,transparent 85%);clip-path:polygon(47% 0,53% 0,100% 100%,0 100%);filter:blur(5px);
+    animation:sweep 2.2s cubic-bezier(.45,0,.3,1)}
+  @keyframes sweep{0%{opacity:0;transform:rotate(var(--a0))}18%{opacity:.4}55%{transform:rotate(var(--a1));opacity:.55}100%{transform:rotate(var(--a2));opacity:.42}}
+  .floor{position:absolute;left:-20%;right:-20%;bottom:-6vh;height:34vh;border-radius:50%;background:radial-gradient(closest-side,rgba(255,80,190,.45),transparent);animation:floor 2.2s ease-out}
+  @keyframes floor{0%,30%{opacity:0}45%{opacity:1}100%{opacity:.7}}
+  .burst{position:absolute;left:50%;top:46%;width:120vmax;height:120vmax;margin:-60vmax 0 0 -60vmax;border-radius:50%;
+    background:radial-gradient(circle,#fff 0%,#ffc2ec 6%,rgba(255,60,180,.6) 16%,rgba(140,60,255,.25) 32%,transparent 55%);mix-blend-mode:screen;
+    animation:burst .9s .78s cubic-bezier(.1,.7,.2,1)}
+  @keyframes burst{0%{opacity:0;transform:scale(.1)}18%{opacity:1}100%{opacity:0;transform:scale(1.2)}}
+  .ray{position:absolute;left:50%;top:46%;width:200vmax;height:200vmax;margin:-100vmax 0 0 -100vmax;mix-blend-mode:screen;
+    background:repeating-conic-gradient(rgba(255,120,210,.0) 0 7deg,rgba(255,150,220,.22) 7deg 9deg,rgba(255,120,210,0) 9deg 18deg);
+    -webkit-mask:radial-gradient(closest-side,#000,transparent 60%);mask:radial-gradient(closest-side,#000,transparent 60%);animation:ray 2.2s linear}
+  @keyframes ray{0%,34%{opacity:0;transform:rotate(0)}44%{opacity:1}100%{opacity:.6;transform:rotate(18deg)}}
+
+  .mask{position:absolute;left:50%;top:44%;width:var(--M);height:calc(var(--M)*.8);transform:translate(-50%,-50%)}
+  .stage{--M:min(96vw,82vh)}
+  .mask svg{width:100%;height:100%;filter:drop-shadow(0 0 6px rgba(255,60,190,.9)) drop-shadow(0 0 22px rgba(170,60,255,.6))}
+  .ink{fill:#1a0627;stroke:#ff5ec8;stroke-width:1.2;stroke-linejoin:round}
+  .stroke{clip-path:inset(0 100% 0 0);animation:brush .26s var(--d) cubic-bezier(.6,0,.3,1)}
+  .stroke.r{clip-path:inset(0 0 0 100%);animation-name:brushR}
+  @keyframes brush{from{clip-path:inset(-5% 100% -5% -5%)}to{clip-path:inset(-5% -5% -5% -5%)}}
+  @keyframes brushR{from{clip-path:inset(-5% -5% -5% 100%)}to{clip-path:inset(-5% -5% -5% -5%)}}
+  .eyes{animation:eyes 2.2s steps(1)}
+  @keyframes eyes{0%,40%{opacity:0}41%{opacity:1}44%{opacity:.2}46%{opacity:1}100%{opacity:1}}
+  .maskwrap{animation:maskfade 2.2s ease-in-out}
+  @keyframes maskfade{0%{opacity:.95;transform:scale(1.04)}50%{opacity:.95;transform:scale(1)}100%{opacity:.6;transform:scale(1.02)}}
+
+  .title{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;white-space:nowrap}
+  .name{display:block;font:900 min(21vw,22vh)/1 "BL Unbounded",sans-serif;letter-spacing:-.02em;
+    background:linear-gradient(100deg,#ffe3f6 0%,#ff6cc9 22%,#ffffff 30%,#ff4fb8 38%,#b05cff 70%,#7a5bff 100%) 0 0/250% 100%;
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 .045em 0 #3b0a52) drop-shadow(0 0 .1em rgba(255,63,180,.85));
+    animation:pop .5s .88s cubic-bezier(.2,1.6,.4,1),shine 1.2s 1.0s ease-in-out}
+  @keyframes pop{from{opacity:0;transform:scale(.4) rotate(-6deg)}to{opacity:1;transform:none}}
+  @keyframes shine{from{background-position:100% 0}to{background-position:0 0}}
+  .tag{display:block;margin-top:.6em;font:900 min(3vw,3vh)/1 "BL Unbounded",sans-serif;letter-spacing:.6em;padding-left:.6em;color:#ffd6f1;
+    text-shadow:0 0 10px #ff4fb8;animation:tag .5s 1.25s ease-out}
+  @keyframes tag{from{opacity:0;letter-spacing:1.2em}to{opacity:1;letter-spacing:.6em}}
+  .glitter{position:absolute;inset:0;pointer-events:none}
+  .glitter b{position:absolute;width:var(--s);height:var(--s);background:var(--c);
+    clip-path:polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%);
+    animation:twk var(--t) var(--d) ease-in-out infinite;filter:drop-shadow(0 0 3px var(--c))}
+  @keyframes twk{0%,100%{transform:scale(0) rotate(0)}50%{transform:scale(1) rotate(45deg)}}
+  .confetti i{position:absolute;top:-4vh;width:6px;height:10px;background:var(--c);border-radius:1px;animation:fall 2.2s var(--d) linear}
+  @keyframes fall{0%{opacity:0;transform:translate(0,0) rotate(0)}10%{opacity:1}100%{opacity:1;transform:translate(var(--dx),110vh) rotate(720deg)}}
+</style>
+</head>
+<body>
+<main class="stage" aria-label="KPDH deck intro">
+  <div class="beams" id="beams"></div>
+  <div class="ray"></div>
+  <div class="floor"></div>
+  <div class="mask"><div class="maskwrap" style="width:100%;height:100%">
+    <svg viewBox="-100 -80 200 160" aria-hidden="true">
+      <!-- original ink-brush mask hint: horns, brows, eye slits, fanged grin -->
+      <path class="ink stroke r" style="--d:.1s" d="M-30 -40 C-46 -52 -62 -70 -60 -78 C-74 -66 -66 -44 -44 -30 Z"/>
+      <path class="ink stroke" style="--d:.16s" d="M30 -40 C46 -52 62 -70 60 -78 C74 -66 66 -44 44 -30 Z"/>
+      <path class="ink stroke" style="--d:.24s" d="M-74 -18 C-58 -34 -34 -34 -10 -22 C-30 -24 -52 -22 -70 -10 Z"/>
+      <path class="ink stroke r" style="--d:.28s" d="M74 -18 C58 -34 34 -34 10 -22 C30 -24 52 -22 70 -10 Z"/>
+      <path class="ink stroke" style="--d:.36s" d="M-82 -6 C-90 20 -78 50 -50 64 C-66 44 -74 22 -70 -2 Z"/>
+      <path class="ink stroke r" style="--d:.36s" d="M82 -6 C90 20 78 50 50 64 C66 44 74 22 70 -2 Z"/>
+      <path class="ink stroke" style="--d:.46s" d="M-52 28 C-30 44 30 44 52 28 C40 52 -40 52 -52 28 Z M-36 36 L-30 50 L-24 38 Z M24 38 L30 50 L36 36 Z"/>
+      <g class="eyes"><path d="M-56 -8 C-46 -16 -30 -14 -20 -4 C-34 -6 -46 -4 -56 -8Z M56 -8 C46 -16 30 -14 20 -4 C34 -6 46 -4 56 -8Z" fill="#ff9be0" stroke="#fff" stroke-width=".6"/></g>
+    </svg>
+  </div></div>
+  <div class="burst"></div>
+  <div class="glitter" id="glitter"></div>
+  <div class="confetti" id="confetti"></div>
+  <div class="title"><span class="name">KPDH</span><span class="tag">TONIGHT · LIVE</span></div>
+</main>
+<script>
+(function(){let s=21;const r=()=>(s=(s*16807)%2147483647)/2147483647;
+  const C=['#ff4fb8','#c36bff','#ffffff','#ffd1f0','#8a7bff','#ffe17a'];
+  const B=[[12,'#ff4fb8','-28deg','6deg','-12deg'],[32,'#a45cff','-12deg','18deg','2deg'],[50,'#ffffff','0deg','-16deg','0deg'],[68,'#a45cff','12deg','-18deg','-2deg'],[88,'#ff4fb8','28deg','-6deg','12deg']];
+  document.getElementById('beams').innerHTML=B.map(([x,c,a0,a1,a2],i)=>`<div class="beam" style="--x:${x}%;--c:${c};--a0:${a0};--a1:${a1};--a2:${a2};animation-delay:${i*.03}s"></div>`).join('');
+  let g='';for(let i=0;i<70;i++){g+=`<b style="left:${(r()*100).toFixed(1)}%;top:${(r()*100).toFixed(1)}%;--s:${(6+r()*16).toFixed(0)}px;--c:${C[i%C.length]};--t:${(.6+r()*.7).toFixed(2)}s;--d:-${(r()*1.2).toFixed(2)}s"></b>`;}
+  document.getElementById('glitter').innerHTML=g;
+  let c='';for(let i=0;i<46;i++){c+=`<i style="left:${(r()*100).toFixed(1)}%;--c:${C[i%C.length]};--d:${(.8+r()*.6).toFixed(2)}s;--dx:${(-10+r()*20).toFixed(0)}vw"></i>`;}
+  document.getElementById('confetti').innerHTML=c;})();
+</script>
+<script src="../splash-runtime.js"></script>
+</body>
+</html>

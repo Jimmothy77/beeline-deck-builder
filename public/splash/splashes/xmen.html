@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en" data-slug="xmen" data-duration="2100" data-poster="1600">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>X-Men — BeeLine splash</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../splash-base.css">
+<style>
+  body{background:#0a1f6e}
+  .stage{background:radial-gradient(90vmax 70vmax at 50% 46%,#2d63f0 0%,#1440c4 35%,#0b2585 70%,#06144d 100%)}
+  .rays{position:absolute;left:50%;top:46%;width:240vmax;height:240vmax;margin:-120vmax 0 0 -120vmax;
+    background:repeating-conic-gradient(rgba(255,255,255,.09) 0 4deg,transparent 4deg 12deg);animation:rays 2.1s linear}
+  @keyframes rays{from{transform:rotate(-10deg);opacity:0}15%{opacity:1}to{transform:rotate(8deg);opacity:1}}
+  .halftone{position:absolute;left:50%;top:46%;width:160vmax;height:160vmax;margin:-80vmax 0 0 -80vmax;
+    background:radial-gradient(circle,#ffd21a 0 2px,transparent 2.6px) 0 0/12px 12px;
+    -webkit-mask:radial-gradient(closest-side,#000 0%,rgba(0,0,0,.85) 14%,transparent 42%);mask:radial-gradient(closest-side,#000 0%,rgba(0,0,0,.85) 14%,transparent 42%);
+    animation:ht .6s .42s cubic-bezier(.1,.8,.2,1)}
+  @keyframes ht{from{opacity:0;transform:scale(.2)}25%{opacity:1}to{opacity:1;transform:scale(1)}}
+  .burst{position:absolute;left:50%;top:46%;width:var(--B);height:var(--B);transform:translate(-50%,-50%);animation:burst .45s .4s cubic-bezier(.2,1.5,.4,1)}
+  .stage{--B:min(96vw,90vh)}
+  .burst svg{width:100%;height:100%}
+  @keyframes burst{from{opacity:0;transform:translate(-50%,-50%) scale(.2) rotate(-20deg)}to{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(0)}}
+  .x{position:absolute;left:50%;top:46%;width:0;height:0}
+  .bar{position:absolute;left:0;top:0;width:calc(var(--B)*1.05);height:calc(var(--B)*.2);margin:calc(var(--B)*-.1) 0 0 calc(var(--B)*-.525);
+    background:linear-gradient(180deg,#fff27a 0%,#ffd21a 30%,#ffb800 70%,#e08a00 100%);border:calc(var(--B)*.012) solid #0b0b14;
+    box-shadow:calc(var(--B)*.016) calc(var(--B)*.016) 0 #0b0b14;clip-path:polygon(4% 0,100% 0,96% 100%,0 100%)}
+  .bar::after{content:"";position:absolute;left:8%;right:8%;top:42%;height:16%;background:#0b0b14;opacity:.85}
+  .b1{transform:rotate(36deg) scaleX(0);animation:b1 .26s .12s cubic-bezier(.7,0,.2,1)}
+  .b2{transform:rotate(-36deg) scaleX(0);animation:b2 .26s .26s cubic-bezier(.7,0,.2,1)}
+  @keyframes b1{from{transform:rotate(36deg) scaleX(0) translateX(-60%)}to{transform:rotate(36deg) scaleX(1)}}
+  @keyframes b2{from{transform:rotate(-36deg) scaleX(0) translateX(60%)}to{transform:rotate(-36deg) scaleX(1)}}
+  .xwrap{position:absolute;left:50%;top:46%;width:0;height:0;animation:xpulse 2.1s ease-out}
+  @keyframes xpulse{0%,24%{transform:scale(1)}30%{transform:scale(1.08)}38%{transform:scale(.98)}100%{transform:scale(1)}}
+  .wipe{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .hole{transform-origin:50px 46px;animation:hole .42s cubic-bezier(.6,0,.4,1)}
+  @keyframes hole{from{transform:scale(0) rotate(-30deg)}to{transform:scale(9) rotate(0)}}
+  .title{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);white-space:nowrap;text-align:center}
+  .name{display:block;font:400 min(22vw,24vh)/1 "BL Bangers",sans-serif;letter-spacing:.04em;color:#fff;
+    -webkit-text-stroke:min(1.1vw,1.1vh) #0b0b14;paint-order:stroke fill;text-shadow:.05em .06em 0 #0b0b14,.09em .1em 0 #1440c4;
+    transform:skewX(-8deg);animation:pow .4s .6s cubic-bezier(.2,1.7,.4,1)}
+  @keyframes pow{from{opacity:0;transform:skewX(-8deg) scale(3)}to{opacity:1;transform:skewX(-8deg) scale(1)}}
+  .tag{position:absolute;left:50%;top:calc(46% + var(--B)*.36);transform:translateX(-50%) rotate(-3deg);white-space:nowrap;
+    font:400 min(4.6vw,4.4vh)/1 "BL Bangers",sans-serif;letter-spacing:.12em;color:#0b0b14;background:#fff;padding:.35em .9em .25em;border:3px solid #0b0b14;box-shadow:5px 5px 0 #0b0b14;
+    animation:tagIn .3s 1.0s cubic-bezier(.2,1.6,.4,1)}
+  @keyframes tagIn{from{opacity:0;transform:translateX(-50%) rotate(-3deg) scale(0)}to{opacity:1;transform:translateX(-50%) rotate(-3deg) scale(1)}}
+  .speed{position:absolute;inset:0;background:repeating-conic-gradient(from 0deg at 50% 46%,rgba(255,255,255,.55) 0 .6deg,transparent .6deg 7deg);
+    -webkit-mask:radial-gradient(closest-side,transparent 62%,#000 100%);mask:radial-gradient(closest-side,transparent 62%,#000 100%);animation:speed .5s .4s ease-out}
+  @keyframes speed{from{opacity:0}30%{opacity:1}to{opacity:.0}}
+</style>
+</head>
+<body>
+<main class="stage" aria-label="X-Men deck intro">
+  <div class="rays"></div>
+  <div class="halftone"></div>
+  <div class="burst"><svg viewBox="-50 -50 100 100" aria-hidden="true"><path id="bp" fill="#fff" stroke="#0b0b14" stroke-width="1.2" opacity=".95"/><path id="bp2" fill="#ffd21a" opacity=".55"/></svg></div>
+  <div class="xwrap"><div class="bar b1"></div><div class="bar b2"></div></div>
+  <div class="speed"></div>
+  <div class="title"><span class="name">X-MEN</span></div>
+  <div class="tag">ASSEMBLE THE ROSTER</div>
+  <svg class="wipe" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <mask id="xm"><rect x="-200" y="-200" width="500" height="500" fill="#fff"/><g class="hole"><rect x="20" y="41" width="60" height="10" transform="rotate(36 50 46)"/><rect x="20" y="41" width="60" height="10" transform="rotate(-36 50 46)"/></g></mask>
+    <rect x="-200" y="-200" width="500" height="500" fill="#ffd21a" mask="url(#xm)"/>
+  </svg>
+</main>
+<script>
+(function(){const pts=[],p2=[];for(let i=0;i<32;i++){const a=i/32*2*Math.PI;const R=i%2?(30+(i*7%5)*1.4):(46-(i*5%4)*2);pts.push([R*Math.cos(a),R*Math.sin(a)]);p2.push([R*.78*Math.cos(a),R*.78*Math.sin(a)]);}
+  const f=a=>'M'+a.map(p=>p.map(v=>v.toFixed(1)).join(' ')).join('L')+'Z';
+  document.getElementById('bp').setAttribute('d',f(pts));document.getElementById('bp2').setAttribute('d',f(p2));})();
+</script>
+<script src="../splash-runtime.js"></script>
+</body>
+</html>

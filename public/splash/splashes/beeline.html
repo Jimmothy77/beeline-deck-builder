@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en" data-slug="beeline" data-duration="2500" data-poster="2300">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>BeeLine — splash</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../splash-base.css">
+<style>
+  body{background:#d57528}
+  .stage{background:radial-gradient(120vmax 60vmax at 0% 0%,rgba(255,200,110,.6),transparent 55%),linear-gradient(180deg,#f3b15a,#e08932 70%,#d57528)}
+  .dots{position:absolute;inset:0;opacity:.09;background-image:radial-gradient(circle at 20px 20px,#6a320c 2px,transparent 2.5px);background-size:38px 34px}
+  .comb{position:absolute;inset:0;opacity:.0;animation:comb 1s ease-out}
+  @keyframes comb{from{opacity:0}to{opacity:.1}}
+  .glow{position:absolute;left:50%;top:var(--cy);width:calc(var(--H)*1.9);height:calc(var(--H)*1.9);transform:translate(-50%,-50%);border-radius:50%;
+    background:radial-gradient(closest-side,rgba(255,236,170,.75),rgba(255,214,120,.25) 50%,transparent);animation:glow 2.5s ease-out}
+  @keyframes glow{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}30%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:.85}}
+  .stage{--H:min(44vh,92vw);--cy:35%}
+  .card{position:absolute;left:50%;top:var(--cy);height:var(--H);aspect-ratio:292/450;transform:translate(-50%,-50%);animation:cardIn .55s cubic-bezier(.2,.9,.25,1.1)}
+  @keyframes cardIn{from{opacity:0;transform:translate(-50%,-44%) scale(.86) rotate(-4deg)}to{opacity:1;transform:translate(-50%,-50%)}}
+  .card img{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;filter:drop-shadow(0 1.4vh 2vh rgba(80,35,0,.35))}
+  .card .back{z-index:1}.card .front{z-index:3;filter:none}
+  .shine{position:absolute;z-index:3;left:12%;right:12%;top:7.7%;bottom:7.7%;overflow:hidden;border-radius:4%;mix-blend-mode:screen}
+  .shine::before{content:"";position:absolute;top:-20%;bottom:-20%;width:45%;left:-60%;background:linear-gradient(100deg,transparent,rgba(255,226,140,.55),transparent);transform:skewX(-18deg);animation:shine .9s .55s ease-in-out}
+  @keyframes shine{from{left:-60%}to{left:130%}}
+  .bee{position:absolute;left:0;top:0;width:40px;z-index:4;pointer-events:none;visibility:hidden;filter:drop-shadow(0 2px 2px rgba(40,20,0,.28))}
+  .bee.behind{z-index:2}
+  .trail{position:absolute;inset:0;width:100%;height:100%;z-index:4;pointer-events:none}
+  .lock{position:absolute;left:50%;top:calc(var(--cy) + var(--H) / 2 + 4.2vh);transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;color:#2a170c}
+  .kicker{font:600 min(2.8vw,2vh)/1 "BL Outfit",sans-serif;letter-spacing:.26em;padding-left:.26em;text-transform:uppercase;color:#6a320c;animation:fade .5s 1.45s ease-out}
+  .row{position:relative;margin-top:.12em;font:600 min(15vw,11.5vh)/1 "BL Fraunces",serif;letter-spacing:-.03em}
+  .slot{position:absolute;right:calc(100% + .1em);top:50%;width:.92em;height:.92em;margin-top:-.46em}
+  .word{animation:word .55s 1.3s cubic-bezier(.2,.8,.2,1)}
+  @keyframes word{from{opacity:0;transform:translateY(.15em);filter:blur(4px)}to{opacity:1;transform:none;filter:none}}
+  .tagline{margin-top:.7em;font:600 min(3.4vw,2.4vh)/1.2 "BL Outfit",sans-serif;color:#3a1c08;animation:fade .5s 1.65s ease-out;text-align:center}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+</style>
+</head>
+<body>
+<main class="stage" aria-label="BeeLine intro">
+  <div class="dots"></div>
+  <div class="glow"></div>
+  <div class="card" id="card">
+    <img class="back" src="../assets/meridian-back.webp" alt="">
+    <img class="front" src="../assets/meridian-front.webp" alt="">
+    <div class="shine"></div>
+  </div>
+  <div class="lock">
+    <div class="kicker">Deck Builder</div>
+    <div class="row"><span class="slot" id="slot"></span><span class="word">BeeLine</span></div>
+    <div class="tagline">Opening your deck…</div>
+  </div>
+  <svg class="trail" id="trail" aria-hidden="true"><g id="dots"></g></svg>
+  <img class="bee" id="bee" src="../assets/bee.svg" alt="">
+</main>
+<script src="../splash-runtime.js"></script>
+<script>
+(function(){
+  // Same flight language as the approved meridian banner: one figure-eight through the card window,
+  // exit at 7π/6 still heading down-left, a C1 swoop that dips then arcs up, and a quick closing spiral.
+  const stage=document.querySelector('.stage'),card=document.getElementById('card'),bee=document.getElementById('bee'),
+        slot=document.getElementById('slot'),svg=document.getElementById('trail'),dotsG=document.getElementById('dots');
+  const WIN={l:.1190,t:.0773,r:.8810,b:.9227};
+  const F0=220,F1=2250; // flight window (ms)
+  let flight=null,lastKey='';
+  function cubic(p0,c1,c2,p3,n,kind,out){for(let i=1;i<=n;i++){const t=i/n,u=1-t;out.push({x:u*u*u*p0.x+3*u*u*t*c1.x+3*u*t*t*c2.x+t*t*t*p3.x,y:u*u*u*p0.y+3*u*u*t*c1.y+3*u*t*t*c2.y+t*t*t*p3.y,kind});}}
+  function build(){
+    const sr=stage.getBoundingClientRect(),lr=slot.getBoundingClientRect();
+    // card rect without its entrance transform: use layout box via offset metrics
+    const cw=card.offsetWidth,ch=card.offsetHeight,ccx=card.offsetLeft,ccy=card.offsetTop; // offsetLeft/Top are pre-transform (translate(-50%,-50%) applied by CSS)
+    const left=ccx-cw/2,top=ccy-ch/2;
+    const win={l:left+cw*WIN.l,t:top+ch*WIN.t,r:left+cw*WIN.r,b:top+ch*WIN.b};win.cx=(win.l+win.r)/2;win.cy=(win.t+win.b)/2;win.w=win.r-win.l;win.h=win.b-win.t;
+    // slot position (lock has only a translateX(-50%), no animation, so its rect is stable)
+    const land={x:lr.left-sr.left+lr.width/2,y:lr.top-sr.top+lr.height/2,s:lr.width};
+    const vmin=Math.min(sr.width,sr.height)/100;
+    const rx=win.w*.5+Math.max(14,3.2*vmin),ry=win.h*.52;
+    const start=Math.PI/2,exit=7*Math.PI/6,end=start+2*Math.PI+(exit-start);
+    const fig=[];for(let i=0;i<=200;i++){const t=start+(end-start)*i/200;fig.push({x:win.cx+rx*Math.sin(t),y:win.cy+ry*Math.sin(t)*Math.cos(t),t,kind:'fig'});}
+    const last=fig[fig.length-1];let tx=rx*Math.cos(last.t),ty=ry*Math.cos(2*last.t);const tl=Math.hypot(tx,ty)||1;const nx=tx/tl,ny=ty/tl;
+    const r0=Math.max(18,land.s*.62),turns=1.05,th0=Math.PI,om=2*Math.PI*turns;
+    const A={x:land.x+r0*Math.cos(th0),y:land.y+r0*Math.sin(th0)};
+    let sx=-Math.cos(th0)-om*Math.sin(th0),sy=-Math.sin(th0)+om*Math.cos(th0);const sl=Math.hypot(sx,sy)||1;sx/=sl;sy/=sl;
+    const yMax=sr.height-5*vmin;
+    // Trough sits below and just right of the spiral entry; the bee keeps descending left, bottoms out, then hooks up into the spiral.
+    const Q={x:A.x+r0*1.4,y:Math.min(yMax,Math.max(last.y,A.y)+6*vmin)};
+    const qT={x:-1,y:.06};
+    const span1=Math.hypot(Q.x-last.x,Q.y-last.y),span2=Math.hypot(A.x-Q.x,A.y-Q.y);
+    const sw=[];
+    cubic(last,{x:last.x+nx*span1*.45,y:Math.min(yMax,last.y+ny*span1*.45)},{x:Q.x-qT.x*span1*.4,y:Q.y-qT.y*span1*.4},Q,36,'home',sw);
+    cubic(Q,{x:Q.x+qT.x*span2*.55,y:Q.y+qT.y*span2*.55},{x:A.x-sx*span2*.5,y:A.y-sy*span2*.5},A,44,'home',sw);
+    const sp=[];for(let i=1;i<=70;i++){const s=i/70,th=th0+om*s,r=r0*(1-s);sp.push({x:land.x+r*Math.cos(th),y:land.y+r*Math.sin(th),kind:'spiral'});}
+    const pts=fig.concat(sw,sp);const acc=[0];for(let i=1;i<pts.length;i++)acc.push(acc[i-1]+Math.hypot(pts[i].x-pts[i-1].x,pts[i].y-pts[i-1].y));
+    const figLen=acc[fig.length-1],swEnd=acc[fig.length+sw.length-1],total=acc[acc.length-1];
+    svg.setAttribute('viewBox',`0 0 ${sr.width} ${sr.height}`);
+    return {pts,acc,figLen,swEnd,total,land,vmin};
+  }
+  function at(f,d){const {pts,acc}=f;if(d<=0)return pts[0];if(d>=acc[acc.length-1])return pts[pts.length-1];let lo=0,hi=acc.length-1;while(lo<hi){const m=(lo+hi)>>1;if(acc[m]<d)lo=m+1;else hi=m;}
+    const i=Math.max(1,lo),u=(d-acc[i-1])/((acc[i]-acc[i-1])||1);return {x:pts[i-1].x+(pts[i].x-pts[i-1].x)*u,y:pts[i-1].y+(pts[i].y-pts[i-1].y)*u,t:pts[i-1].t,kind:pts[i-1].kind};}
+  const herm=(u,v)=>{const a=Math.min(2.8,Math.max(.12,v)),b=3-2*a,c=a-2;return a*u+b*u*u+c*u*u*u;};
+  const T2=.80;
+  function dist(f,t){const sw=f.swEnd-f.figLen,sp=f.total-f.swEnd,body=f.figLen+sw,t1=T2*(f.figLen/body);
+    // ease-in on the very start so the bee doesn't pop in at full speed
+    if(t<=t1){const u=t/t1;return f.figLen*(u<.12?u*u/(.24):u-.06)/(1-.06);}
+    if(t<=T2)return f.figLen+(t-t1)/(T2-t1)*sw;
+    const u=(t-T2)/(1-T2),v=(sw/(T2-t1))*(1-T2)/Math.max(sp,1);return f.swEnd+Math.min(1,Math.max(0,herm(u,v)))*sp;}
+  const NS='http://www.w3.org/2000/svg';
+  function pose(ms){
+    const key=innerWidth+'x'+innerHeight;if(!flight||key!==lastKey){flight=build();lastKey=key;}
+    const f=flight;const t=Math.max(0,Math.min(1,(ms-F0)/(F1-F0)));
+    if(ms<F0){bee.style.visibility='hidden';dotsG.innerHTML='';return;}
+    const d=dist(f,t),p=at(f,d);
+    const fw=Math.max(30,6.5*f.vmin);let size=fw;
+    if(t>T2){const u=(t-T2)/(1-T2);size=fw+(f.land.s-fw)*herm(u,1);if(u>.82)size*=1+.07*Math.sin(Math.PI*Math.min(1,(u-.82)/.18));}
+    const h=size*170/200;bee.style.width=size+'px';bee.style.visibility='visible';
+    bee.style.transform=`translate(${(p.x-size/2).toFixed(1)}px,${(p.y-h/2).toFixed(1)}px)`;
+    bee.classList.toggle('behind',p.kind==='fig'&&Math.cos(p.t)<0);
+    // dotted trail
+    const fade=t<=.02?0:t>=.94?Math.max(0,1-(t-.94)/.06):1;let html='';
+    if(fade>.01&&d>4){const L=Math.max(90,14*f.vmin),st=Math.max(0,d-L);for(let i=0;i<16;i++){const u=i/15,dd=st+L*u;if(dd>d)continue;const q=at(f,dd);
+      html+=`<circle cx="${q.x.toFixed(1)}" cy="${q.y.toFixed(1)}" r="${(1.3+1.8*u).toFixed(2)}" fill="#3d2a18" opacity="${((.28+.62*u)*fade).toFixed(2)}"/>`;}}
+    dotsG.innerHTML=html;
+  }
+  BLSplash.onFrame(pose);
+  addEventListener('resize',()=>{flight=null;});
+})();
+</script>
+</body>
+</html>

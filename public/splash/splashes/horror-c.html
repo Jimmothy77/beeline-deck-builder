@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en" data-slug="horror-c" data-duration="2400" data-poster="2100">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Horror Movie Poster (option C: the door) — BeeLine splash</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../splash-base.css">
+<style>
+  body{background:#020101}
+  .stage{background:#030202}
+  .push{position:absolute;inset:0;animation:push 2.4s cubic-bezier(.3,.1,.3,1)}
+  @keyframes push{from{transform:scale(1.08)}to{transform:scale(1)}}
+  .stage{--dh:min(46vh,90vw);--dw:calc(var(--dh) * .44);--dt:80%}
+  @media (orientation:portrait){.stage{--dh:min(40vh,80vw);--dt:74%}}
+  .wall{position:absolute;inset:0;background:radial-gradient(40% 50% at 50% var(--dt),rgba(120,70,30,.28),transparent 70%);animation:wall 2.4s ease-in}
+  @keyframes wall{0%,20%{opacity:0}60%{opacity:1}100%{opacity:1}}
+  .door{position:absolute;left:50%;top:var(--dt);width:var(--dw);height:var(--dh);transform:translate(-50%,-100%)}
+  .jamb{position:absolute;inset:-4% -8% 0;border:calc(var(--dw)*.05) solid #120a06;border-bottom:none;box-shadow:inset 0 0 0 1px rgba(255,190,120,.08)}
+  .light{position:absolute;left:0;top:0;bottom:0;width:100%;transform-origin:0 50%;
+    background:linear-gradient(90deg,#ffd9a0,#ffb460 60%,#e88a3a);box-shadow:0 0 6vmin rgba(255,170,90,.55);animation:open 2.4s cubic-bezier(.6,0,.3,1)}
+  @keyframes open{0%{transform:scaleX(0);opacity:0}6%{transform:scaleX(.012);opacity:1}9%{opacity:.4}11%{opacity:1}22%{transform:scaleX(.02)}36%{transform:scaleX(.08)}40%{transform:scaleX(.07)}70%{transform:scaleX(.62)}100%{transform:scaleX(.68)}}
+  .panel{position:absolute;right:0;top:0;bottom:0;width:100%;transform-origin:100% 50%;background:linear-gradient(90deg,#0d0805,#1b110a);animation:panel 2.4s cubic-bezier(.6,0,.3,1)}
+  @keyframes panel{0%{transform:perspective(60vh) rotateY(0) scaleX(1)}22%{transform:perspective(60vh) rotateY(-2deg) scaleX(.98)}36%{transform:perspective(60vh) rotateY(-6deg) scaleX(.92)}40%{transform:perspective(60vh) rotateY(-5deg) scaleX(.93)}70%{transform:perspective(60vh) rotateY(-40deg) scaleX(.38)}100%{transform:perspective(60vh) rotateY(-44deg) scaleX(.32)}}
+  .fig{position:absolute;bottom:0;height:94%;aspect-ratio:.34;left:100%;animation:cross 2.4s cubic-bezier(.45,0,.55,1)}
+  @keyframes cross{0%,45%{transform:translateX(0)}80%{transform:translateX(calc(var(--dw) * -1.02))}100%{transform:translateX(calc(var(--dw) * -1.06))}}
+  .clip{position:absolute;inset:0;overflow:hidden}
+  .fig svg{width:100%;height:100%;transform:rotate(-2deg);transform-origin:50% 100%}
+  .spill{position:absolute;left:50%;top:var(--dt);width:calc(var(--dw) * 5);height:calc(100% - var(--dt));transform:translateX(-50%);overflow:hidden;
+    clip-path:polygon(40% 0,calc(40% + var(--sw)) 0,calc(40% + var(--sw) * 3.2) 100%,calc(40% - var(--sw) * 1.4) 100%);--sw:0%;animation:spill 2.4s cubic-bezier(.6,0,.3,1)}
+  @property --sw{syntax:'<percentage>';inherits:false;initial-value:0%}
+  @keyframes spill{0%,6%{--sw:.24%;opacity:0}8%{opacity:1}22%{--sw:.4%}36%{--sw:1.6%}40%{--sw:1.4%}70%{--sw:12.4%}100%{--sw:13.6%}}
+  .spill::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,190,110,.75),rgba(230,140,60,.35) 45%,rgba(120,60,20,.0) 100%)}
+  .shadow{position:absolute;left:46%;top:0;width:12%;height:120%;transform-origin:50% 0;background:linear-gradient(180deg,rgba(0,0,0,.92),rgba(0,0,0,.7) 60%,transparent);
+    clip-path:polygon(40% 0,60% 0,100% 30%,90% 100%,10% 100%,0 30%);animation:sh 2.4s cubic-bezier(.45,0,.55,1)}
+  @keyframes sh{0%,45%{transform:translateX(30vw) skewX(-45deg);opacity:0}52%{opacity:1}80%{transform:translateX(0) skewX(0);opacity:1}100%{transform:translateX(-.6vw) skewX(2deg);opacity:1}}
+  .dust i{position:absolute;width:2px;height:2px;border-radius:50%;background:#ffe2b0;opacity:.0;animation:dust 2.4s linear}
+  @keyframes dust{0%,40%{opacity:0;transform:translate(0,0)}60%{opacity:.8}100%{opacity:.6;transform:translate(var(--dx),var(--dy))}}
+  .title{position:absolute;left:50%;top:calc(var(--dt) - var(--dh) - 6vh);transform:translate(-50%,-100%);text-align:center;white-space:nowrap}
+  .t1{display:block;font:400 min(15vw,16vh)/.9 "BL Anton",sans-serif;letter-spacing:.12em;padding-left:.12em;color:#ead9bd;
+    text-shadow:0 0 .3em rgba(255,140,60,.35);animation:tIn 2.4s linear}
+  @keyframes tIn{0%,52%{opacity:0;filter:blur(8px)}58%{opacity:.5}60%{opacity:.15}64%{opacity:.9;filter:blur(0)}66%{opacity:.6}70%,100%{opacity:1;filter:blur(0)}}
+  .t2{display:block;margin-top:.35em;font:400 min(4.6vw,4.2vh)/1 "BL Anton",sans-serif;letter-spacing:.5em;padding-left:.5em;color:#e0482c;text-shadow:0 0 .6em rgba(220,60,30,.45);animation:t2 .6s 1.4s ease-out}
+  @keyframes t2{from{opacity:0;letter-spacing:.9em}to{opacity:1;letter-spacing:.5em}}
+  .tag{position:absolute;left:50%;bottom:max(6vh,env(safe-area-inset-bottom));transform:translateX(-50%);white-space:nowrap;font:italic 500 min(4vw,3.4vh)/1 "BL Cormorant",serif;color:#d9b48a;letter-spacing:.12em;opacity:0;animation:fade .6s 1.6s ease-out}
+  @keyframes fade{to{opacity:.85}}
+  /* wide / landscape: bigger door, figure and floor shadow; title moves to the left of the door */
+  @media (orientation:landscape){
+    .stage{--dh:min(72vh,58vw);--dt:73%}
+    .door,.spill{left:63%}
+    .wall{background:radial-gradient(34% 62% at 63% var(--dt),rgba(130,75,32,.34),transparent 70%)}
+    .fig{height:98%}
+    .shadow{left:39%;width:15%;background:linear-gradient(180deg,rgba(0,0,0,.97),rgba(0,0,0,.86) 55%,rgba(0,0,0,.35));clip-path:polygon(38% 0,46% 0,50% 22%,54% 0,62% 0,67% 36%,84% 72%,98% 100%,2% 100%,16% 72%,33% 36%)}
+    .spill::before{background:linear-gradient(180deg,rgba(255,198,120,.88),rgba(236,150,66,.52) 50%,rgba(140,70,24,.14))}
+    .dust{position:absolute;inset:0;transform:translateX(13vw)}
+    .title{left:27%;top:44%;transform:translate(-50%,-50%)}
+    .t1{font-size:min(10vw,19vh)}
+    .t2{font-size:min(3.4vw,4.6vh)}
+    .tag{left:27%;bottom:auto;top:calc(44% + min(10vw,19vh) * .62 + 6vh)}
+  }
+  .grain{position:absolute;inset:0;width:100%;height:100%;mix-blend-mode:screen;opacity:.12}
+  .vig{position:absolute;inset:0;background:radial-gradient(closest-side at 50% 55%,transparent 40%,rgba(0,0,0,.9))}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="gr"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="9"/><feColorMatrix values="0 0 0 0 1  0 0 0 0 .9  0 0 0 0 .8  0 0 0 2 -1"/></filter></svg>
+<main class="stage" aria-label="Horror Movie Poster deck intro, the door">
+  <div class="push">
+    <div class="wall"></div>
+    <div class="spill"><div class="shadow"></div></div>
+    <div class="door">
+      <div class="light"></div>
+      <div class="clip"><div class="fig"><svg viewBox="0 0 36 100" preserveAspectRatio="none" aria-hidden="true"><path d="M19.5 3 C22.6 3.2 24 6 23.4 9.4 C23 11.8 21.8 13.4 20.6 14.4 C22.4 15.4 25.6 16.4 27 19 C28.6 22.4 28.4 30 29 38 C29.6 46 30.8 52 31.6 58 L32.6 60.5 L31.4 60 L32 63.5 L30.6 60.8 L30.4 64 L29.6 60.4 L28.6 62.6 L28.8 58.4 C27.6 52 26.4 45 25.6 38 L24.8 52 C24.6 62 24.4 80 24 99 L20.4 99 C20.2 86 19.6 74 18.6 64 C17.8 74 17.2 86 16.4 99 L12.8 99 C12.6 80 12.2 62 11.6 52 L10.6 38 C9.8 45 8.6 52 7.4 58.4 L7.6 62.6 L6.6 60.4 L5.8 64 L5.6 60.8 L4.2 63.5 L4.8 60 L3.6 60.5 L4.6 58 C5.4 52 6.6 46 7.2 38 C7.8 30 7.6 22.4 9.2 19 C10.6 16.4 13.8 15.2 16.4 14.4 C15.2 13.2 14.4 11.4 14.4 9 C14.6 5.4 16.6 2.8 19.5 3Z" fill="#050302"/></svg></div></div>
+      <div class="panel"></div>
+      <div class="jamb"></div>
+    </div>
+    <div class="dust" id="dust"></div>
+  </div>
+  <div class="title"><span class="t1">HORROR</span><span class="t2">MOVIE POSTER</span></div>
+  <div class="tag">something is already inside</div>
+  <svg class="grain" aria-hidden="true"><rect width="100%" height="100%" filter="url(#gr)"/></svg>
+  <div class="vig"></div>
+</main>
+<script>
+(function(){let s=3;const r=()=>(s=(s*16807)%2147483647)/2147483647;let h='';
+  for(let i=0;i<30;i++)h+=`<i style="left:${(44+r()*14).toFixed(1)}%;top:${(25+r()*45).toFixed(1)}%;--dx:${(-2+r()*4).toFixed(1)}vw;--dy:${(r()*5).toFixed(1)}vh"></i>`;
+  document.getElementById('dust').innerHTML=h;})();
+</script>
+<script src="../splash-runtime.js"></script>
+</body>
+</html>

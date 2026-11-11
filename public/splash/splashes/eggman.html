@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en" data-slug="eggman" data-duration="2200" data-poster="1600">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Dr. Eggman — BeeLine splash</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../splash-base.css">
+<style>
+  body{background:#3a0004}
+  .stage{background:radial-gradient(90vmax 90vmax at 50% 45%,#ff2a20 0%,#c3070f 32%,#6a0006 62%,#2a0003 100%)}
+  .hex{position:absolute;inset:0;opacity:.18;
+    background-image:radial-gradient(circle at 50% 50%,#000 1.4px,transparent 1.8px),radial-gradient(circle at 50% 50%,#000 1.4px,transparent 1.8px);
+    background-size:22px 38px;background-position:0 0,11px 19px;-webkit-mask:radial-gradient(closest-side,transparent 30%,#000 100%);mask:radial-gradient(closest-side,transparent 30%,#000 100%)}
+  .hazard{position:absolute;left:-10%;right:-10%;height:min(5vh,6vw);
+    background:repeating-linear-gradient(-45deg,#ffcc00 0 min(2.4vh,3vw),#120a00 0 min(4.8vh,6vw));
+    box-shadow:0 0 0 3px #120a00,0 6px 18px rgba(0,0,0,.5)}
+  .hz-top{top:env(safe-area-inset-top,0);animation:hzL .45s cubic-bezier(.2,.9,.2,1)}
+  .hz-bot{bottom:env(safe-area-inset-bottom,0);animation:hzR .45s .05s cubic-bezier(.2,.9,.2,1)}
+  @keyframes hzL{from{transform:translateX(-110%)}to{transform:none}}
+  @keyframes hzR{from{transform:translateX(110%)}to{transform:none}}
+
+  .stage{--rig:min(82vw,62vh)}
+  .rig{position:absolute;left:50%;top:43%;width:var(--rig);height:var(--rig);transform:translate(-50%,-50%)}
+  .rig svg{width:100%;height:100%}
+  .spin,.blade{transform-origin:0 0}
+  .speed{animation:speed .9s .78s cubic-bezier(.1,.7,.2,1)}
+  @keyframes speed{0%{opacity:0;transform:scale(.4)}20%{opacity:1}100%{opacity:0;transform:scale(1.9)}}
+  .gear{animation:gearIn .7s cubic-bezier(.2,.9,.25,1.05),gearSpin 2.2s linear}
+  @keyframes gearIn{from{opacity:0}to{opacity:1}}
+  @keyframes gearSpin{from{transform:rotate(-70deg) scale(.55)}35%{transform:rotate(-8deg) scale(1)}to{transform:rotate(12deg) scale(1)}}
+  .ringA{animation:ringA 2.2s cubic-bezier(.2,.8,.2,1)}
+  .ringB{animation:ringB 2.2s cubic-bezier(.2,.8,.2,1)}
+  .ringC{animation:ringC 2.2s cubic-bezier(.2,.8,.2,1)}
+  @keyframes ringA{0%{transform:scale(.1) rotate(180deg);opacity:0}8%{opacity:1}30%{transform:scale(1) rotate(0)}100%{transform:scale(1) rotate(-30deg)}}
+  @keyframes ringB{0%,4%{transform:scale(.1) rotate(-200deg);opacity:0}12%{opacity:1}34%{transform:scale(1) rotate(0)}100%{transform:scale(1) rotate(40deg)}}
+  @keyframes ringC{0%,8%{transform:scale(.1) rotate(160deg);opacity:0}16%{opacity:1}38%{transform:scale(1) rotate(0)}100%{transform:scale(1) rotate(-50deg)}}
+  
+  .core{animation:core 2.2s ease-out}
+  @keyframes core{0%,34%{opacity:0}50%{opacity:1}56%{opacity:.85}100%{opacity:1}}
+  .coreflash{animation:cflash .5s .82s ease-out}
+  @keyframes cflash{0%{opacity:0;transform:scale(.3)}30%{opacity:1}100%{opacity:0;transform:scale(1.6)}}
+  .ping{animation:ping 1s 1s ease-out}
+  @keyframes ping{0%{opacity:0;transform:scale(.6)}8%{opacity:.9}100%{opacity:0;transform:scale(1.25)}}
+
+  .title{position:absolute;left:50%;top:calc(43% + var(--rig) / 2 + 1.2vh);transform:translateX(-50%);white-space:nowrap;text-align:center}
+  .name{display:block;font:400 min(11.5vw,10vh)/1 "BL Russo",sans-serif;font-style:italic;letter-spacing:.02em;color:#ffd21a;
+    -webkit-text-stroke:min(.9vw,.9vh) #1a0002;paint-order:stroke fill;transform:skewX(-10deg);
+    text-shadow:.06em .06em 0 #1a0002,0 0 .5em rgba(255,200,0,.25);
+    animation:slam .45s 1.05s cubic-bezier(.15,.9,.25,1.2)}
+  @keyframes slam{0%{opacity:0;transform:translateX(60vw) skewX(-30deg)}60%{opacity:1;transform:translateX(-2vw) skewX(-4deg)}100%{transform:skewX(-10deg)}}
+  .name::after{content:"";position:absolute;left:-14%;right:-14%;top:42%;height:.12em;background:linear-gradient(90deg,transparent,#fff 30%,#fff 70%,transparent);opacity:0;animation:streak .5s 1.12s ease-out}
+  @keyframes streak{0%{opacity:0;transform:scaleX(.2) translateX(40%)}10%{opacity:.9}100%{opacity:0;transform:scaleX(1.2)}}
+  .tag{display:block;margin-top:.9em;font:400 min(2.2vw,2.4vh)/1 "BL Russo",sans-serif;letter-spacing:.5em;padding-left:.5em;color:#ffe9a8;
+    animation:tag .4s 1.35s ease-out}
+  @keyframes tag{from{opacity:0;transform:translateY(8px)}to{opacity:.9;transform:none}}
+  .flashbg{position:absolute;inset:0;background:#fff3b0;mix-blend-mode:screen;animation:fb .4s .84s ease-out}
+  @keyframes fb{0%{opacity:0}15%{opacity:.55}100%{opacity:0}}
+</style>
+</head>
+<body>
+<main class="stage" aria-label="Dr. Eggman deck intro">
+  <div class="hex"></div>
+  <div class="hazard hz-top"></div><div class="hazard hz-bot"></div>
+  <div class="rig">
+    <svg viewBox="-50 -50 100 100" aria-hidden="true">
+      <defs>
+        <linearGradient id="chrome" x1="0" y1="-1" x2="0" y2="1" gradientUnits="objectBoundingBox">
+          <stop offset="0" stop-color="#ffffff"/><stop offset=".22" stop-color="#b9c0ca"/><stop offset=".45" stop-color="#5d636e"/>
+          <stop offset=".52" stop-color="#f4f6f9"/><stop offset=".7" stop-color="#8b929d"/><stop offset="1" stop-color="#2d3138"/>
+        </linearGradient>
+        <linearGradient id="chrome2" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#e9edf2"/><stop offset=".35" stop-color="#6c727c"/><stop offset=".5" stop-color="#ffffff"/><stop offset=".75" stop-color="#7c838d"/><stop offset="1" stop-color="#22262b"/>
+        </linearGradient>
+        <radialGradient id="coreG"><stop offset="0" stop-color="#fffbe0"/><stop offset=".35" stop-color="#ffe14a"/><stop offset=".7" stop-color="#ff7a00"/><stop offset="1" stop-color="#b80008"/></radialGradient>
+        <linearGradient id="bY" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff07a"/><stop offset=".5" stop-color="#ffc800"/><stop offset="1" stop-color="#d98a00"/></linearGradient>
+        <linearGradient id="bR" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff5a4a"/><stop offset=".5" stop-color="#e3101b"/><stop offset="1" stop-color="#8a0008"/></linearGradient>
+        <clipPath id="irisClip"><circle r="27.5"/></clipPath>
+      </defs>
+      <g class="spin speed" id="speed"></g>
+      <g class="spin gear"><path id="gear" fill="#2a2e35" stroke="#0c0d10" stroke-width=".6"/><circle r="40.5" fill="none" stroke="url(#chrome2)" stroke-width="1.1"/></g>
+      <g class="spin ringA"><circle r="37" fill="none" stroke="url(#chrome)" stroke-width="3.4"/><circle r="37" fill="none" stroke="#1a1c20" stroke-width=".35" stroke-dasharray="1.2 6.55"/><g id="bolts"></g></g>
+      <g class="spin ringB"><circle r="32.6" fill="none" stroke="#ffcc00" stroke-width="2" stroke-dasharray="10 2.2"/><circle r="31.2" fill="none" stroke="#1a0002" stroke-width=".4"/></g>
+      <g class="spin ringC"><circle r="29.4" fill="none" stroke="url(#chrome2)" stroke-width="2.4"/></g>
+      <g clip-path="url(#irisClip)">
+        <circle r="28" fill="#1a0002"/>
+        <g class="core"><circle r="27" fill="url(#coreG)"/>
+          <circle r="15" fill="none" stroke="#b80008" stroke-width="1" opacity=".7"/>
+          <circle r="7" fill="#fff" opacity=".85"/>
+          <path d="M-22 0H-9M9 0H22M0 -22V-9M0 9V22" stroke="#7a0006" stroke-width=".9"/>
+        </g>
+        <g id="blades"></g>
+      </g>
+      <circle r="28" fill="none" stroke="#0c0d10" stroke-width="1.2"/>
+      <circle class="spin coreflash" r="14" fill="#fffbe0"/>
+      <circle class="spin ping" r="30" fill="none" stroke="#fff6b0" stroke-width="1.2"/>
+    </svg>
+  </div>
+  <div class="flashbg"></div>
+  <div class="title"><span class="name">DR. EGGMAN</span><span class="tag">SYSTEMS ONLINE</span></div>
+</main>
+<script>
+(function(){
+  const NS='http://www.w3.org/2000/svg';
+  // gear teeth
+  let d='';const N=36,R1=44.5,R0=41.2;
+  for(let i=0;i<N;i++){const a=i/N*2*Math.PI,w=Math.PI/N*.55;
+    const pts=[[R0,a-w*1.25],[R1,a-w*.7],[R1,a+w*.7],[R0,a+w*1.25]];
+    d+=(i?'L':'M')+pts.map(([r,t])=>(r*Math.cos(t)).toFixed(2)+' '+(r*Math.sin(t)).toFixed(2)).join('L');}
+  d+='Z M41.2 0A41.2 41.2 0 1 0 -41.2 0A41.2 41.2 0 1 0 41.2 0Z';
+  document.getElementById('gear').setAttribute('d',d);
+  // bolts
+  let b='';for(let i=0;i<8;i++){const a=i/8*2*Math.PI+.2;b+=`<circle cx="${(37*Math.cos(a)).toFixed(2)}" cy="${(37*Math.sin(a)).toFixed(2)}" r=".95" fill="#2a2e35" stroke="#fff" stroke-width=".25"/>`;}
+  document.getElementById('bolts').innerHTML=b;
+  // speed lines
+  let s='';let seed=3;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+  for(let i=0;i<64;i++){const a=rnd()*2*Math.PI,r0=34+rnd()*10,len=12+rnd()*40;
+    s+=`<line x1="${(r0*Math.cos(a)).toFixed(1)}" y1="${(r0*Math.sin(a)).toFixed(1)}" x2="${((r0+len)*Math.cos(a)).toFixed(1)}" y2="${((r0+len)*Math.sin(a)).toFixed(1)}" stroke="${i%3?'#fff3c0':'#ffd000'}" stroke-width="${(.25+rnd()*.7).toFixed(2)}" stroke-linecap="round"/>`;}
+  document.getElementById('speed').innerHTML=s;
+  // iris blades: each blade is a band whose inner edge sits r from centre; opening slides + twists it out.
+  const g=document.getElementById('blades');const st=document.createElement('style');let css='';
+  for(let i=0;i<8;i++){const a=i*45;
+    const p=document.createElementNS(NS,'path');
+    p.setAttribute('d','M0 -6 L34 -6 L34 30 L0 30 Z');
+    p.setAttribute('fill',i%2?'url(#bR)':'url(#bY)');p.setAttribute('stroke','#1a0002');p.setAttribute('stroke-width','.7');
+    p.setAttribute('class','blade b'+i);g.appendChild(p);
+    css+=`.go .b${i}{animation:bl${i} 2.2s cubic-bezier(.6,0,.2,1)}
+@keyframes bl${i}{0%,30%{transform:rotate(${a}deg) translate(-1px,0) rotate(-38deg)}52%{transform:rotate(${a+28}deg) translate(26px,0) rotate(-38deg)}100%{transform:rotate(${a+34}deg) translate(30px,0) rotate(-38deg)}}\n`;}
+  st.textContent=css;document.head.appendChild(st);
+})();
+</script>
+<script src="../splash-runtime.js"></script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" data-slug="nier" data-duration="2300" data-poster="1800">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Nier — BeeLine splash</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../splash-base.css">
+<style>
+  :root{--ink:#4a473c;--paper:#d3cdb8}
+  body{background:#2a2822}
+  .stage{background:radial-gradient(100vmax 80vmax at 50% 45%,#dcd7c3 0%,#cfc9b2 55%,#b9b29a 100%);animation:boot .5s steps(1)}
+  @keyframes boot{0%{filter:brightness(0)}12%{filter:brightness(1.4)}16%{filter:brightness(.3)}22%{filter:brightness(1)}100%{filter:none}}
+  .scan{position:absolute;inset:0;background:repeating-linear-gradient(180deg,rgba(60,56,44,.09) 0 1px,transparent 1px 3px);pointer-events:none}
+  .grid{position:absolute;inset:0;opacity:.35;background-image:linear-gradient(rgba(74,71,60,.18) 1px,transparent 1px),linear-gradient(90deg,rgba(74,71,60,.18) 1px,transparent 1px);background-size:min(6vmin,48px) min(6vmin,48px);
+    -webkit-mask:radial-gradient(closest-side,#000,transparent);mask:radial-gradient(closest-side,#000,transparent);animation:gridIn .6s .1s ease-out}
+  @keyframes gridIn{from{opacity:0}to{opacity:.35}}
+  .sweep{position:absolute;left:0;right:0;height:18vh;top:0;background:linear-gradient(180deg,transparent,rgba(255,255,245,.55) 50%,transparent);mix-blend-mode:screen;animation:sweep .7s .12s linear}
+  @keyframes sweep{from{transform:translateY(-20vh)}to{transform:translateY(110vh)}}
+  .glitch{position:absolute;left:0;right:0;height:2.2vh;top:44%;background:rgba(74,71,60,.55);animation:gl 2.3s steps(1)}
+  @keyframes gl{0%{opacity:0}24%{opacity:1;transform:translate(-6vw,-8vh) scaleY(.6)}26%{opacity:1;transform:translate(4vw,6vh) scaleY(1.4)}28%{opacity:0}62%{opacity:0}63%{opacity:.7;transform:translate(0,14vh) scaleY(.4)}64%{opacity:0}100%{opacity:0}}
+
+  .log{position:absolute;left:max(5vw,env(safe-area-inset-left));top:max(5vh,env(safe-area-inset-top));font:400 min(2.6vw,2.2vh)/1.75 "BL Courier",monospace;color:var(--ink);letter-spacing:.06em}
+  .log span{display:block;white-space:pre;clip-path:inset(0 100% 0 0);animation:type .32s var(--d) steps(22)}
+  @keyframes type{to{clip-path:inset(0 0 0 0)}}
+  .log b{font-weight:700}
+  .frame{position:absolute;left:50%;top:47%;width:var(--fw);height:calc(var(--fw)*.42);transform:translate(-50%,-50%)}
+  .stage{--fw:min(84vw,96vh)}
+  .frame i{position:absolute;width:9%;height:20%;border:solid var(--ink);border-width:0;animation:corner .45s .45s cubic-bezier(.2,.8,.2,1)}
+  .frame i:nth-child(1){left:0;top:0;border-left-width:2px;border-top-width:2px;--x:-3vmin;--y:-3vmin}
+  .frame i:nth-child(2){right:0;top:0;border-right-width:2px;border-top-width:2px;--x:3vmin;--y:-3vmin}
+  .frame i:nth-child(3){left:0;bottom:0;border-left-width:2px;border-bottom-width:2px;--x:-3vmin;--y:3vmin}
+  .frame i:nth-child(4){right:0;bottom:0;border-right-width:2px;border-bottom-width:2px;--x:3vmin;--y:3vmin}
+  @keyframes corner{from{opacity:0;transform:translate(var(--x),var(--y))}to{opacity:1;transform:none}}
+  .bar{position:absolute;left:4%;right:4%;top:50%;height:46%;transform:translateY(-50%) scaleX(0);transform-origin:0 50%;background:var(--ink);animation:bar .38s .7s cubic-bezier(.7,0,.2,1)}
+  @keyframes bar{0%{transform:translateY(-50%) scaleX(0)}60%{transform:translateY(-50%) scaleX(1);transform-origin:0 50%}100%{transform:translateY(-50%) scaleX(1)}}
+  .title{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:.5em;font:400 calc(var(--fw)*.11)/1 "BL Cormorant",serif;letter-spacing:.55em;padding-left:.55em;color:var(--paper);
+    clip-path:inset(0 100% 0 0);animation:titleIn .4s .86s steps(12)}
+  @keyframes titleIn{to{clip-path:inset(0 0 0 0)}}
+  .title::before{content:"";width:.24em;height:.24em;background:var(--paper);margin-right:.2em}
+  .meta{position:absolute;left:4%;right:4%;top:100%;margin-top:1.4vh;display:flex;justify-content:space-between;font:400 min(2.2vw,1.9vh)/1 "BL Courier",monospace;color:var(--ink);letter-spacing:.2em;animation:meta .4s 1.15s ease-out}
+  @keyframes meta{from{opacity:0}to{opacity:1}}
+  .prog{position:absolute;left:50%;bottom:max(8vh,env(safe-area-inset-bottom));width:var(--fw);transform:translateX(-50%);font:400 min(2.2vw,1.9vh)/1 "BL Courier",monospace;color:var(--ink);letter-spacing:.2em}
+  .prog .track{height:6px;margin-top:1vh;border:1px solid var(--ink);padding:1px}
+  .prog .pfill{height:100%;background:var(--ink);transform-origin:0 50%;animation:fill 1.5s .2s cubic-bezier(.6,.1,.3,1)}
+  @keyframes fill{0%{transform:scaleX(0)}40%{transform:scaleX(.36)}55%{transform:scaleX(.42)}100%{transform:scaleX(1)}}
+  .petals{position:absolute;inset:0;pointer-events:none}
+  .petals i{position:absolute;left:var(--x);top:var(--y);width:var(--s);height:calc(var(--s)*.62);background:#fffef8;border-radius:100% 0 100% 0;
+    background:linear-gradient(135deg,#fff,#f1eee4);box-shadow:0 2px 4px rgba(60,56,44,.35);animation:petal 2.3s var(--d) cubic-bezier(.3,.2,.4,1)}
+  @keyframes petal{0%{opacity:0;transform:translate(0,0) rotate(var(--r)) rotateX(0)}12%{opacity:1}100%{opacity:.95;transform:translate(var(--dx),var(--dy)) rotate(calc(var(--r) + 260deg)) rotateX(140deg)}}
+  .sepia{position:absolute;inset:0;background:radial-gradient(closest-side,transparent 55%,rgba(80,70,45,.35));pointer-events:none}
+</style>
+</head>
+<body>
+<main class="stage" aria-label="Nier deck intro">
+  <div class="grid"></div>
+  <div class="log"><span style="--d:.05s">&gt; BOOT SEQUENCE ........ <b>OK</b></span><span style="--d:.22s">&gt; VISUAL CORTEX ........ <b>OK</b></span><span style="--d:.39s">&gt; DECK LINK ............ <b>OK</b></span><span style="--d:.56s">&gt; MEMORY UNIT .......... <b>SYNC</b></span></div>
+  <div class="frame"><i></i><i></i><i></i><i></i>
+    <div class="bar"></div>
+    <div class="title">NIER</div>
+    <div class="meta"><span>■ DECK.OPEN</span><span>UNIT 02 · STANDBY</span></div>
+  </div>
+  <div class="prog"><div>LOADING DECK DATA</div><div class="track"><div class="pfill"></div></div></div>
+  <div class="petals" id="petals"></div>
+  <div class="glitch"></div>
+  <div class="sweep"></div>
+  <div class="scan"></div>
+  <div class="sepia"></div>
+</main>
+<script>
+(function(){let s=17;const r=()=>(s=(s*16807)%2147483647)/2147483647;let h='';
+  for(let i=0;i<22;i++){h+=`<i style="--x:${(-10+r()*80).toFixed(1)}%;--y:${(-10+r()*70).toFixed(1)}%;--s:${(14+r()*18).toFixed(0)}px;--r:${(r()*360).toFixed(0)}deg;--dx:${(25+r()*40).toFixed(0)}vw;--dy:${(25+r()*45).toFixed(0)}vh;--d:${(.75+r()*.5).toFixed(2)}s"></i>`;}
+  document.getElementById('petals').innerHTML=h;})();
+</script>
+<script src="../splash-runtime.js"></script>
+</body>
+</html>

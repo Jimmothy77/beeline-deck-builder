@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en" data-slug="tmnt" data-duration="2200" data-poster="1650">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>TMNT — BeeLine splash</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../splash-base.css">
+<style>
+  body{background:#0b120d}
+  .stage{background:#16221a}
+  .bricks{position:absolute;inset:0;width:100%;height:100%;background:linear-gradient(180deg,#1f3226,#18281e 60%,#101a13)}
+  .slime{position:absolute;left:0;right:0;bottom:0;height:16vh;background:linear-gradient(180deg,transparent,rgba(70,160,60,.35));}
+  .water{position:absolute;left:-5%;right:-5%;bottom:0;height:9vh;background:linear-gradient(180deg,#24482c,#0f2114);border-top:2px solid rgba(160,255,120,.35);
+    -webkit-mask:linear-gradient(#000,#000)}
+  .water::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 30px,rgba(190,255,150,.18) 30px 60px);animation:flow 2.2s linear}
+  @keyframes flow{from{transform:translateX(0)}to{transform:translateX(-60px)}}
+  .shaft{position:absolute;left:50%;top:0;width:min(70vw,64vh);height:100%;transform:translateX(-50%);mix-blend-mode:screen;
+    background:linear-gradient(180deg,rgba(220,255,170,.65),rgba(190,255,140,.18) 55%,transparent 92%);
+    clip-path:polygon(36% 0,64% 0,100% 100%,0 100%);
+    -webkit-mask:repeating-linear-gradient(90deg,#000 0 8%,rgba(0,0,0,.25) 8% 11%);mask:repeating-linear-gradient(90deg,#000 0 8%,rgba(0,0,0,.25) 8% 11%);
+    animation:shaft 2.2s ease-out}
+  @keyframes shaft{0%{opacity:0}18%{opacity:1}24%{opacity:.7}30%{opacity:1}100%{opacity:.9}}
+  .grate{position:absolute;left:50%;top:0;width:min(22vw,20vh);height:min(4vw,3.6vh);transform:translateX(-50%);background:repeating-linear-gradient(90deg,#3c4a40 0 12%,#e8ffd0 12% 20%);border:3px solid #2a352d;border-top:none;
+    box-shadow:0 0 30px rgba(220,255,170,.6);animation:grate .3s ease-out}
+  @keyframes grate{from{box-shadow:none;opacity:.4}to{opacity:1}}
+  .dust i{position:absolute;width:3px;height:3px;border-radius:50%;background:#e9ffc8;animation:dust 2.2s linear;opacity:.7}
+  @keyframes dust{from{transform:translate(0,0)}to{transform:translate(var(--dx),12vh)}}
+
+  .hex{position:absolute;left:50%;top:50%;width:min(110vw,120vh);height:min(110vw,120vh);transform:translate(-50%,-50%);
+    -webkit-mask:radial-gradient(closest-side,#000 20%,transparent 70%);mask:radial-gradient(closest-side,#000 20%,transparent 70%);animation:hex .8s .35s ease-out}
+  @keyframes hex{from{opacity:0;transform:translate(-50%,-50%) scale(.6)}to{opacity:.55;transform:translate(-50%,-50%) scale(1)}}
+  .hex svg{width:100%;height:100%}
+
+  .splats{position:absolute;left:50%;top:50%;width:var(--A);height:var(--A);transform:translate(-50%,-50%)}
+  .stage{--A:min(100vw,92vh)}
+  .splat{position:absolute;width:36%;aspect-ratio:1;animation:splat .32s var(--d) cubic-bezier(.2,1.5,.4,1)}
+  .splat svg{width:100%;height:100%;overflow:visible}
+  @keyframes splat{from{opacity:0;transform:scale(.1) rotate(var(--r))}to{opacity:1;transform:scale(1) rotate(var(--r))}}
+  .drip{transform-box:fill-box;transform-origin:50% 0;animation:drip 1.2s var(--dd) cubic-bezier(.5,0,.3,1)}
+  @keyframes drip{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+  .can{position:absolute;inset:0;background:radial-gradient(circle,rgba(255,255,255,.0),transparent)}
+
+  .title{position:absolute;left:50%;top:51%;transform:translate(-50%,-50%);text-align:center;white-space:nowrap}
+  .name{display:block;font:400 min(24vw,26vh)/1 "BL Spray",sans-serif;color:#7be04a;letter-spacing:.02em;
+    -webkit-text-stroke:min(.5vw,.5vh) #0b1a0e;paint-order:stroke fill;text-shadow:0 .05em 0 #0b1a0e,0 0 .25em rgba(120,230,80,.45);
+    animation:tag .4s 1.05s cubic-bezier(.2,1.6,.4,1)}
+  @keyframes tag{from{opacity:0;transform:scale(1.6) rotate(-6deg);filter:blur(6px)}to{opacity:1;transform:rotate(-3deg);filter:blur(0)}}
+  .sub{display:inline-block;margin-top:.5em;font:400 min(3.6vw,3.4vh)/1 "BL Marker",cursive;color:#e9ffd8;letter-spacing:.14em;transform:rotate(-3deg);animation:sub .35s 1.35s ease-out}
+  @keyframes sub{from{opacity:0;transform:translateY(10px) rotate(-3deg)}to{opacity:.95;transform:rotate(-3deg)}}
+  .vig{position:absolute;inset:0;background:radial-gradient(closest-side,transparent 45%,rgba(0,0,0,.8))}
+</style>
+</head>
+<body>
+<main class="stage" aria-label="TMNT deck intro">
+  <svg class="bricks" aria-hidden="true"><defs><pattern id="br" width="84" height="44" patternUnits="userSpaceOnUse">
+    <rect width="84" height="44" fill="#0a100c"/><rect x="2" y="2" width="80" height="19" rx="2" fill="#21362a"/><rect x="-40" y="24" width="80" height="18" rx="2" fill="#1c2f24"/><rect x="44" y="24" width="80" height="18" rx="2" fill="#1e3226"/></pattern>
+    <radialGradient id="brf" cx="50%" cy="30%" r="70%"><stop offset="0" stop-color="#fff" stop-opacity=".0"/><stop offset="1" stop-color="#000" stop-opacity=".55"/></radialGradient></defs>
+    <rect width="100%" height="100%" fill="url(#br)"/><rect width="100%" height="100%" fill="url(#brf)"/></svg>
+  <div class="slime"></div>
+  <div class="hex"><svg aria-hidden="true"><defs><pattern id="hx" width="42" height="72.75" patternUnits="userSpaceOnUse" patternTransform="scale(.9)">
+    <path d="M21 0 L42 12.1 V36.4 L21 48.5 L0 36.4 V12.1Z M21 48.5 V72.75 M0 36.4 L-21 48.5 M42 36.4 L63 48.5" fill="none" stroke="#5bbd45" stroke-width="2.4" stroke-linejoin="round"/></pattern></defs>
+    <rect width="100%" height="100%" fill="url(#hx)"/></svg></div>
+  <div class="shaft"></div>
+  <div class="grate"></div>
+  <div class="dust" id="dust"></div>
+  <div class="splats" id="splats"></div>
+  <div class="water"></div>
+  <div class="title"><span class="name">TMNT</span><span class="sub">fresh from the sewers</span></div>
+  <div class="vig"></div>
+</main>
+<script>
+(function(){let s=41;const r=()=>(s=(s*16807)%2147483647)/2147483647;
+  function blob(color){let d='';const N=28;const pts=[];for(let i=0;i<N;i++){const a=i/N*2*Math.PI;const R=(i%2?22:34)+r()*(i%3?6:16);pts.push([R*Math.cos(a),R*Math.sin(a)]);}
+    d='M'+pts.map(p=>p.map(v=>v.toFixed(1)).join(' ')).join(' L ')+'Z';
+    let extra='';for(let i=0;i<9;i++){const a=r()*2*Math.PI,R=40+r()*14;extra+=`<circle cx="${(R*Math.cos(a)).toFixed(1)}" cy="${(R*Math.sin(a)).toFixed(1)}" r="${(1+r()*3.4).toFixed(1)}"/>`;}
+    let drips='';for(let i=0;i<4;i++){const x=-22+r()*44,h=18+r()*40,w=2.4+r()*2.6;drips+=`<g class="drip" style="--dd:${(.0+r()*.2).toFixed(2)}s"><rect x="${(x-w/2).toFixed(1)}" y="20" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="${(w/2).toFixed(1)}"/><circle cx="${x.toFixed(1)}" cy="${(20+h).toFixed(1)}" r="${(w*.75).toFixed(1)}"/></g>`;}
+    return `<svg viewBox="-50 -50 100 100"><g fill="${color}" style="filter:url(#none)"><path d="${d}" stroke-linejoin="round" stroke="${color}" stroke-width="4"/>${extra}${drips}</g></svg>`;}
+  const C=[['#2f78e6',3,6,.5],['#e3262c',62,3,.62],['#9145d6',0,60,.74],['#ff8d1e',64,60,.86]];
+  document.getElementById('splats').innerHTML=C.map(([c,x,y,d])=>`<div class="splat" style="left:${x}%;top:${y}%;--d:${d}s;--r:${(-30+r()*60).toFixed(0)}deg">${blob(c)}</div>`).join('');
+  document.querySelectorAll('.splat').forEach(el=>{const dl=parseFloat(el.style.getPropertyValue('--d'));el.querySelectorAll('.drip').forEach(g=>g.style.setProperty('--dd',(dl+.2+parseFloat(g.style.getPropertyValue('--dd'))).toFixed(2)+'s'));});
+  let h='';for(let i=0;i<30;i++){h+=`<i style="left:${(35+r()*30).toFixed(1)}%;top:${(r()*80).toFixed(1)}%;--dx:${(-3+r()*6).toFixed(1)}vw;opacity:${(.3+r()*.6).toFixed(2)}"></i>`;}
+  document.getElementById('dust').innerHTML=h;})();
+</script>
+<script src="../splash-runtime.js"></script>
+</body>
+</html>

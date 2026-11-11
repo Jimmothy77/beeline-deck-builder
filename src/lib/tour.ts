@@ -30,6 +30,10 @@ export function rememberTourAnswer(store: Store, answer: TourAnswer): void {
 
 export type TourView = "home" | "builder";
 
+/** Shown on the first step when the tour starts in a deck: it keeps to the deck view so the deck stays as it is. */
+export const TOUR_IN_DECK_INTRO =
+  "You're in a deck, so the tour shows the deck view's steps and leaves this deck just as it is. Picking and unlocking decks are on the deck list: replay the tour from there to see those too.";
+
 export type TourStep = {
   id: string;
   view: TourView;

@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type 
 import { createPortal } from "react-dom";
 import { CircleQuestionMark } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { guardOverlay, keepFocusOnPress } from "@/lib/modal-guard";
 import { findTourTarget, type TourStep, type TourView } from "@/lib/tour";
 
 /**
@@ -25,13 +26,25 @@ function measure(element: HTMLElement): Rect {
 
 const sameRect = (a: Rect | null, b: Rect | null) => a === b || (!!a && !!b && a.top === b.top && a.left === b.left && a.width === b.width && a.height === b.height);
 
-export function Tour({ steps, onNeedView, onClose }: { steps: TourStep[]; onNeedView: (view: TourView) => TourViewResult; onClose: () => void }) {
+export function Tour({
+  steps,
+  onNeedView,
+  onClose,
+  intro = null,
+}: {
+  steps: TourStep[];
+  onNeedView: (view: TourView) => TourViewResult;
+  onClose: () => void;
+  /** A line shown on the first step (started in a deck: which steps are left out). */
+  intro?: string | null;
+}) {
   const [index, setIndex] = useState(0);
   const [rect, setRect] = useState<Rect | null>(null);
   const [missing, setMissing] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const [viewOk, setViewOk] = useState(true);
   const captionRef = useRef<HTMLDivElement | null>(null);
+  const overlayRef = useRef<HTMLDivElement | null>(null);
   const nextRef = useRef<HTMLButtonElement | null>(null);
   const targetRef = useRef<HTMLElement | null>(null);
   const opener = useRef<Element | null>(null);
@@ -46,22 +59,35 @@ export function Tour({ steps, onNeedView, onClose }: { steps: TourStep[]; onNeed
 
   // Remember what had focus, and give it back when the tour closes. Started from the first-run prompt, whose
   // buttons are gone by then, focus goes to the Tour button instead.
+  // While the tour is open, nothing behind it can be reached: the rest of the page is inert, and a focusin
+  // guard puts focus back in the caption if anything outside still gets it.
   useEffect(() => {
     opener.current = document.activeElement === document.body ? null : document.activeElement;
+    const release = overlayRef.current ? guardOverlay(overlayRef.current, () => (nextRef.current ?? captionRef.current?.querySelector<HTMLElement>(FOCUSABLE))?.focus()) : () => undefined;
     return () => {
+      release();
       const back = opener.current;
       if (back instanceof HTMLElement && back.isConnected) back.focus();
       else document.querySelector<HTMLElement>("[data-tour-button]")?.focus();
     };
   }, []);
 
-  // Esc closes the tour from anywhere, before anything else on the page sees the key.
+  // Esc closes the tour from anywhere, before anything else on the page sees the key. Tab or Enter
+  // from outside the caption (focus left on <body>, say) never reaches the page: Tab goes back to the caption.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        closeRef.current();
+        return;
+      }
+      if (event.key !== "Tab" && event.key !== "Enter" && event.key !== " ") return;
+      const active = document.activeElement;
+      if (active && captionRef.current?.contains(active)) return;
       event.preventDefault();
       event.stopPropagation();
-      closeRef.current();
+      (nextRef.current ?? captionRef.current?.querySelector<HTMLElement>(FOCUSABLE))?.focus();
     };
     document.addEventListener("keydown", onKey, true);
     return () => document.removeEventListener("keydown", onKey, true);
@@ -143,9 +169,9 @@ export function Tour({ steps, onNeedView, onClose }: { steps: TourStep[]; onNeed
   const titleId = `tour-title-${step.id}`;
 
   return createPortal(
-    <div data-tour-overlay="" className="fixed inset-0 z-[60]">
-      {/* Blocks the page while the tour is open; clicking it does nothing. */}
-      <div className={`absolute inset-0 ${rect ? "" : "bg-black/60"}`} aria-hidden="true" />
+    <div ref={overlayRef} data-tour-overlay="" className="fixed inset-0 z-[60]">
+      {/* Blocks the page while the tour is open; pressing it does nothing and keeps focus in the caption. */}
+      <div data-tour-backdrop="" className={`absolute inset-0 ${rect ? "" : "bg-black/60"}`} aria-hidden="true" onMouseDown={keepFocusOnPress} onPointerDown={keepFocusOnPress} />
       {rect ? (
         <div
           data-tour-ring=""
@@ -174,6 +200,7 @@ export function Tour({ steps, onNeedView, onClose }: { steps: TourStep[]; onNeed
         <p id={`${titleId}-body`} className="mt-1 text-muted-foreground">
           {step.body}
         </p>
+        {intro && index === 0 ? <p className="mt-2 text-xs text-amber-200/90" data-tour-intro="">{intro}</p> : null}
         {note ? <p className="mt-2 text-xs text-amber-200/90" data-tour-note="">{note}</p> : null}
         {missing || !viewOk ? (
           <p className="mt-2 text-xs text-amber-200/90" data-tour-missing="">
@@ -234,10 +261,13 @@ export function TourPrompt({ onTake, onDecline }: { onTake: () => void; onDeclin
   );
 }
 
-/** Replays the tour at any time. */
+/**
+ * Replays the tour at any time. From the sm breakpoint up it floats in the bottom-left corner. On a phone it
+ * sits at the end of the page instead, in the normal flow, so it never covers a card tile.
+ */
 export function TourButton({ onClick }: { onClick: () => void }) {
   return (
-    <Button type="button" variant="outline" data-tour-button="" aria-label="Take the tour" title="Take the tour" className="fixed bottom-4 left-4 z-40 h-10 rounded-full bg-card/90 px-3 shadow-lg shadow-black/40" onClick={onClick}>
+    <Button type="button" variant="outline" data-tour-button="" aria-label="Take the tour" title="Take the tour" className="relative mx-4 mt-2 mb-4 h-10 rounded-full bg-card/90 px-3 shadow-lg shadow-black/40 sm:fixed sm:bottom-4 sm:left-4 sm:z-40 sm:m-0" onClick={onClick}>
       <CircleQuestionMark /> <span className="hidden sm:inline">Tour</span>
     </Button>
   );

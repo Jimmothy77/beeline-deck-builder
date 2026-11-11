@@ -47,7 +47,7 @@ Choosing a deck loads it as designed (one copy of each main-deck card on the art
 - swap any card for an alternate art
 - add tokens and other extras, with a quantity on every card
 - pick the card back
-- give one card its own back in the card editor (click the card's art): **Card Back** (one of the deck's card backs), **Alt Back** (any extra that is not a token) or **Token Backs** (a token). It prints on every copy of that card. Without a pick the card uses the deck back, and a double-faced card keeps its own back face. A pick on a double-faced card replaces that face, and the editor says so. In SxF a pick on a Color or Black and White token or extra moves to that card's other file when you switch the print set. A card with a pick shows a small "Back:" label on its tile and the desktop flyout turns to that back; cards without one look as before
+- give one card its own back in the card editor (click the card's art): **Card Back** (one of the deck's card backs), **Alt Back** (any extra that is not a token) or **Token Backs** (a token). It prints on every copy of that card. Without a pick the card uses the deck back, and a double-faced card keeps its own back face. A pick on a double-faced card replaces that face, and the editor says so. In SxF a pick on a Color or Black and White token or extra moves to that card's other file when you switch the print set. A card with a pick shows a small "Back:" label on its tile and the desktop card pop-up shows that back beside the front (see below); cards without one look as before
 - **All cards**, which sets every card in that deck and section to 1 copy
 - **Random**, which picks a main-deck or alternate art for each main-deck card. Lock a card and Random leaves it alone
 - **Clear all**, which sets every card in the deck to 0: main deck, tokens and extras (locked cards too, the same as pressing − to 0). Per-card back picks stay. While a filter is on, **Clear shown (N)** sits beside it and sets only the N counted cards the filter shows to 0; the cards it hides keep their counts. Both say what they did in a status line with **Undo Clear all** / **Undo Clear shown**, which puts back every count from just before. Any other change ends the Undo
@@ -55,9 +55,44 @@ Choosing a deck loads it as designed (one copy of each main-deck card on the art
 - save the deck, keep several, and export each as its own XML
 - export or import the saved-deck list as JSON
 
+### The desktop card pop-up
+
+At desktop widths, hovering a card's art with a mouse (or focusing it with the keyboard) shows it larger, up to 400px wide, beside its row. It pops up with a quick fade and scale-in from the thumbnail (180ms, eased, no overshoot); with reduced motion it only fades, in 60ms. There is no flip any more. A card with its own back shows that back beside the front at half size, labelled: **Chosen back** for a back picked in the card editor (it wins, as it is what prints), or **Back face** for a double-faced card's own back. The pair shrinks a little when needed so it fits beside the row instead of covering it. A one-faced card without a pick shows only its front: its back is the deck's card back, the same for every card and shown in the Card back picker. Phones and touch never get the pop-up.
+
+### The deck splash
+
+The first time a deck is opened in a browser session (Build, a saved deck, or Continue), a short splash plays over it, then the deck view is there underneath. Click or tap anywhere, press Esc, or use **Skip** to end it early. It plays once per deck per session: "played" is kept in `sessionStorage` under `printabee.splash.v1.<deck id>`, so nothing in `localStorage` or the saved decks changes, and a new session plays it again. If `sessionStorage` can't be used, it doesn't play. With reduced motion it shows the splash's still (poster) frame for 1.2s instead. The splash never changes a count or a save, and nothing behind it can be reached while it shows. When it closes, focus goes back where it was, or to the deck's heading when the button that opened it is gone.
+
+Each deck has its own splash by Frame Lab: original HTML/CSS/SVG pages with bundled fonts and no network requests, under `public/splash/`. `src/data/splash-assets.ts` maps deck ids to pages:
+
+| deck id | page |
+|---|---|
+| `dr-eggman` | `splashes/eggman.html` |
+| `floating-world` | `splashes/floating-world.html` |
+| `horror-movie-poster-secret-lair` | `splashes/horror-c.html` (the creaky door) |
+| `kpdh` | `splashes/kpdh.html` |
+| `nier` | `splashes/nier.html` |
+| `persona-5` | `splashes/persona5.html` |
+| `silksong` | `splashes/silksong.html` (v2) |
+| `sxf` | `splashes/sxf.html` |
+| `tmnt` | `splashes/tmnt.html` |
+| `vader` | `splashes/vader.html` |
+| `x-men` | `splashes/xmen.html` |
+| any other deck | `splashes/beeline.html` (the BeeLine fallback) |
+
+A page is shown in a sandboxed iframe (`sandbox="allow-scripts"`, so it can't reach the app), loaded with `?noskip=1` (the app draws the one Skip button) and `?poster=1` for reduced motion. It reports `beeline-splash:ready` and `beeline-splash:end` with `postMessage`, and only messages from that frame count. A page that is missing or fails (no ready message within 2.5s) is skipped: the splash closes and the deck opens as usual. With no usable page at all, the app draws a generic splash (the bee and the deck's name). The app plays the pages itself; Frame Lab's `splash-player.js` is shipped with the set but never loaded, so its own "seen" flag in `localStorage` is never written.
+
+`public/splash/` is exactly Frame Lab's frozen list of 40 files (`scripts/splash-final.sha256`, their `FINAL.sha256` byte for byte), copied by `npx tsx scripts/copy-splash.ts --from <Frame Lab folder>` from the allow-list in `scripts/splash-files.ts`. The copy refuses to run unless every source file matches the list, writes nothing when nothing changed, and removes anything in `public/splash/` that isn't on the allow-list. The Horror options not picked (`horror.html`, `horror-a`, `horror-b`), the fonts only they use (`fell-sc`, `vt323`), the review page, `review/` and `tools/` are never copied. `npx tsx scripts/copy-splash.ts --check` checks that `public/splash/` matches the list (and, with `--from`, that Frame Lab's folder still does), that no file has a network URL, key, Drive id or user name, that every page's files and fonts are on the allow-list, and that the registry agrees with the pages. `cd public/splash && sha256sum -c ../../scripts/splash-final.sha256` checks the copy too.
+
+Paid editions (Deluxe, Partial Foil) play their deck's own splash, like the free Standard edition; the BeeLine splash is only for a deck with no art of its own. Frame Lab's pages load their fonts from inside a sandboxed frame, which the browser treats as a cross-origin request, so the server must send `Access-Control-Allow-Origin` (GitHub Pages sends `*`).
+
+The local zip (`local/` in this repository: `Start BeeLine.bat`, `serve_beeline.py`, `README.txt`, plus the built site as `site\`) starts `serve_beeline.py`, Python's standard `http.server` bound to 127.0.0.1:4178 that adds that header and fixes the content types of the site's files. `src/lib/local-build.test.ts` checks the files and, when Python is installed, runs the server and checks its headers.
+
+The splash and the tour: the tour never plays a splash (not for the deck it opens as a preview, and not while it is open), and a splash covers the first-run prompt, which waits underneath until the splash ends. So a first visit that opens a deck straight away sees the splash first, then the prompt.
+
 ### The tour
 
-On the first visit BeeLine asks "New to BeeLine? Want a quick tour?" with **Take the tour** and **No thanks**. The answer is stored under `printabee.tour.v1` (`taken` or `declined`), so the question never comes back on its own; Esc counts as No thanks. The **Tour** button in the bottom-left corner replays it any time. Six steps highlight the real controls with a short caption and Back, Next and Skip tour; Esc closes it at any point. The steps: pick a deck; unlock a paid deck with the Drive folder link from the Ko-fi order; click a card's art to swap its front and back (Card Back, Alt Back, Token Backs); the search box (`t:creature c:g mv<=3`); the Filters panel; Clear all and Clear shown. The deck-view steps use the deck being built; with none, the tour opens the first deck as an unsaved preview and closes it again at the end. The tour never changes a count or a saved deck, keeps keyboard focus inside its caption, and gives focus back when it closes. A control that isn't on screen (the phone's Add cards tab is open, say) gets its caption in the middle of the screen instead.
+On the first visit BeeLine asks "New to BeeLine? Want a quick tour?" with **Take the tour** and **No thanks**. The answer is stored under `printabee.tour.v1` (`taken` or `declined`), so the question never comes back on its own; Esc counts as No thanks. The **Tour** button replays it any time: it floats in the bottom-left corner on wider screens, and on a phone it sits at the end of the page, so it never covers a card. Six steps highlight the real controls with a short caption and Back, Next and Skip tour; Esc closes it at any point. The steps: pick a deck; unlock a paid deck with the Drive folder link from the Ko-fi order; click a card's art to swap its front and back (Card Back, Alt Back, Token Backs); the search box (`t:creature c:g mv<=3`); the Filters panel; Clear all and Clear shown. Started from the deck list, the deck-view steps use the deck being built; with none, the tour opens the first deck as an unsaved preview and closes it again at the end. Started inside a deck, the tour shows only its four deck-view steps and says so, so the deck view stays open with its search, its Undo and everything else. The tour never changes a count or a saved deck. While it is open the rest of the page is inert, pressing the dimmed backdrop does nothing, and keyboard focus can't leave its caption; focus goes back where it was when it closes. A control that isn't on screen (the phone's Add cards tab is open, say) gets its caption in the middle of the screen instead.
 
 ### Filtering the deck view
 
@@ -74,7 +109,7 @@ The search box takes plain words (all must be in the card's name, as before) and
 | power / toughness | `pow>=3`, `tou<2`, ranges as for mana value | Power, Toughness |
 | quick toggles | `qty>0` (or `is:indeck`), `is:dfc`, `is:token` (or `is:extra`), `is:basic` | Show only chips |
 
-Terms are joined with "and"; `or` works inside one kind of term (types, colors, rarities). Parentheses group, nothing more. Color, type, mana value, rarity, rules text, power and toughness come from `src/data/card-lookup.ts`, a one-time cross-reference of every card name in the shipped decks against Scryfall's public API (the app never calls Scryfall; the lookup loads as its own file the first time the deck view opens). A double-faced card has both faces' colors, type lines and rules text, the front's power and toughness, and matches a type on either face. Rarity is that of the printing Scryfall returns for the name. A name Scryfall has no card for is **unmatched**, and a name several different Scryfall cards share (most tokens) is **ambiguous** and keeps only the facts they agree on. While filtering, such cards carry an "unmatched" or "ambiguous" marker; name search and the quick toggles still find them, but a filter on a fact they lack leaves them out, and the line under the box says how many were left out that way. If the card data file can't load (a dropped connection, say), the box says so with a **Try again** link, and those filters are set aside rather than hiding every card: the list shows every card that matches the rest of the search.
+Terms are joined with "and"; `or` works inside one kind of term (types, colors, rarities). Parentheses group, nothing more. Color, type, mana value, rarity, rules text, power and toughness come from `src/data/card-lookup.ts`, a one-time cross-reference of every card name in the shipped decks against Scryfall's public API (the app never calls Scryfall; the lookup loads as its own file the first time the deck view opens). A double-faced card has both faces' colors, type lines and rules text, the front's power and toughness, and matches a type on either face. Rarity is that of the printing Scryfall returns for the name. A name Scryfall has no card for is **unmatched**, and a name several different Scryfall cards share (most tokens) is **ambiguous** and keeps only the facts they agree on. While filtering, such cards carry an "unmatched" or "ambiguous" marker; name search and the quick toggles still find them, but a filter on a fact they lack leaves them out, and the line under the box says how many were left out that way. If the card data file can't load (a dropped connection, say), the box says so with a **Try again** link and suggests reloading the page if that doesn't work (some browsers keep a failed load of the same file until the page is reloaded), and those filters are set aside rather than hiding every card: the list shows every card that matches the rest of the search.
 
 Treatments live in `src/data/treatments.ts`. Foil / Non-Foil offers the White Holo and Standard Holo finishes. Partial Foil offers only the Standard Holo finishes. Add a row to offer another one. Choosing a treatment sets `<foil>true</foil>`. Stock is `(S30) Standard Smooth`, the same default as the Art Picker.
 
@@ -175,7 +210,7 @@ To create the key:
 4. For the GitHub Pages site, add it as a repository secret named `GOOGLE_API_KEY` (**Settings → Secrets and variables → Actions → New repository secret**). The Pages workflow writes it into the built `dist/config.js` at deploy time (see GitHub Pages below). Leave `public/config.js` as the placeholder: never commit the key.
 5. For a local build or the local zip, paste the key into the built `config.js` (`dist/config.js`, or `site\config.js` in the local zip), or run `GOOGLE_API_KEY=… npx tsx scripts/write-config.ts dist/config.js` after `npm run build`.
 
-The key is visible to anyone who can load the page. The referrer restriction is what stops other sites from using it. Do not use a key that can do anything besides read Drive.
+The key is visible to anyone who can load the page. The referrer restriction is what stops other sites from using it. Do not use a key that can do anything besides read Drive. To limit what a leaked or abused key can cost, either put it in a separate Google Cloud project with no billing account attached (the Drive API's free quota still works, and nothing can be charged), or set a daily quota cap on the Drive API in that project (**APIs & Services → Google Drive API → Quotas**, lower "Queries per day") so a flood of requests stops at the cap.
 
 The paid folder has to be visible to an API key, which means shared so anyone with the link can view it. The app calls Drive API v3 `files.list` with `'<id>' in parents`, follows shortcuts, and walks subfolders. If it finds `New Drive Link.txt`, it reads the file and continues from the newer folder link inside (up to three hops).
 
@@ -193,7 +228,7 @@ Suggested repository name: `beeline-deck-builder`. The site would then live at `
 2. sets **Settings → Pages → Source** to **GitHub Actions**,
 3. adds the repository secret `GOOGLE_API_KEY`: a browser key restricted to the Drive API and to the referrers `https://<owner>.github.io/beeline-deck-builder/*` and `http://127.0.0.1:4178/*` (local dev and preview).
 
-After `npm run build`, the workflow's "Write the Google API key into dist/config.js" step runs `npx tsx scripts/write-config.ts dist/config.js` with the secret in the `GOOGLE_API_KEY` environment variable. The script replaces only the `googleApiKey: "YOUR_GOOGLE_API_KEY",` line, writing the key as a JSON string literal, so the file keeps the format the app reads. It never prints the key (its only output is one line saying whether it wrote a key or kept the placeholder), and the workflow passes the secret only through `env`, never on a command line, with no `echo`, `cat` or `set -x`. A key with spaces or line breaks fails the step without being shown. Without the secret, `dist/config.js` keeps the placeholder and paid unlock stays off. `public/config.js` in the repository is always the placeholder. `src/lib/deploy-config.test.ts` checks the workflow text and does a dry run of the step with a fake key.
+After `npm run build`, the workflow's "Write the Google API key into dist/config.js" step runs `npx tsx scripts/write-config.ts dist/config.js` with the secret in the `GOOGLE_API_KEY` environment variable. The script replaces only the `googleApiKey: "YOUR_GOOGLE_API_KEY",` line, writing the key as a JSON string literal, so the file keeps the format the app reads. It never prints the key (its only output is one line saying whether it wrote a key or kept the placeholder), and the workflow passes the secret only through `env`, never on a command line, with no `echo`, `cat` or `set -x`. A key with spaces or line breaks fails the step without being shown. Without the secret, `dist/config.js` keeps the placeholder and paid unlock stays off, and the script prints that as a `::warning::` annotation so the run summary shows it (it reads `GITHUB_ACTIONS`; `pages.yml` itself is unchanged). `public/config.js` in the repository is always the placeholder. `src/lib/deploy-config.test.ts` checks the workflow text and does a dry run of the step with a fake key.
 
 The key stays out of the bundle, so it can also be edited in the deployed `config.js`. Never commit a paid Drive file or folder id; `npm test` checks every id in the repo and in `dist/` against the allow list.
 
@@ -212,13 +247,14 @@ Vitest covers:
 - deck lists: file names and labels, both line formats, the shipped lists, list counts and every never-zero rule, folder fallbacks, Spy x Family Color and Black and White
 - the banner copy, the shop link, the stacking rules, and the bee's flight path
 - Clear all, Clear shown and their Undo; the deck filter's matching, the query box and the controls; the card lookup
-- the first-run tour (the remembered answer, replay, Esc, focus, a missing control, no count or save changes); the deploy-time key step (workflow text and a dry run with a fake key)
+- the first-run tour (the remembered answer, replay, Esc, focus, a missing control, no count or save changes, starting inside a deck, nothing behind it reachable); the deploy-time key step (workflow text and a dry run with a fake key)
+- the desktop card pop-up (no flip, the pop-up timing and origin, backs beside the front, reduced motion); the deck splash (once per deck per session, skip, reduced motion, the registry and fallback, focus after it closes, missing or failed assets, the tour order); the splash files (a page for every deck, exactly Frame Lab's frozen list, the excluded files absent, the copy script's allow-list, idempotence and --check, the content checks); the local zip's `.bat` and server (localhost only, the cross-origin header, content types)
 
 Which extras are tokens comes from a one-time cross-reference of every extra and token name in the shipped decks against Scryfall's public API, committed as `src/data/token-lookup.ts`. The app never calls Scryfall. A name is a token when Scryfall's card has the layout token, double_faced_token or emblem, or "Token" in its type line. Names Scryfall has no card for, names that are both a token and a game card, and names whose only match is an art card or vanguard use the old rule (a Tokens folder, or a name starting with "Token"). `npx tsx scripts/token-lookup.ts` asks Scryfall again (about 165 requests, 8 a second) and rewrites the lookup; `--report <file>` writes the report from the committed lookup; `--check` fails when a shipped name has no entry or when a hand override matches no card. A few cards are decided by hand in `src/data/token-overrides.ts` (deck id and exact card name; the script never rewrites it), and those win over Scryfall and the old rule: Persona 5's Raphael, Thor and Titania, Silksong's Blood (Infection) and Vader's Shapeshifter 1-9 are tokens, and Persona 5's Lands (the Forest 3 art) is not. Nothing else uses the lookup: the Tokens and Extras lists still follow the folders.
 
 The card facts come from `npx tsx scripts/card-lookup.ts [--cache <dir>]`, which asks Scryfall's `/cards/collection` for every card name (75 a request, 8 requests a second, backing off on a 429), tries `The <name>` and then Scryfall's fuzzy match for main-deck names it still has no card for (flagged for a check by eye in the report), and does an exact search with extras for tokens and names shared by several cards. `--report <file>` writes the report from the committed lookup; `--check` fails when a shipped card name has no entry or is listed as both matched and unmatched.
 
-The golden tests `src/lib/v0127-golden.test.ts` and `src/lib/v0128-golden.test.ts` load saves made by v0.1.27 and v0.1.28 and check that they store, load and export byte for byte as those versions did, the v0.1.28 ones including Spy x Family Color and Black and White decks with Hydroelectric.
+The golden tests `src/lib/v0127-golden.test.ts`, `v0128-golden.test.ts`, `v0129-golden.test.ts`, `v0130-golden.test.ts` and `v0131-golden.test.ts` load saves made by v0.1.27, v0.1.28, v0.1.29, v0.1.30 and v0.1.31 and check that they store, load and export byte for byte as those versions did, the v0.1.28 ones including Spy x Family Color and Black and White decks with Hydroelectric.
 
 `npx tsx scripts/mutate.ts` breaks the code on purpose, one rule at a time, and fails if any test still passes.
 
@@ -245,6 +281,14 @@ src/data/card-lookup.ts   static Scryfall card facts (generated)
 scripts/card-lookup.ts
 src/components/Tour.tsx   first-run prompt, Tour button, coach marks
 src/lib/tour.ts           tour steps and the printabee.tour.v1 flag
+src/components/Splash.tsx the deck splash overlay
+src/lib/splash.ts         splash bookkeeping (sessionStorage) and choice
+src/data/splash-assets.ts splash registry by deck id, and the fallback
+public/splash/            Frame Lab's splash pages, runtime, CSS, fonts (copied, never edited)
+scripts/copy-splash.ts    copies and checks public/splash/ (allow-list in scripts/splash-files.ts)
+local/                    the local zip's Start BeeLine.bat, serve_beeline.py and README.txt
+src/lib/modal-guard.ts    keeps focus inside the tour and splash overlays
+src/components/CardFlyout.tsx  desktop card pop-up
 scripts/write-config.ts   writes the GOOGLE_API_KEY secret into dist/config.js at deploy time
 src/lib/decklist.ts       deck list parsing and counts
 src/lib/flight.ts         banner bee path

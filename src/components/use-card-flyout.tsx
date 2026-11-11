@@ -1,6 +1,6 @@
 import { type FocusEvent, type PointerEvent, useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { FLYOUT_MEDIA, REDUCED_MOTION_MEDIA, flipPlan, flyoutPlacement } from "@/lib/desktop";
+import { FLYOUT_MEDIA, REDUCED_MOTION_MEDIA, flyoutBack, flyoutLayout, flyoutPlacement, popOrigin } from "@/lib/desktop";
 import { FlyoutLayer, type FlyoutShown } from "@/components/CardFlyout";
 
 export type { FlyoutCard } from "@/components/CardFlyout";
@@ -34,7 +34,7 @@ export type FlyoutBinding = {
  * or resize. The layer ignores the pointer, so it never takes a click meant for
  * the - / + buttons.
  */
-export function useCardFlyout(cardback: string | null | undefined) {
+export function useCardFlyout() {
   const [shown, setShown] = useState<FlyoutShown | null>(null);
   const openRef = useRef(false);
   /** The thumbnail button the flyout belongs to. */
@@ -46,12 +46,15 @@ export function useCardFlyout(cardback: string | null | undefined) {
       if (!card.front || !matches(FLYOUT_MEDIA)) return;
       const anchor = target.closest<HTMLElement>("[data-flyout-anchor]") ?? target;
       const rect = anchor.getBoundingClientRect();
-      const placement = flyoutPlacement(rect, { width: window.innerWidth, height: window.innerHeight });
-      const plan = flipPlan({ customBack: card.customBack, dfcBack: card.dfcBack, cardback, reducedMotion: matches(REDUCED_MOTION_MEDIA) });
+      const viewport = { width: window.innerWidth, height: window.innerHeight };
+      const back = flyoutBack({ customBack: card.customBack, dfcBack: card.dfcBack });
+      const layout = flyoutLayout(rect, viewport, back !== null);
+      const placement = flyoutPlacement(rect, viewport, layout.size);
+      const origin = popOrigin(target.getBoundingClientRect(), placement);
       targetRef.current = target;
-      setShown({ card, placement, plan });
+      setShown({ card, placement, layout, back, origin, reducedMotion: matches(REDUCED_MOTION_MEDIA) });
     },
-    [cardback],
+    [],
   );
 
   const isOpen = shown !== null;

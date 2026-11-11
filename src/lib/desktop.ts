@@ -1,5 +1,5 @@
 /**
- * Desktop-only builder helpers: the card-art flyout, the Back to top button,
+ * Desktop-only builder helpers: the card-art pop-up (the "flyout"), the Back to top button,
  * and the Extras / Tokens side tiles. Pure functions so they can be tested
  * without a browser. The phone layout does not use any of this.
  */
@@ -21,84 +21,75 @@ export const DESKTOP_THUMB_WIDTH = 160;
 export const FLYOUT_MAX_WIDTH = 400;
 export const FLYOUT_MARGIN = 12;
 export const FLYOUT_GAP = 12;
-/** Whole turns the card makes while it expands. Two turns show the back twice. */
-export const FLYOUT_TURNS = 2;
 /**
- * One continuous turn of FLYOUT_TURNS x 360deg, so there is no stop or snap
- * between the flips. v0.1.26 used 900ms with cubic-bezier(0.2, 0.7, 0.2, 1),
- * which whips through the first turn. This is twice as long with a symmetric-ish
- * ease-in-out: it starts gently, keeps an even speed through both turns, and
- * slows smoothly onto the front. No overshoot, so it never swings past the front.
+ * The flyout pops up: a quick fade plus a scale-in from the hovered thumbnail,
+ * with an ease-out that settles without overshoot. With reduced motion there is
+ * no scale, only a near-instant fade.
  */
-export const FLYOUT_FLIP_MS = 1800;
-export const FLYOUT_FLIP_EASING = "cubic-bezier(0.45, 0, 0.25, 1)";
-/** The card grows from the thumbnail side faster than it turns, so it is readable early. */
-export const FLYOUT_GROW_MS = 600;
-export const FLYOUT_GROW_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";
-export const FLYOUT_FADE_MS = 160;
-
-/** The four control points of a `cubic-bezier(x1, y1, x2, y2)` easing, or null if it is not one. */
-export function bezierPoints(easing: string): [number, number, number, number] | null {
-  const match = /^cubic-bezier\(([^)]*)\)$/.exec(easing.trim());
-  if (!match) return null;
-  const points = match[1]!.split(",").map((part) => Number(part.trim()));
-  return points.length === 4 && points.every(Number.isFinite) ? (points as [number, number, number, number]) : null;
-}
-
-/**
- * A flip easing is smooth when it starts and ends at zero speed and never
- * overshoots: y1 = 0 with x1 > 0 (no whip at the start), y2 = 1 with x2 < 1
- * (eases onto the front, no swing past it). Linear fails: it starts and stops
- * at full speed.
- */
-export function smoothFlipEasing(easing: string): boolean {
-  const points = bezierPoints(easing);
-  if (!points) return false;
-  const [x1, y1, x2, y2] = points;
-  return x1 > 0 && x1 <= 1 && x2 >= 0 && x2 < 1 && y1 === 0 && y2 === 1;
-}
+export const FLYOUT_POP_MS = 180;
+export const FLYOUT_POP_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";
+export const FLYOUT_POP_FROM_SCALE = 0.6;
+export const FLYOUT_REDUCED_FADE_MS = 60;
+/** A card's own back is shown beside the front, at this fraction of the front's width. */
+export const FLYOUT_BACK_SCALE = 0.5;
+/** Room for the "Back face" / "Chosen back" label under the back. */
+export const FLYOUT_BACK_LABEL = 24;
+/** A front shown with its back never shrinks below this to fit beside the row. */
+export const FLYOUT_MIN_PAIR_WIDTH = 280;
 
 export type Rect = { left: number; top: number; right: number; bottom: number };
 export type Size = { width: number; height: number };
 export type FlyoutSide = "right" | "left" | "over";
 export type FlyoutPlacement = { left: number; top: number; width: number; height: number; side: FlyoutSide };
 
-export type FlipMode = "custom" | "dfc" | "cardback" | "spin" | "fade";
-export type FlipPlan = {
-  mode: FlipMode;
-  /** Whole turns. 0 means no flip. */
-  turns: number;
-  /** The side that faces the viewer at each half turn, first to last. Always ends on "front". */
-  faces: Array<"front" | "back">;
-  /** Thumbnail id shown on the back while it turns. Null when nothing is drawn on the back. */
-  backImage: string | null;
+export type FlyoutBackKind = "custom" | "dfc";
+/** The back the flyout shows beside the front, or null for a one-faced card with no back picked. */
+export type FlyoutBack = { kind: FlyoutBackKind; image: string } | null;
+
+/**
+ * Which back the flyout shows. A back picked in the card editor wins (it is what
+ * prints, even over a double-faced card's own back face); otherwise a
+ * double-faced card shows its own back face. Any other card shows only its
+ * front: its back is the deck's card back, the same for every card and shown in
+ * the Card back picker.
+ */
+export function flyoutBack({ customBack, dfcBack }: { customBack?: string | null; dfcBack?: string | null }): FlyoutBack {
+  if (customBack) return { kind: "custom", image: customBack };
+  if (dfcBack) return { kind: "dfc", image: dfcBack };
+  return null;
+}
+
+export type FlyoutLayout = {
+  /** The front card. */
+  front: Size;
+  /** The back beside it, or null. */
+  back: Size | null;
+  /** The whole pop-up: front, gap and back. */
+  size: Size;
 };
 
 /**
- * How the flyout turns while it opens. A card with a back picked in the card
- * editor shows that back (even when it has a back face of its own), a
- * double-faced card shows its own back, any other card shows the deck's card back, and a card with neither just spins
- * (its front on both sides). With reduced motion there is no turn, only a fade.
+ * Sizes for the pop-up. Without a back it is the front alone, as large as
+ * flyoutSize allows (up to 400px). With a back, the back sits beside the front
+ * at FLYOUT_BACK_SCALE of its width, and the pair shrinks (never below
+ * FLYOUT_MIN_PAIR_WIDTH for the front) until it fits on one side of the row.
  */
-export function flipPlan({
-  customBack,
-  dfcBack,
-  cardback,
-  reducedMotion,
-  turns = FLYOUT_TURNS,
-}: {
-  /** The back picked for this card in the card editor. */
-  customBack?: string | null;
-  dfcBack?: string | null;
-  cardback?: string | null;
-  reducedMotion: boolean;
-  turns?: number;
-}): FlipPlan {
-  if (reducedMotion || turns <= 0) return { mode: "fade", turns: 0, faces: ["front"], backImage: null };
-  const mode: FlipMode = customBack ? "custom" : dfcBack ? "dfc" : cardback ? "cardback" : "spin";
-  const faces: Array<"front" | "back"> = [];
-  for (let half = 0; half <= turns * 2; half += 1) faces.push(half % 2 === 0 ? "front" : "back");
-  return { mode, turns, faces, backImage: customBack || dfcBack || cardback || null };
+export function flyoutLayout(anchor: Rect, viewport: Size, hasBack: boolean, margin = FLYOUT_MARGIN, gap = FLYOUT_GAP): FlyoutLayout {
+  const full = flyoutSize(viewport);
+  if (!hasBack) return { front: full, back: null, size: full };
+  const pair = (width: number) => width + gap + Math.floor(width * FLYOUT_BACK_SCALE);
+  const room = Math.max(viewport.width - margin - anchor.right - gap, anchor.left - gap - margin, 0);
+  let width = full.width;
+  if (pair(width) > room) width = Math.min(full.width, Math.max(FLYOUT_MIN_PAIR_WIDTH, Math.floor((room - gap) / (1 + FLYOUT_BACK_SCALE))));
+  const front = { width, height: Math.floor(width * CARD_RATIO) };
+  const backWidth = Math.floor(width * FLYOUT_BACK_SCALE);
+  const back = { width: backWidth, height: Math.floor(backWidth * CARD_RATIO) };
+  return { front, back, size: { width: pair(width), height: front.height } };
+}
+
+/** Where the pop-up scales in from: the centre of the hovered thumbnail, relative to the pop-up's top-left corner. */
+export function popOrigin(thumb: Rect, placement: { left: number; top: number }): { x: number; y: number } {
+  return { x: Math.round((thumb.left + thumb.right) / 2 - placement.left), y: Math.round((thumb.top + thumb.bottom) / 2 - placement.top) };
 }
 
 /** Flyout size: up to FLYOUT_MAX_WIDTH (400px) wide, never taller than the viewport minus its margins. */

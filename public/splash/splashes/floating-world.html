@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en" data-slug="floating-world" data-duration="2300" data-poster="1800">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Floating World — BeeLine splash</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../splash-base.css">
+<style>
+  body{background:#efe4cb}
+  .stage{background:radial-gradient(90vmax 70vmax at 50% 35%,#f6edd8 0%,#ecdfc2 55%,#d9c7a1 100%)}
+  .washi{position:absolute;inset:0;opacity:.55;mix-blend-mode:multiply}
+  .sun{position:absolute;right:12%;top:9%;width:min(20vmin,150px);height:min(20vmin,150px);border-radius:50%;
+    background:radial-gradient(circle at 40% 38%,#e2574a,#c8372d 70%,#b02c24);opacity:.9;animation:sun .8s .1s ease-out}
+  @keyframes sun{from{opacity:0;transform:translateY(20px)}to{opacity:.88;transform:none}}
+  .clouds{position:absolute;left:0;right:0;top:16%;height:10vh;opacity:.0;animation:clouds 2.3s ease-out}
+  @keyframes clouds{from{opacity:0;transform:translateX(-4vw)}30%{opacity:.6}to{opacity:.6;transform:translateX(2vw)}}
+
+  .pond{position:absolute;left:50%;top:var(--cy);width:var(--K);height:var(--K);transform:translate(-50%,-50%)}
+  .stage{--K:min(74vw,42vh);--cy:31%;--WW:min(100vw,130vh)}
+  @media (orientation:portrait){.stage{--WW:165vw;--cy:33%;--K:min(74vw,46vh)}}
+  .pond svg{width:100%;height:100%}
+  .ripple{fill:none;stroke:#3b5f86;stroke-width:.5;transform-origin:0 0;opacity:0}
+  .rp1{animation:rip 1.6s .5s ease-out}.rp2{animation:rip 1.6s .75s ease-out}.rp3{animation:rip 1.6s 1s ease-out}
+  @keyframes rip{0%{opacity:0;transform:scale(.2)}10%{opacity:.55}100%{opacity:0;transform:scale(1.15)}}
+  .swirl{transform-origin:0 0;animation:swirl 2.3s cubic-bezier(.15,.6,.25,1)}
+  @keyframes swirl{0%{transform:rotate(-250deg) scale(1.35);opacity:0}12%{opacity:1}100%{transform:rotate(0deg) scale(1)}}
+  .koi .tail{transform-origin:-20px 0;animation:tail .22s ease-in-out infinite alternate}
+  @keyframes tail{from{transform:rotate(-9deg)}to{transform:rotate(9deg)}}
+  .enso{fill:none;stroke:#1d1b18;stroke-width:2.6;stroke-linecap:round;stroke-dasharray:300;stroke-dashoffset:300;opacity:.85;animation:enso .7s .15s cubic-bezier(.6,0,.3,1)}
+  @keyframes enso{to{stroke-dashoffset:22}}
+
+  .wave{position:absolute;left:0;bottom:0;width:var(--WW);aspect-ratio:1600/500;animation:waveIn .9s cubic-bezier(.2,.75,.2,1)}
+  .wave svg{width:100%;height:100%;display:block;overflow:hidden}
+  .sea{position:absolute;left:0;right:0;bottom:0;height:calc(var(--WW) * .3125);animation:seaIn .9s ease-out;
+    background:linear-gradient(180deg,transparent 0 67.6%,#1d1b18 67.6% calc(67.6% + 2px),#8fb0c9 calc(67.6% + 2px) 77.6%,#1d1b18 77.6% calc(77.6% + 2px),#1f477e calc(77.6% + 2px));}
+  .sea::after{content:"";position:absolute;left:0;right:0;bottom:0;height:21%;background:repeating-linear-gradient(-18deg,transparent 0 9px,rgba(20,50,94,.45) 9px 11px)}
+  @keyframes seaIn{from{transform:translateY(100%)}to{transform:none}}
+  @keyframes waveIn{from{transform:translate(-75%,35%) }to{transform:none}}
+  .spray circle{transform-box:fill-box;transform-origin:50% 50%;animation:spray .9s .55s ease-out}
+  @keyframes spray{0%{opacity:0;transform:translate(0,10px) scale(.3)}40%{opacity:1}100%{opacity:1;transform:none}}
+
+  .title{position:absolute;left:50%;top:calc(var(--cy) + var(--K) / 2 + 3.2vh);transform:translateX(-50%);white-space:nowrap;text-align:center;color:#1d1b18}
+  .name{display:block;font:italic 500 min(10vw,9vh)/1 "BL Cormorant",serif;letter-spacing:.02em;animation:inkIn .8s .9s ease-out}
+  @keyframes inkIn{from{opacity:0;filter:blur(6px);transform:translateY(8px)}to{opacity:1;filter:blur(0);transform:none}}
+  .rule{display:block;margin:.5em auto 0;height:1px;width:min(40vw,30vh);background:linear-gradient(90deg,transparent,#1d1b18,transparent);animation:rule .6s 1.2s ease-out}
+  @keyframes rule{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+  .seal{position:absolute;left:calc(50% - var(--K) * .66);top:calc(var(--cy) - var(--K) * .5);width:min(9vw,7.6vh);padding:.25em 0;
+    background:#c33a2c;color:#f7ead2;border-radius:3px;font:400 min(5.6vw,4.8vh)/1.06 "BL Mincho",serif;text-align:center;
+    writing-mode:vertical-rl;letter-spacing:.06em;box-shadow:inset 0 0 0 2px #c33a2c,inset 0 0 0 4px #f2dcc0,inset 0 0 0 6px #c33a2c;
+    filter:url(#rough);animation:stamp .35s 1.25s cubic-bezier(.3,1.6,.5,1)}
+  @keyframes stamp{0%{opacity:0;transform:scale(1.8) rotate(-10deg)}100%{opacity:.95;transform:scale(1) rotate(-3deg)}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="rough"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="3"/><feDisplacementMap in="SourceGraphic" scale="3"/></filter>
+</svg>
+<main class="stage" aria-label="Floating World deck intro">
+  <svg class="washi fill" aria-hidden="true">
+    <filter id="paper" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency=".012 .05" numOctaves="3" seed="8" result="f"/>
+      <feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="2" seed="2" result="g"/>
+      <feBlend in="f" in2="g" mode="multiply"/>
+      <feColorMatrix values="0 0 0 0 .55  0 0 0 0 .45  0 0 0 0 .3  0 0 0 -1.4 1.05"/>
+    </filter>
+    <rect width="100%" height="100%" filter="url(#paper)"/>
+  </svg>
+  <div class="sun"></div>
+  <svg class="clouds" viewBox="0 0 1000 60" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M40 30 H260 M300 22 H420" stroke="#b9a37a" stroke-width="5" stroke-linecap="round"/>
+  </svg>
+  <div class="pond">
+    <svg viewBox="-50 -50 100 100" aria-hidden="true">
+      <defs>
+        <clipPath id="kb1"><path id="kbody" d="M24 0 C20 -7 6 -8.2 -6 -6.4 C-14 -5 -19 -2.6 -22 -.8 L-22 .8 C-19 2.6 -14 5 -6 6.4 C6 8.2 20 7 24 0Z"/></clipPath>
+        <g id="koi">
+          <g class="tail"><path d="M-21 0 C-26 -2 -30 -8 -36 -9.5 C-33 -4 -33 4 -36 9.5 C-30 8 -26 2 -21 0Z" fill="#f4eee2" stroke="#1d1b18" stroke-width=".45" opacity=".95"/></g>
+          <path d="M6 -6 C4 -12 -2 -13 -4 -12 C-2 -9 0 -7 2 -6Z M6 6 C4 12 -2 13 -4 12 C-2 9 0 7 2 6Z" fill="#f4eee2" stroke="#1d1b18" stroke-width=".4"/>
+          <use href="#kbody" fill="#fbf6ec" stroke="#1d1b18" stroke-width=".55"/>
+          <g clip-path="url(#kb1)"><path class="spots" d="M24 -2 C18 -9 10 -8 8 -2 C12 2 18 4 24 2Z M2 -8 C-2 -2 -1 4 -8 8 L-14 8 C-12 2 -10 -4 -14 -8Z" /></g>
+          <path d="M-8 -3.8 C-2 -4.6 6 -4.4 12 -2.6" fill="none" stroke="#1d1b18" stroke-width=".25" opacity=".5"/>
+          <path d="M23.4 -1.2 C25 -2.4 26.4 -2.2 27.6 -3.6 M23.4 1.2 C25 2.4 26.4 2.2 27.6 3.6" fill="none" stroke="#1d1b18" stroke-width=".35"/><path d="M10 0 C2 -.6 -10 -.4 -18 0" stroke="#e2541c" stroke-width="1.2" opacity=".0"/><circle cx="18.5" cy="-2.6" r=".75" fill="#1d1b18"/><circle cx="18.5" cy="2.6" r=".75" fill="#1d1b18"/>
+        </g>
+      </defs>
+      <circle class="ripple rp1" r="44"/><circle class="ripple rp2" r="44"/><circle class="ripple rp3" r="44"/>
+      <path class="enso" d="M 30 -32 A 44 44 0 1 0 41 -16" pathLength="300" />
+      <g class="swirl">
+        <g transform="rotate(-18) translate(0 -21) rotate(-14)"><use href="#koi" class="koi"/></g>
+        <g transform="rotate(162) translate(0 -21) rotate(-14)"><use href="#koi" class="koi k2"/></g>
+      </g>
+    </svg>
+  </div>
+  <div class="sea"></div>
+  <div class="wave">
+    <svg viewBox="0 0 1600 500" preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <pattern id="lines" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(-18)"><path d="M0 7 H14" stroke="#14325e" stroke-width="2" opacity=".35"/></pattern>
+      </defs>
+      <path d="M0 500 V330 C120 300 230 300 330 330 C420 356 520 350 600 320 C700 280 760 300 800 340 C860 400 980 400 1080 360 C1160 330 1250 330 1340 352 C1440 376 1520 360 1600 340 L1640 340 V540 L-40 540 L-40 330Z" fill="#8fb0c9" stroke="#1d1b18" stroke-width="3"/>
+      <path id="crest" d="M0 500 V380 C140 360 260 300 380 220 C470 160 560 105 660 92 C760 80 840 110 870 165 C896 214 868 262 828 262 C792 262 784 222 808 208 C830 196 850 214 846 230 C900 236 960 300 1040 360 C1120 420 1260 430 1400 410 C1480 400 1550 392 1600 390 L1640 390 V540 L-40 540 L-40 380Z" fill="#1f477e" stroke="#1d1b18" stroke-width="4"/>
+      <path d="M0 500 V420 C150 400 280 340 400 270 C490 214 580 160 670 150 C740 142 790 160 808 190 C760 180 700 196 640 236 C540 300 470 380 420 500Z" fill="#2f63a3" opacity=".9"/>
+      <path d="M0 500 V380 C140 360 260 300 380 220 C470 160 560 105 660 92 C760 80 840 110 870 165 C896 214 868 262 828 262 C792 262 784 222 808 208 C830 196 850 214 846 230 C900 236 960 300 1040 360 C1120 420 1260 430 1400 410 C1480 400 1550 392 1600 390 L1640 390 V540 L-40 540 L-40 380Z" fill="url(#lines)"/>
+      <path d="M380 220 C470 160 560 105 660 92 C760 80 840 110 870 165" fill="none" stroke="#f4eee2" stroke-width="16" stroke-linecap="round" opacity=".95"/>
+      <g id="claws" fill="#f4eee2" stroke="#1d1b18" stroke-width="2.4"></g>
+      <g class="spray" id="spray" fill="#f4eee2" stroke="#1d1b18" stroke-width="1.6"></g>
+    </svg>
+  </div>
+  <div class="title"><span class="name">Floating World</span><span class="rule"></span></div>
+  <div class="seal">浮世絵</div>
+</main>
+<script src="../splash-runtime.js"></script>
+<script>
+(function(){
+  // koi colours (second fish red-on-white, first orange)
+  document.querySelectorAll('.spots').forEach(p=>p.setAttribute('fill','#e2541c'));
+  const k2=document.querySelector('.k2');
+  // clone def for a red variant
+  const koi=document.getElementById('koi');const red=koi.cloneNode(true);red.id='koi2';red.querySelector('.spots').setAttribute('fill','#c3261c');
+  red.querySelector('clipPath')||0;koi.parentNode.appendChild(red);k2.setAttribute('href','#koi2');
+  // foam claws along the crest lip
+  const crest=document.getElementById('crest');const L=crest.getTotalLength();let h='';let s=5;const r=()=>(s=(s*16807)%2147483647)/2147483647;
+  for(let d=L*0.16;d<L*0.36;d+=L*0.012){const p=crest.getPointAtLength(d),q=crest.getPointAtLength(d+2);const a=Math.atan2(q.y-p.y,q.x-p.x)*180/Math.PI;
+    const sz=10+r()*12;h+=`<path transform="translate(${p.x.toFixed(1)} ${p.y.toFixed(1)}) rotate(${(a-90).toFixed(1)}) scale(${(sz/20).toFixed(2)})" d="M0 0 C-6 -6 -4 -18 6 -20 C2 -14 4 -8 10 -6 C6 -4 4 -1 0 0Z"/>`;}
+  document.getElementById('claws').innerHTML=h;
+  let sp='';for(let i=0;i<38;i++){const x=560+r()*300,y=50+r()*110;sp+=`<circle cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" r="${(2+r()*6).toFixed(1)}" style="animation-delay:${(.5+r()*.35).toFixed(2)}s"/>`;}
+  document.getElementById('spray').innerHTML=sp;
+})();
+</script>
+</body>
+</html>

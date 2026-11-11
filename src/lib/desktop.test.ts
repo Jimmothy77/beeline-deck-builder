@@ -2,17 +2,19 @@ import { describe, expect, it } from "vitest";
 import {
   CARD_RATIO,
   DESKTOP_THUMB_WIDTH,
-  FLYOUT_FADE_MS,
-  FLYOUT_FLIP_EASING,
-  FLYOUT_FLIP_MS,
-  FLYOUT_GROW_EASING,
-  FLYOUT_GROW_MS,
-  bezierPoints,
-  smoothFlipEasing,
+  FLYOUT_BACK_SCALE,
+  FLYOUT_GAP,
+  FLYOUT_MIN_PAIR_WIDTH,
+  FLYOUT_POP_EASING,
+  FLYOUT_POP_FROM_SCALE,
+  FLYOUT_POP_MS,
+  FLYOUT_REDUCED_FADE_MS,
   TOKEN_TILE_THRESHOLD,
   backToTopVisible,
-  flipPlan,
+  flyoutBack,
+  flyoutLayout,
   flyoutPlacement,
+  popOrigin,
   flyoutSize,
   sideTileSummary,
   usesSideTile,
@@ -22,40 +24,66 @@ const viewport = { width: 1440, height: 900 };
 const size = { width: 400, height: Math.floor(400 * CARD_RATIO) };
 const overlaps = (a: { left: number; right: number }, left: number, width: number) => !(left >= a.right || left + width <= a.left);
 
-describe("flyout flip plan", () => {
-  it("turns twice and ends on the front", () => {
-    const plan = flipPlan({ cardback: "deck-back", reducedMotion: false });
-    expect(plan.turns).toBe(2);
-    expect(plan.faces).toEqual(["front", "back", "front", "back", "front"]);
-    expect(plan.faces.at(-1)).toBe("front");
+describe("flyout back", () => {
+  it("shows a back picked in the card editor over a double-faced card's own back face", () => {
+    expect(flyoutBack({ customBack: "pick", dfcBack: "lost-vale" })).toEqual({ kind: "custom", image: "pick" });
   });
 
-  it("ends on the front for any number of turns", () => {
-    for (const turns of [1, 2, 3]) expect(flipPlan({ cardback: "b", reducedMotion: false, turns }).faces.at(-1)).toBe("front");
+  it("shows a double-faced card's own back face", () => {
+    expect(flyoutBack({ dfcBack: "lost-vale" })).toEqual({ kind: "dfc", image: "lost-vale" });
   });
 
-  it("shows a double-faced card's own back, not the deck back", () => {
-    const plan = flipPlan({ dfcBack: "lost-vale", cardback: "deck-back", reducedMotion: false });
-    expect(plan.mode).toBe("dfc");
-    expect(plan.backImage).toBe("lost-vale");
+  it("shows no back for a one-faced card without a pick (its back is the deck back)", () => {
+    expect(flyoutBack({})).toBeNull();
+    expect(flyoutBack({ customBack: null, dfcBack: null })).toBeNull();
+  });
+});
+
+describe("flyout layout with a back beside the front", () => {
+  const leftRow = { left: 40, top: 300, right: 340, bottom: 560 };
+  it("keeps the front alone at full size when there is no back", () => {
+    expect(flyoutLayout(leftRow, viewport, false)).toEqual({ front: size, back: null, size });
   });
 
-  it("uses the deck card back for a one-faced card", () => {
-    const plan = flipPlan({ dfcBack: null, cardback: "deck-back", reducedMotion: false });
-    expect(plan.mode).toBe("cardback");
-    expect(plan.backImage).toBe("deck-back");
+  it("puts the back beside the front at half its width, at full size when the pair fits", () => {
+    const layout = flyoutLayout(leftRow, viewport, true);
+    expect(layout.front).toEqual(size);
+    expect(layout.back).toEqual({ width: 400 * FLYOUT_BACK_SCALE, height: Math.floor(200 * CARD_RATIO) });
+    expect(layout.size).toEqual({ width: 400 + FLYOUT_GAP + 200, height: size.height });
+    const place = flyoutPlacement(leftRow, viewport, layout.size);
+    expect(place.side).toBe("right");
+    expect(place.left + place.width).toBeLessThanOrEqual(viewport.width - 12);
   });
 
-  it("just spins when there is no back at all", () => {
-    const plan = flipPlan({ reducedMotion: false });
-    expect(plan.mode).toBe("spin");
-    expect(plan.backImage).toBeNull();
-    expect(plan.turns).toBeGreaterThan(0);
+  it("shrinks the pair to fit beside a row in the middle of the screen, so it never covers that row", () => {
+    const middle = { left: 560, top: 300, right: 860, bottom: 560 };
+    const layout = flyoutLayout(middle, viewport, true);
+    expect(layout.front.width).toBeLessThan(400);
+    expect(layout.front.width).toBeGreaterThanOrEqual(FLYOUT_MIN_PAIR_WIDTH);
+    const place = flyoutPlacement(middle, viewport, layout.size);
+    expect(place.side).not.toBe("over");
+    expect(overlaps(middle, place.left, place.width)).toBe(false);
   });
 
-  it("does no flips with reduced motion, even for a double-faced card", () => {
-    const plan = flipPlan({ dfcBack: "lost-vale", cardback: "deck-back", reducedMotion: true });
-    expect(plan).toEqual({ mode: "fade", turns: 0, faces: ["front"], backImage: null });
+  it("never shrinks the front below the minimum, even with no room at all", () => {
+    expect(flyoutLayout({ left: 300, top: 0, right: 1140, bottom: 100 }, viewport, true).front.width).toBe(FLYOUT_MIN_PAIR_WIDTH);
+  });
+});
+
+describe("flyout pop-up", () => {
+  it("scales in from the centre of the hovered thumbnail", () => {
+    expect(popOrigin({ left: 100, top: 200, right: 260, bottom: 424 }, { left: 352, top: 100 })).toEqual({ x: -172, y: 212 });
+  });
+
+  it("is quick (150-200ms), eases out without overshoot, and fades near-instantly with reduced motion", () => {
+    expect(FLYOUT_POP_MS).toBeGreaterThanOrEqual(150);
+    expect(FLYOUT_POP_MS).toBeLessThanOrEqual(200);
+    const [x1, y1, x2, y2] = /^cubic-bezier\(([^)]*)\)$/.exec(FLYOUT_POP_EASING)![1]!.split(",").map(Number);
+    expect([x1, x2].every((x) => x! >= 0 && x! <= 1)).toBe(true);
+    expect(y1! > 0 && y2! <= 1).toBe(true);
+    expect(FLYOUT_POP_FROM_SCALE).toBeGreaterThan(0);
+    expect(FLYOUT_POP_FROM_SCALE).toBeLessThan(1);
+    expect(FLYOUT_REDUCED_FADE_MS).toBeLessThanOrEqual(80);
   });
 });
 
@@ -101,30 +129,6 @@ describe("flyout placement", () => {
     expect(short.height).toBeLessThanOrEqual(400 - 24);
     expect(short.width).toBe(Math.floor((400 - 24) / CARD_RATIO));
   });
-});
-
-describe("flyout flip timing (v0.1.27)", () => {
-  // v0.1.26 turned in 900ms on cubic-bezier(0.2, 0.7, 0.2, 1), which whips through the first turn.
-  const OLD_FLIP_MS = 900;
-  const OLD_FLIP_EASING = "cubic-bezier(0.2, 0.7, 0.2, 1)";
-
-  it("is about twice as long as v0.1.26, and still settles quickly enough to stay snappy", () => {
-    expect(FLYOUT_FLIP_MS).toBe(1800);
-    expect(FLYOUT_FLIP_MS / OLD_FLIP_MS).toBe(2);
-    expect(FLYOUT_GROW_MS).toBeLessThan(FLYOUT_FLIP_MS);
-    expect(FLYOUT_FADE_MS).toBeLessThanOrEqual(200);
-  });
-
-  it("eases in and out with no whip at the start and no swing past the front", () => {
-    expect(bezierPoints(FLYOUT_FLIP_EASING)).toEqual([0.45, 0, 0.25, 1]);
-    expect(smoothFlipEasing(FLYOUT_FLIP_EASING)).toBe(true);
-    expect(smoothFlipEasing(OLD_FLIP_EASING)).toBe(false);
-    expect(smoothFlipEasing("cubic-bezier(0, 0, 1, 1)")).toBe(false);
-    expect(smoothFlipEasing("cubic-bezier(0.45, 0, 0.25, 1.3)")).toBe(false);
-    expect(smoothFlipEasing("ease")).toBe(false);
-    expect(bezierPoints(FLYOUT_GROW_EASING)).not.toBeNull();
-  });
-
 });
 
 describe("flyout size against the v0.1.27 thumbnails", () => {

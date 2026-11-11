@@ -212,61 +212,47 @@
     linear-gradient(115deg, transparent 36%, oklch(0.95 0.02 200 / 16%) 48%, transparent 60%),
     linear-gradient(165deg, oklch(0.26 0.03 220), oklch(0.18 0.025 230));
 }
-/* Desktop card-art flyout (v0.1.26, smoother flip in v0.1.27). Only rendered at desktop widths. */
-/* Opacity and the grow live on the wrapper: opacity on the turning card would flatten its 3D faces. */
-/* The wrapper grows from the thumbnail side; the card turns about its own centre in one continuous, */
-/* eased turn (FLYOUT_TURNS x 360deg), so there is no stop or snap between flips. Timing comes from */
-/* src/lib/desktop.ts through the --flyout-* custom properties; the fallbacks below match it. */
+/* Desktop card-art pop-up (the flyout). Only rendered at desktop widths. No flip since v0.1.31: */
+/* it fades and scales in from the hovered thumbnail (transform-origin is set inline). Timing comes */
+/* from src/lib/desktop.ts through the --flyout-* custom properties; the fallbacks below match it. */
 .beeline-flyout {
-  perspective: 1600px;
-  animation:
-    beeline-flyout-appear 120ms ease-out both,
-    beeline-flyout-grow var(--flyout-grow-ms, 600ms) var(--flyout-grow-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
+  animation: beeline-flyout-pop var(--flyout-pop-ms, 180ms) var(--flyout-pop-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
 }
-.beeline-flyout[data-flyout-mode="fade"] { animation: beeline-flyout-appear 160ms ease-out both; }
-.beeline-flyout-card {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  transform-style: preserve-3d;
-  transform-origin: center;
-  will-change: transform;
-  animation: beeline-flyout-flip var(--flyout-flip-ms, 1800ms) var(--flyout-flip-ease, cubic-bezier(0.45, 0, 0.25, 1)) both;
-}
-.beeline-flyout-card[data-mode="fade"] { animation: beeline-flyout-fade 160ms ease-out both; }
+.beeline-flyout[data-flyout-motion="fade"] { animation: beeline-flyout-fade-in var(--flyout-fade-ms, 60ms) linear both; }
 .beeline-flyout-face {
-  position: absolute;
-  inset: 0;
   overflow: hidden;
   border-radius: 4.8% / 3.4%;
   background: #0d0906;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 220, 150, 0.18);
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
 }
-.beeline-flyout-back { transform: rotateY(180deg); }
-@keyframes beeline-flyout-appear {
+.beeline-flyout-label {
+  background: rgba(13, 9, 6, 0.85);
+  color: rgb(255, 230, 180);
+  box-shadow: 0 0 0 1px rgba(255, 220, 150, 0.25);
+}
+@keyframes beeline-flyout-pop {
+  from { opacity: 0; transform: scale(var(--flyout-pop-from, 0.6)); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes beeline-flyout-fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
 }
-@keyframes beeline-flyout-grow {
-  from { transform: scale(0.3); }
-  to { transform: scale(1); }
-}
-@keyframes beeline-flyout-flip {
-  from { transform: rotateY(0deg); }
-  to { transform: rotateY(var(--flyout-turn, 720deg)); }
-}
-@keyframes beeline-flyout-fade {
-  from { transform: scale(0.94); }
-  to { transform: scale(1); }
+/* Deck splash (v0.1.31). The generic splash rises in, holds, and fades; reduced motion shows it still. */
+.beeline-splash-generic { animation: beeline-splash-generic 1600ms ease-out both; }
+.beeline-splash[data-splash-motion="still"] .beeline-splash-generic { animation: none; }
+@keyframes beeline-splash-generic {
+  0% { opacity: 0; transform: translateY(12px) scale(0.96); }
+  25% { opacity: 1; transform: none; }
+  80% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: none; }
 }
 @media (prefers-reduced-motion: reduce) {
+  /* Deck splash: a still frame, no movement. */
+  .beeline-splash-generic { animation: none; }
+  /* Card pop-up: a near-instant fade, no scale. */
   .beeline-flyout,
-  .beeline-flyout[data-flyout-mode] { animation: beeline-flyout-appear 160ms ease-out both; }
-  .beeline-flyout-card,
-  .beeline-flyout-card[data-mode] { animation: beeline-flyout-fade 160ms ease-out both; }
-  .beeline-flyout-back { display: none; }
+  .beeline-flyout[data-flyout-motion] { animation: beeline-flyout-fade-in var(--flyout-fade-ms, 60ms) linear both; }
   /* Extras / Tokens overlay: fade only, no zoom. */
   .beeline-overlay { --tw-enter-scale: 1; --tw-exit-scale: 1; }
 }

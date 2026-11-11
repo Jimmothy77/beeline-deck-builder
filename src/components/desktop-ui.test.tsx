@@ -8,7 +8,7 @@ import { BuilderView } from "@/components/BuilderView";
 import { freshDraft } from "@/lib/draft";
 import type { SavedDeck } from "@/lib/storage";
 import type { CardFace, CardRole, DeckCard, DeckCatalogue, Edition } from "@/lib/types";
-import { DESKTOP_THUMB_WIDTH, FLYOUT_FLIP_EASING, FLYOUT_FLIP_MS, FLYOUT_GROW_EASING, FLYOUT_GROW_MS } from "@/lib/desktop";
+import { DESKTOP_THUMB_WIDTH, FLYOUT_POP_EASING, FLYOUT_POP_FROM_SCALE, FLYOUT_POP_MS, FLYOUT_REDUCED_FADE_MS } from "@/lib/desktop";
 
 // Made-up ids. None of them is shaped like a Drive id.
 function face(id: string, name: string): CardFace {
@@ -154,78 +154,90 @@ describe("desktop card flyout", () => {
     expect(flyout()).toBeNull();
   });
 
-  it("flips front, back, front, back and ends on the front, using the deck card back", () => {
+  it("pops up with the front alone for a one-faced card: no flip, and no back drawn", () => {
     render();
     hover(frontButton("Akroma"));
     const layer = flyout()!;
-    expect(layer.dataset.flyoutMode).toBe("cardback");
-    expect(layer.dataset.flyoutFaces?.split(" ").at(-1)).toBe("front");
-    expect(layer.dataset.flyoutFaces).toBe("front back front back front");
-    expect(layer.style.getPropertyValue("--flyout-turn")).toBe("720deg");
-    expect(layer.querySelector('[data-face="back"] img')?.getAttribute("src")).toContain("thumb-deckback");
+    expect(layer.dataset.flyoutMotion).toBe("pop");
+    expect(layer.dataset.flyoutBack).toBe("none");
+    expect(layer.querySelectorAll("[data-face]")).toHaveLength(1);
+    expect(layer.querySelector('[data-face="back"]')).toBeNull();
+    expect(layer.innerHTML).not.toContain("thumb-deckback");
+    expect(layer.style.width).toBe("400px");
   });
 
-  it("uses a double-faced card's own back face", () => {
+  it("shows a double-faced card's own back face beside the front, labelled, at half size", () => {
     render();
     hover(frontButton("Dowsing Dagger // Lost Vale"));
     const layer = flyout()!;
-    expect(layer.dataset.flyoutMode).toBe("dfc");
-    expect(layer.querySelector('[data-face="back"] img')?.getAttribute("src")).toContain("thumb-m2-b");
+    expect(layer.dataset.flyoutBack).toBe("dfc");
+    const back = layer.querySelector<HTMLElement>('[data-face="back"]')!;
+    expect(back.querySelector("img")?.getAttribute("src")).toContain("thumb-m2-b");
+    expect(back.querySelector("[data-flyout-label]")!.textContent).toBe("Back face");
+    expect(back.style.width).toBe("200px");
+    expect(layer.querySelector<HTMLElement>('[data-face="front"]')!.style.width).toBe("400px");
+    // Side by side, not stacked faces: the back is a sibling after the front, both visible at once.
+    expect(back.previousElementSibling?.getAttribute("data-face")).toBe("front");
+    expect(layer.className).toContain("flex");
   });
 
-  it("spins with the front on both sides when the deck has no card back", () => {
-    render(edition({ backs: false }));
-    hover(frontButton("Akroma"));
-    expect(flyout()!.dataset.flyoutMode).toBe("spin");
-    expect(flyout()!.querySelector('[data-face="back"] img')?.getAttribute("src")).toContain("thumb-m1");
+  it("puts the back on the far side when the pop-up opens left of the row", () => {
+    render();
+    const button = frontButton("Dowsing Dagger // Lost Vale");
+    const anchor = button.closest("[data-flyout-anchor]")!;
+    anchor.getBoundingClientRect = () => ({ left: 1100, right: 1400, top: 300, bottom: 560, width: 300, height: 260, x: 1100, y: 300, toJSON: () => ({}) });
+    Object.defineProperty(window, "innerWidth", { value: 1440, configurable: true });
+    Object.defineProperty(window, "innerHeight", { value: 900, configurable: true });
+    hover(button);
+    const layer = flyout()!;
+    expect(layer.dataset.flyoutSide).toBe("left");
+    expect(layer.style.flexDirection).toBe("row-reverse");
+    // Placed with the back counted in: the whole pair (front, gap, half-size back) sits left of the row.
+    expect(layer.style.width).toBe("612px");
+    expect(Number.parseFloat(layer.style.left) + 612).toBeLessThanOrEqual(1100 - 12);
   });
 
-  it("takes its flip timing and easing from desktop.ts", () => {
+  it("takes its pop-up timing and easing from desktop.ts and scales in from the thumbnail", () => {
+    render();
+    const button = frontButton("Akroma");
+    button.getBoundingClientRect = () => ({ left: 100, right: 260, top: 200, bottom: 424, width: 160, height: 224, x: 100, y: 200, toJSON: () => ({}) });
+    hover(button);
+    const layer = flyout()!;
+    expect(layer.style.getPropertyValue("--flyout-pop-ms")).toBe(`${FLYOUT_POP_MS}ms`);
+    expect(layer.style.getPropertyValue("--flyout-pop-ease")).toBe(FLYOUT_POP_EASING);
+    expect(layer.style.getPropertyValue("--flyout-pop-from")).toBe(String(FLYOUT_POP_FROM_SCALE));
+    expect(layer.style.getPropertyValue("--flyout-fade-ms")).toBe(`${FLYOUT_REDUCED_FADE_MS}ms`);
+    const [x, y] = layer.style.transformOrigin.split(" ").map((part) => Number.parseFloat(part));
+    expect(x).toBe(180 - Number.parseFloat(layer.style.left));
+    expect(y).toBe(312 - Number.parseFloat(layer.style.top));
+  });
+
+  it("closes at once, and the next card gets its own pop-up from the beginning", () => {
     render();
     hover(frontButton("Akroma"));
-    const layer = flyout()!;
-    expect(layer.style.getPropertyValue("--flyout-flip-ms")).toBe(`${FLYOUT_FLIP_MS}ms`);
-    expect(layer.style.getPropertyValue("--flyout-flip-ease")).toBe(FLYOUT_FLIP_EASING);
-    expect(layer.style.getPropertyValue("--flyout-grow-ms")).toBe(`${FLYOUT_GROW_MS}ms`);
-    expect(layer.style.getPropertyValue("--flyout-grow-ease")).toBe(FLYOUT_GROW_EASING);
+    const first = flyout()!;
+    leave(frontButton("Akroma"));
+    expect(flyout()).toBeNull();
+    expect(document.querySelectorAll(".beeline-flyout")).toHaveLength(0);
+    hover(frontButton("Akroma"));
+    expect(flyout()).not.toBe(first);
+    // A fast move can deliver the next card's pointerover before this one's pointerout.
+    const again = flyout()!;
+    hover(frontButton("Arcane Signet"));
+    const next = flyout()!;
+    expect(next).not.toBe(again);
+    expect(again.isConnected).toBe(false);
+    expect(next.querySelector('[data-face="front"] img[alt="Arcane Signet"]')).not.toBeNull();
+    expect(document.querySelectorAll("[data-flyout]")).toHaveLength(1);
   });
 
-  it("closes at once mid-flip, and the next card starts its own flip from the beginning", () => {
-    vi.useFakeTimers();
-    try {
-      render();
-      hover(frontButton("Akroma"));
-      const first = flyout()!;
-      act(() => {
-        vi.advanceTimersByTime(FLYOUT_FLIP_MS / 2);
-      });
-      leave(frontButton("Akroma"));
-      expect(flyout()).toBeNull();
-      expect(document.querySelectorAll(".beeline-flyout")).toHaveLength(0);
-      hover(frontButton("Akroma"));
-      expect(flyout()).not.toBe(first);
-      // A fast move can deliver the next card's pointerover before this one's pointerout.
-      const again = flyout()!;
-      hover(frontButton("Arcane Signet"));
-      const next = flyout()!;
-      expect(next).not.toBe(again);
-      expect(again.isConnected).toBe(false);
-      expect(next.querySelector('[data-face="front"] img[alt="Arcane Signet"]')).not.toBeNull();
-      expect(document.querySelectorAll("[data-flyout]")).toHaveLength(1);
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it("does no flips with reduced motion", () => {
+  it("only fades with reduced motion, and still shows the back beside the front", () => {
     media.reduced = true;
     render();
     hover(frontButton("Dowsing Dagger // Lost Vale"));
     const layer = flyout()!;
-    expect(layer.dataset.flyoutMode).toBe("fade");
-    expect(layer.dataset.flyoutFaces).toBe("front");
-    expect(layer.querySelector('[data-face="back"]')).toBeNull();
-    expect(layer.style.getPropertyValue("--flyout-turn")).toBe("0deg");
+    expect(layer.dataset.flyoutMotion).toBe("fade");
+    expect(layer.querySelector('[data-face="back"] img')?.getAttribute("src")).toContain("thumb-m2-b");
   });
 
   it("never takes the pointer, so the - / + buttons still work while it shows", () => {

@@ -5,7 +5,8 @@
  *
  * The key is read only from the GOOGLE_API_KEY environment variable, never from the command line, and this
  * script never prints it: not on success, not in an error. When the variable is unset or empty the file is left
- * as it is, so the site keeps the placeholder and paid unlock stays off. public/config.js in the repository
+ * as it is, so the site keeps the placeholder and paid unlock stays off (in GitHub Actions this is a ::warning::
+ * annotation on the run). public/config.js in the repository
  * always keeps the placeholder; only the built copy gets the key.
  */
 import { readFileSync, writeFileSync } from "node:fs";
@@ -36,6 +37,15 @@ export function configWithKey(template: string, rawKey: string | undefined): Con
   return { text, wrote: true, message: "Wrote the Google API key from the GOOGLE_API_KEY secret into config.js." };
 }
 
+/**
+ * The one line the script prints. Inside GitHub Actions (GITHUB_ACTIONS=true) a missing secret is printed as a
+ * ::warning:: annotation, so the run summary shows that paid unlock is off. Neither form ever holds the key.
+ */
+export function outputLine(fileName: string, result: Pick<ConfigResult, "wrote" | "message">, inActions: boolean): string {
+  if (!result.wrote && inActions) return `::warning title=Paid unlock is off::${result.message}`;
+  return `${fileName}: ${result.message}`;
+}
+
 function main(): number {
   const target = process.argv[2];
   if (!target) {
@@ -45,7 +55,7 @@ function main(): number {
   try {
     const result = configWithKey(readFileSync(target, "utf8"), process.env.GOOGLE_API_KEY);
     if (result.wrote) writeFileSync(target, result.text);
-    console.log(`${path.basename(target)}: ${result.message}`);
+    console.log(outputLine(path.basename(target), result, process.env.GITHUB_ACTIONS === "true"));
     return 0;
   } catch (error) {
     // Only the message: the messages above never hold the key.

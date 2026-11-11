@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en" data-slug="silksong" data-duration="2400" data-poster="2000">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Silksong — BeeLine splash</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../splash-base.css">
+<style>
+  body{background:#070d10}
+  .stage{background:linear-gradient(180deg,#16242c 0%,#22363f 38%,#1a2b33 68%,#0a1216 100%)}
+  .fadein{position:absolute;inset:0;background:#05090b;animation:fadein .55s ease-out forwards;z-index:30;pointer-events:none}
+  @keyframes fadein{from{opacity:1}to{opacity:0}}
+  .layer{position:absolute;inset:-4% -6%;width:112%;height:108%}
+  .far{animation:pFar 2.4s cubic-bezier(.25,.6,.3,1)}
+  .mid{animation:pMid 2.4s cubic-bezier(.25,.6,.3,1)}
+  .near{animation:pNear 2.4s cubic-bezier(.25,.6,.3,1)}
+  @keyframes pFar{from{transform:translateX(1.2%) scale(1.03)}to{transform:translateX(-.6%) scale(1)}}
+  @keyframes pMid{from{transform:translateX(3%) scale(1.05)}to{transform:translateX(-1.4%) scale(1)}}
+  @keyframes pNear{from{transform:translateX(7%) scale(1.08)}to{transform:translateX(-3%) scale(1)}}
+  .shafts{position:absolute;inset:0;mix-blend-mode:screen;opacity:.0;animation:shafts 2.4s ease-out}
+  .shafts i{position:absolute;top:-10%;height:120%;width:var(--w);left:var(--x);transform:rotate(var(--r));transform-origin:50% 0;
+    background:linear-gradient(180deg,rgba(170,215,215,.22),rgba(170,215,215,.06) 55%,transparent 85%);filter:blur(10px)}
+  @keyframes shafts{0%{opacity:0}35%{opacity:1}100%{opacity:.85}}
+  .fog{position:absolute;left:-30%;width:160%;height:var(--h);top:var(--y);border-radius:50%;
+    background:radial-gradient(closest-side,rgba(120,160,168,var(--a)),transparent);filter:blur(18px);animation:fog 2.4s linear}
+  @keyframes fog{from{transform:translateX(var(--f0))}to{transform:translateX(var(--f1))}}
+  .grain{position:absolute;inset:0;width:100%;height:100%;mix-blend-mode:overlay;opacity:.32;pointer-events:none}
+  .vig{position:absolute;inset:0;background:radial-gradient(closest-side at 50% 52%,transparent 52%,rgba(3,7,9,.82) 100%);pointer-events:none}
+
+  .stage{--hh:min(56vh,62vw);--hx:24%;--hb:7%}
+  @media (orientation:portrait){.stage{--hh:min(31vh,64vw);--hx:36%;--hb:11%}}
+  .hero{position:absolute;left:var(--hx);bottom:var(--hb);height:var(--hh);aspect-ratio:130/200;margin-left:calc(var(--hh) * -.325)}
+  .hero svg{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 0 .35vmin rgba(200,245,238,.55)) drop-shadow(0 0 2.2vmin rgba(150,220,215,.22))}
+  .rock{animation:rockIn .6s ease-out}
+  @keyframes rockIn{from{opacity:0;transform:translateY(6%)}to{opacity:1;transform:none}}
+  .fig{animation:drop .62s .12s cubic-bezier(.3,.05,.3,1.12)}
+  @keyframes drop{from{transform:translateY(-150%)}to{transform:none}}
+  .cloak{transform-origin:0 -70px;animation:cloak .62s .12s ease-out}
+  @keyframes cloak{0%{transform:scaleY(1.18) skewX(-6deg)}70%{transform:scaleY(1.06) skewX(3deg)}85%{transform:scaleY(.94)}100%{transform:none}}
+  .needle{transform-origin:12px -52px;animation:flick .5s .78s cubic-bezier(.3,.6,.3,1.4)}
+  @keyframes flick{0%{transform:rotate(0)}35%{transform:rotate(-38deg)}100%{transform:rotate(14deg)}}
+  .dust circle{animation:dust .7s .7s ease-out;opacity:0}
+  @keyframes dust{0%{opacity:.8;transform:translate(0,0) scale(.4)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(1.2)}}
+
+  .threads{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+  .threads path{fill:none;stroke-linecap:round}
+  .t-main{stroke:#eef5f0;stroke-width:1.6;filter:drop-shadow(0 0 2px rgba(210,245,235,.8))}
+  .t-web{stroke:#cfe0dc;stroke-width:1}
+  .t-glint{stroke:#fff;stroke-width:3;filter:drop-shadow(0 0 4px #fff)}
+
+  .title{position:absolute;left:50%;top:var(--ty);transform:translate(-50%,-50%);text-align:center;white-space:nowrap}
+  .stage{--ty:27%}
+  @media (orientation:portrait){.stage{--ty:24%}}
+  .name{display:block;font:500 min(9.4vw,10.5vh)/1 "BL Cinzel",serif;letter-spacing:.2em;padding-left:.2em;color:#e7eee9;
+    text-shadow:0 0 .35em rgba(150,220,210,.35),0 .04em 0 rgba(0,0,0,.6);animation:nameIn .75s 1.1s cubic-bezier(.2,.7,.2,1)}
+  @keyframes nameIn{from{opacity:0;filter:blur(10px);transform:translateY(.12em);letter-spacing:.34em}to{opacity:1;filter:none;transform:none;letter-spacing:.2em}}
+  .orn{display:block;width:min(70vw,64vh);height:min(7vw,6.4vh);margin:.35em auto 0}
+  .orn path{fill:none;stroke:#cfdcd6;stroke-width:1.1;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;animation:orn .7s 1.3s ease-out forwards}
+  .orn .dia{fill:#e7eee9;stroke:none;opacity:0;animation:fade .3s 1.6s ease-out forwards}
+  @keyframes orn{to{stroke-dashoffset:0}}
+  @keyframes fade{to{opacity:1}}
+  .sub{display:block;margin-top:.5em;font:italic 500 min(3.4vw,3vh)/1 "BL Cormorant",serif;letter-spacing:.14em;color:#9fc0b9;opacity:0;animation:fade .5s 1.55s ease-out forwards}
+  .glint{position:absolute;width:min(9vmin,70px);height:min(9vmin,70px);margin:calc(min(9vmin,70px) / -2);pointer-events:none;opacity:0;animation:glint .8s 1.32s ease-out}
+  @keyframes glint{0%{opacity:0;transform:scale(.2) rotate(-30deg)}30%{opacity:1;transform:scale(1.1) rotate(0)}100%{opacity:0;transform:scale(.7) rotate(25deg)}}
+  .chime{position:absolute;width:min(14vmin,110px);height:min(14vmin,110px);margin:calc(min(14vmin,110px) / -2);border-radius:50%;border:1.5px solid rgba(220,245,240,.75);box-shadow:0 0 12px rgba(180,240,235,.5),inset 0 0 18px rgba(180,240,235,.25);background:radial-gradient(closest-side,rgba(200,255,250,.18),transparent);opacity:0;pointer-events:none}
+  .c1{animation:chime 1s 1.34s ease-out}.c2{animation:chime 1s 1.5s ease-out}
+  @keyframes chime{0%{opacity:0;transform:scale(.2)}15%{opacity:.8}100%{opacity:0;transform:scale(2.2)}}
+  .spores i{position:absolute;left:var(--x);top:var(--y);width:var(--s);height:var(--s);border-radius:50%;background:#d8fff2;
+    box-shadow:0 0 6px 2px rgba(150,255,220,.55),0 0 14px 4px rgba(90,200,180,.25);opacity:0;animation:spore 1.6s var(--d) ease-out}
+  @keyframes spore{0%{opacity:0;transform:translate(0,0)}25%{opacity:var(--o)}100%{opacity:calc(var(--o) * .8);transform:translate(var(--dx),var(--dy))}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="ink" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="3" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="10" xChannelSelector="R" yChannelSelector="G"/></filter>
+  <filter id="inkS" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".09" numOctaves="2" seed="3" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.6" xChannelSelector="R" yChannelSelector="G"/></filter>
+  <filter id="grainF"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="3" seed="5"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="linear" slope="1"/></feComponentTransfer></filter>
+</svg>
+<main class="stage" aria-label="Silksong deck intro">
+  <svg class="layer far" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><g id="far" filter="url(#ink)"></g></svg>
+  <div class="shafts" id="shafts"></div>
+  <div class="fog" style="--y:46%;--h:34%;--a:.30;--f0:-4%;--f1:5%"></div>
+  <svg class="layer mid" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><g id="mid" filter="url(#ink)"></g></svg>
+  <div class="fog" style="--y:64%;--h:30%;--a:.26;--f0:6%;--f1:-5%"></div>
+  <svg class="threads" id="threads" aria-hidden="true">
+    <path class="t-web" id="w1"/><path class="t-web" id="w2"/><path class="t-web" id="w3"/>
+    <path class="t-main" id="drop"/><path class="t-main" id="main"/><path class="t-glint" id="glintPath"/>
+    <g id="bell" opacity="0"><path d="M0 -9 V-3" stroke="#cfe0dc" stroke-width="1"/><path d="M-6 9 C-6 2 -4.4 -3 0 -3.4 C4.4 -3 6 2 6 9 C7 9.6 7.4 10.4 7.4 11 L-7.4 11 C-7.4 10.4 -7 9.6 -6 9Z" fill="#d9d2b8" stroke="#1a2328" stroke-width="1"/><circle cy="12.6" r="1.6" fill="#d9d2b8"/><path d="M-3.4 1 C-3.8 3.5 -3.9 6 -3.8 8.4" stroke="#fffbea" stroke-width="1.3" opacity=".8" fill="none"/></g>
+  </svg>
+  <div class="hero" id="hero">
+    <svg viewBox="-65 -170 130 200" aria-hidden="true">
+      <g class="rock"><path filter="url(#inkS)" d="M-62 34 L-63 18 L-56 9 L-47 6 L-40 0 L-29 2 L-20 -2 L-8 0 L2 -3 L14 -1 L25 -4 L36 0 L46 2 L55 8 L61 15 L63 34Z" fill="#0d171b" stroke="#52737c" stroke-width="1.8" stroke-linejoin="round"/>
+        <path d="M-44 8 L-36 16 L-38 26 M12 3 L18 12 L14 22 M40 6 L46 14" stroke="#2f4a53" stroke-width="1.3" fill="none"/>
+        <path d="M-40 1 L-29 3 L-20 -1 L-8 1 M14 0 L25 -3 L36 1" stroke="#8fb0b6" stroke-width="1" fill="none" opacity=".55"/></g>
+      <g class="fig" filter="url(#inkS)">
+        <defs>
+          <linearGradient id="clk" x1="0" y1="-68" x2="0" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#5f7d86"/><stop offset=".6" stop-color="#36505a"/><stop offset="1" stop-color="#1c2e35"/></linearGradient>
+          <linearGradient id="hrn" x1="0" y1="-112" x2="0" y2="-90" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#c3ccc8"/><stop offset="1" stop-color="#6f7e80"/></linearGradient>
+        </defs>
+        <!-- thin pointed legs -->
+        <path d="M-7 -20 L-9.5 -1 L-12 0 L-4 0 L-3 -20Z M3 -20 L5 -1 L3 0 L11 0 L8 -20Z" fill="#0f1a1f" stroke="#0a1216" stroke-width="1.6" stroke-linejoin="miter"/>
+        <g class="needle">
+          <path d="M8 -46 L58 -112 L60.5 -110.5 L12.5 -43.5Z" fill="#e8eeec" stroke="#0a1216" stroke-width="1.2"/>
+          <ellipse cx="11" cy="-47" rx="2.6" ry="1.2" transform="rotate(-52 11 -47)" fill="#0a1216"/>
+          <circle id="tip" cx="10" cy="-46" r=".5" fill="none"/>
+        </g>
+        <g class="cloak">
+          <!-- angular mantle: pointed shoulders, flaring into sharp tattered points, swept left by the wind -->
+          <path d="M-9 -70 L9 -70 L21 -63 L27 -60 L19 -55 L17 -38 L19 -14 L15 -18 L13 -3 L9 -15 L5 -1 L1 -14 L-4 -2 L-8 -15 L-13 -3 L-17 -17 L-24 -6 L-27 -21 L-37 -11 L-37 -25 L-50 -19 L-45 -31 L-62 -31 L-47 -40 L-58 -46 L-36 -48 L-26 -58 L-29 -62 L-21 -64Z" fill="url(#clk)" stroke="#0a1216" stroke-width="2.8" stroke-linejoin="miter"/>
+          <path d="M-14 -60 L-20 -44 L-30 -30 L-37 -25 M-4 -56 L-6 -36 L-8 -15 M6 -56 L8 -36 L9 -15 M-20 -52 L-40 -40" stroke="#162730" stroke-width="1.3" fill="none"/>
+          <path d="M-14 -62 L-26 -50 L-44 -40 L-30 -40 L-20 -46Z" fill="#22363e" opacity=".8"/>
+          <!-- rim light on the lit (right) edge -->
+          <path d="M10 -68 L21 -62 L26 -60 M18 -55 L16 -38 L18 -16" stroke="#dff6f1" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+          <!-- pale angular collar -->
+          <path d="M-14 -70 L14 -70 L9 -61 L4 -64 L0 -56 L-4 -64 L-9 -61Z" fill="#dfe4e0" stroke="#0a1216" stroke-width="1.8" stroke-linejoin="miter"/>
+        </g>
+        <!-- arm holding the needle -->
+        <path d="M8 -60 L18 -52 L15 -45 L10 -44 L12 -50 L6 -55Z" fill="#1f333b" stroke="#0a1216" stroke-width="1.6" stroke-linejoin="miter"/>
+        <path d="M10 -48 L15 -46 L13 -42 L9 -43Z" fill="#dfe4e0" stroke="#0a1216" stroke-width="1"/>
+        <!-- dark helm behind the mask -->
+        <path d="M-15 -90 C-16 -101 -9 -109 0 -110 C9 -109 16 -101 15 -90 L11 -76 L-11 -76Z" fill="#17262c" stroke="#0a1216" stroke-width="2.2"/>
+        <!-- one pair of hard, pointed horns sweeping sideways and back from the helm (beetle-like) -->
+        <path d="M-12 -101 C-22 -106 -36 -105 -47 -108 L-60 -115 C-55 -105 -44 -97 -31 -95 L-35 -91 L-26 -93 C-21 -93 -16 -93 -12 -93Z" fill="url(#hrn)" stroke="#0a1216" stroke-width="2.2" stroke-linejoin="miter"/>
+        <path d="M12 -101 C22 -106 36 -105 47 -108 L60 -115 C55 -105 44 -97 31 -95 L35 -91 L26 -93 C21 -93 16 -93 12 -93Z" fill="url(#hrn)" stroke="#0a1216" stroke-width="2.2" stroke-linejoin="miter"/>
+        <path d="M-34 -105 L-38 -113 L-40 -105.5Z M34 -105 L38 -113 L40 -105.5Z" fill="#8f9c9c" stroke="#0a1216" stroke-width="1.6" stroke-linejoin="miter"/>
+        <path d="M-18 -100 C-28 -102 -40 -102 -50 -106 M18 -100 C28 -102 40 -102 50 -106" stroke="#f4f8f5" stroke-width="1.1" fill="none" opacity=".75"/>
+        <!-- pointed shield mask with clearly visible dark eye holes -->
+        <path d="M0 -105 C9 -105 14 -99 13 -90 C12 -82 6 -73 0 -66 C-6 -73 -12 -82 -13 -90 C-14 -99 -9 -105 0 -105Z" fill="#eeede5" stroke="#0a1216" stroke-width="2.4"/>
+        <path d="M-11.5 -92 L-2 -85.5 L-2.6 -79.5 L-8.5 -82.5Z M11.5 -92 L2 -85.5 L2.6 -79.5 L8.5 -82.5Z" fill="#071014" stroke="#071014" stroke-width=".8" stroke-linejoin="round"/>
+        <path d="M0 -104 L0 -96 M-6 -101 C-3 -103 3 -103 6 -101" stroke="#9aa9a8" stroke-width=".9" fill="none"/>
+        <path d="M8 -101 C11 -97 12 -92 11 -86" stroke="#ffffff" stroke-width="1.4" fill="none" opacity=".8"/>
+        <circle id="crown" cx="0" cy="-108" r=".5" fill="none"/>
+      </g>
+      <g class="dust" fill="#9fb8bc"><circle cx="-20" cy="2" r="3" style="--dx:-14px;--dy:-6px"/><circle cx="18" cy="2" r="3" style="--dx:14px;--dy:-7px"/><circle cx="-8" cy="3" r="2" style="--dx:-8px;--dy:-10px"/><circle cx="8" cy="3" r="2" style="--dx:9px;--dy:-11px"/></g>
+    </svg>
+  </div>
+  <svg class="layer near" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><g id="near" filter="url(#ink)"></g></svg>
+  <div class="title"><span class="name">SILKSONG</span>
+    <svg class="orn" viewBox="0 0 400 40" aria-hidden="true">
+      <path pathLength="1" d="M196 20 C170 20 160 8 140 10 C122 12 124 30 138 28 C148 26 146 16 136 18 M140 10 C100 4 60 26 6 18"/>
+      <path pathLength="1" d="M204 20 C230 20 240 8 260 10 C278 12 276 30 262 28 C252 26 254 16 264 18 M260 10 C300 4 340 26 394 18"/>
+      <path class="dia" d="M200 13 L206 20 L200 27 L194 20Z"/>
+    </svg>
+    <span class="sub">a needle, a thread, a song</span>
+  </div>
+  <div class="spores" id="spores"></div>
+  <div class="chime c1" id="c1"></div><div class="chime c2" id="c2"></div>
+  <svg class="glint" id="gl" viewBox="-50 -50 100 100" aria-hidden="true"><path d="M0 -48 C3 -10 10 -3 48 0 C10 3 3 10 0 48 C-3 10 -10 3 -48 0 C-10 -3 -3 -10 0 -48Z" fill="#fff" style="filter:drop-shadow(0 0 6px #bff)"/><circle r="6" fill="#fff"/></svg>
+  <svg class="grain" aria-hidden="true"><rect width="100%" height="100%" filter="url(#grainF)"/></svg>
+  <div class="vig"></div>
+  <div class="fadein"></div>
+</main>
+<script src="../splash-runtime.js"></script>
+<script>
+(function(){
+  let seed=19;const r=()=>(seed=(seed*16807)%2147483647)/2147483647;
+  // ---- hand-drawn cavern layers (procedural, seeded) ----
+  function ridge(x0,x1,y,amp,step,bottom){let d=`M${x0} ${bottom?1000:-100} L${x0} ${y}`;let px=x0,py=y;
+    for(let x=x0+step;x<=x1+step;x+=step*(.6+r()*.8)){const ny=y+(r()-.5)*2*amp;const cx=(px+x)/2+(r()-.5)*step*.4,cy=(py+ny)/2+(r()-.5)*amp*.8;d+=` Q${cx.toFixed(0)} ${cy.toFixed(0)} ${x.toFixed(0)} ${ny.toFixed(0)}`;px=x;py=ny;}
+    return d+` L${px.toFixed(0)} ${bottom?1000:-100}Z`;}
+  function stal(x,top,len,w){return `M${x-w} ${top} Q${(x-w*.35).toFixed(0)} ${(top+len*.6).toFixed(0)} ${x} ${top+len} Q${(x+w*.35).toFixed(0)} ${(top+len*.6).toFixed(0)} ${x+w} ${top}Z`;}
+  function pillar(x,w,top,bot){const a=[];for(let y=top;y<=bot;y+=60){a.push([x-w/2+(r()-.5)*w*.25,y]);}const b=a.map(([px,py])=>[px+w+(r()-.5)*w*.25,py]).reverse();
+    return 'M'+a.concat(b).map(p=>p.map(v=>v.toFixed(0)).join(' ')).join(' L')+'Z';}
+  const L=(id,html)=>document.getElementById(id).innerHTML=html;
+  let far='';
+  far+=`<path d="${ridge(-50,1650,620,34,130,true)}" fill="#2c4551" stroke="#4a6874" stroke-width="2"/>`;
+  far+=`<path d="${ridge(-50,1650,150,50,80,false)}" fill="#2a424e" stroke="#4a6874" stroke-width="2"/>`;
+  for(let i=0;i<14;i++){const x=40+i*115+r()*50;far+=`<path d="${stal(x,140+r()*40,60+r()*140,10+r()*16)}" fill="#2a424e"/>`;}
+  for(let i=0;i<13;i++){const x=30+i*125+r()*60;far+=`<path d="${stal(x,660,-(50+r()*120),12+r()*18)}" fill="#2c4551" stroke="#4a6874" stroke-width="1.6"/>`;}
+  far+=`<path d="${pillar(470,70,120,700)}" fill="#2e4955" stroke="#4a6874" stroke-width="2"/><path d="${pillar(1180,56,120,700)}" fill="#2e4955" stroke="#4a6874" stroke-width="2"/>`;
+  L('far',far);
+  let mid='';
+  mid+=`<path d="${ridge(-50,1650,720,24,170,true)}" fill="#18282f" stroke="#3a5761" stroke-width="2.4"/>`;
+  mid+=`<path d="${ridge(-50,1650,70,40,100,false)}" fill="#16252c" stroke="#3a5761" stroke-width="2.4"/>`;
+  for(let i=0;i<9;i++){const x=60+i*190+r()*80;mid+=`<path d="${stal(x,60,120+r()*230,16+r()*22)}" fill="#16252c" stroke="#3a5761" stroke-width="2"/>`;}
+  for(let i=0;i<8;i++){const x=200+i*170+r()*70;mid+=`<path d="${stal(x,750,-(70+r()*150),16+r()*20)}" fill="#18282f" stroke="#3a5761" stroke-width="2"/>`;}
+  mid+=`<path d="${pillar(120,150,40,820)}" fill="#152329" stroke="#3a5761" stroke-width="2.4"/><path d="${pillar(1500,170,40,820)}" fill="#152329" stroke="#3a5761" stroke-width="2.4"/>`;
+  // hanging roots
+  for(let i=0;i<6;i++){const x=250+i*230+r()*60;let d=`M${x} 60`;let y=60;for(let k=0;k<5;k++){y+=40+r()*30;d+=` q${(r()-.5)*30} 20 ${(r()-.5)*14} ${(30+r()*20).toFixed(0)}`;}mid+=`<path d="${d}" stroke="#2c4752" stroke-width="2.2" fill="none"/>`;}
+  L('mid',mid);
+  let near='';
+  near+=`<path d="M-80 1000 L-80 640 C40 620 120 700 210 760 C280 800 330 860 360 1000Z" fill="#081014" stroke="#2b444d" stroke-width="3"/>`;
+  near+=`<path d="M1680 1000 L1680 600 C1560 600 1480 680 1400 760 C1340 820 1300 900 1290 1000Z" fill="#081014" stroke="#2b444d" stroke-width="3"/>`;
+  near+=`<path d="M-80 -100 L-80 260 C0 230 60 150 130 110 C200 70 300 40 380 -100Z" fill="#081014" stroke="#2b444d" stroke-width="3"/>`;
+  near+=`<path d="M1680 -100 L1680 300 C1600 250 1540 160 1460 110 C1400 70 1320 40 1240 -100Z" fill="#081014" stroke="#2b444d" stroke-width="3"/>`;
+  near+=`<path d="${stal(300,0,190,22)}" fill="#081014" stroke="#2b444d" stroke-width="2.4"/><path d="${stal(1330,0,230,26)}" fill="#081014" stroke="#2b444d" stroke-width="2.4"/>`;
+  L('near',near);
+  // light shafts, spores
+  document.getElementById('shafts').innerHTML=[[18,9,-14],[44,6,-10],[63,12,-16],[82,7,-12]].map(([x,w,a])=>`<i style="--x:${x}%;--w:${w}%;--r:${a}deg"></i>`).join('');
+  let sp='';for(let i=0;i<38;i++){sp+=`<i style="--x:${(r()*100).toFixed(1)}%;--y:${(30+r()*65).toFixed(1)}%;--s:${(2+r()*4).toFixed(1)}px;--o:${(.45+r()*.55).toFixed(2)};--dx:${(-4+r()*8).toFixed(1)}vw;--dy:${(-8-r()*14).toFixed(1)}vh;--d:${(.85+r()*.7).toFixed(2)}s"></i>`;}
+  document.getElementById('spores').innerHTML=sp;
+
+  // ---- silk threads (seekable): drawn, then snapped taut with a damped twang ----
+  const $=id=>document.getElementById(id);const svg=$('threads'),tip=$('tip'),crown=$('crown'),title=document.querySelector('.name');
+  const ctr=el=>{const b=el.getBoundingClientRect();return {x:b.left+b.width/2,y:b.top+b.height/2};};
+  const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
+  const ease=t=>1-Math.pow(1-t,3);
+  function q(P0,P1,sag,u){ // quadratic from P0 to P1 with perpendicular sag, partially drawn to u
+    const mx=(P0.x+P1.x)/2,my=(P0.y+P1.y)/2,dx=P1.x-P0.x,dy=P1.y-P0.y,l=Math.hypot(dx,dy)||1;
+    const C={x:mx-dy/l*sag,y:my+dx/l*sag};
+    const a={x:P0.x+(C.x-P0.x)*u,y:P0.y+(C.y-P0.y)*u},b={x:C.x+(P1.x-C.x)*u,y:C.y+(P1.y-C.y)*u};
+    const e={x:a.x+(b.x-a.x)*u,y:a.y+(b.y-a.y)*u};
+    return {d:`M${P0.x.toFixed(1)} ${P0.y.toFixed(1)} Q${a.x.toFixed(1)} ${a.y.toFixed(1)} ${e.x.toFixed(1)} ${e.y.toFixed(1)}`,end:e,C,at:(v)=>{const A={x:P0.x+(C.x-P0.x)*v,y:P0.y+(C.y-P0.y)*v},B={x:C.x+(P1.x-C.x)*v,y:C.y+(P1.y-C.y)*v};return {x:A.x+(B.x-A.x)*v,y:A.y+(B.y-A.y)*v};}};}
+  const twang=(s0,t,ts,k=7,w=34)=>t<ts?s0:s0*Math.exp(-k*(t-ts))*Math.cos(w*(t-ts));
+  BLSplash.onFrame(ms=>{
+    const W=innerWidth,H=innerHeight,t=ms/1000,port=H>W;svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+    const S=Math.min(W,H);
+    // web threads weaving across the cavern
+    const webs=[[{x:-.05*W,y:.16*H},{x:1.05*W,y:.42*H},.22,.18*S,.7,'w1'],[{x:-.05*W,y:.5*H},{x:1.05*W,y:.1*H},.36,-.16*S,.84,'w2'],[{x:.3*W,y:-.05*H},{x:.78*W,y:1.05*H},.5,.1*S,.98,'w3']];
+    for(const [A,B,t0,sag,ts,id] of webs){const u=ease(clamp((t-t0)/.45));const el=$(id);
+      el.setAttribute('d',u>0?q(A,B,twang(sag,t,ts,5,26),u).d:'');el.style.opacity=(t>1.15?.28:.55).toString();}
+    // descent thread from the ceiling to the hero's crown; retracts after landing
+    const c=ctr(crown);const dropU=t<.82?1:1-ease(clamp((t-.82)/.25));
+    $('drop').setAttribute('d',t>.08&&dropU>0?`M${c.x.toFixed(1)} ${(c.y-(c.y+20)*dropU).toFixed(1)} L${c.x.toFixed(1)} ${c.y.toFixed(1)}`:'');
+    $('drop').style.opacity=dropU.toFixed(2);
+    // main thread flung from the needle to an anchor on the right wall, then snapped taut
+    const P=ctr(tip),A={x:W*(port?.97:.95),y:H*(port?.5:.47)};
+    const u=ease(clamp((t-.86)/.3));const sag=twang(.22*S,t,1.16,6,30);
+    const m=q(P,A,sag,u);$('main').setAttribute('d',u>0?m.d:'');
+    // travelling glint while the thread flies
+    if(u>0&&u<1){const a=m.at(Math.max(0,u-.06)),b=m.end;$('glintPath').setAttribute('d',`M${a.x.toFixed(1)} ${a.y.toFixed(1)} L${b.x.toFixed(1)} ${b.y.toFixed(1)}`);}else $('glintPath').setAttribute('d','');
+    // small bell riding the taut thread
+    const bell=$('bell');if(t>1.12){const p=m.at(.8);const sw=Math.exp(-3*(t-1.16))*Math.sin(16*(t-1.16))*22;const sc=Math.max(1.5,S/300);
+      bell.setAttribute('transform',`translate(${p.x.toFixed(1)} ${(p.y+9*sc).toFixed(1)}) scale(${sc.toFixed(2)}) rotate(${sw.toFixed(1)} 0 -9)`);bell.setAttribute('opacity',clamp((t-1.12)/.1).toFixed(2));
+      const gl=$('gl'),c1=$('c1'),c2=$('c2');for(const e of [gl,c1,c2]){e.style.left=p.x+'px';e.style.top=(p.y+14*sc)+'px';}}
+    else bell.setAttribute('opacity','0');
+  });
+})();
+</script>
+</body>
+</html>

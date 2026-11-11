@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { TOKEN_LOOKUP, TOKEN_LOOKUP_UNMATCHED } from "@/data/token-lookup";
-import { flipPlan } from "@/lib/desktop";
+import { flyoutBack } from "@/lib/desktop";
 import { backOptions, resolveBackOverride, selectionToSlots, type SavedCard } from "@/lib/selection";
 import { exportSavedJson, importSavedJson, loadSaved, writeSaved, SAVED_KEY } from "@/lib/storage";
 import { TOKEN_OVERRIDES } from "@/data/token-overrides";
@@ -222,10 +222,11 @@ describe("per-card back in saved decks", () => {
 });
 
 describe("flyout with a picked back", () => {
-  it("shows the picked back over a double-faced card's own back and over the deck back", () => {
-    expect(flipPlan({ customBack: "pick", dfcBack: "own", cardback: "deck", reducedMotion: false })).toMatchObject({ mode: "custom", backImage: "pick" });
-    expect(flipPlan({ customBack: null, dfcBack: "own", cardback: "deck", reducedMotion: false })).toMatchObject({ mode: "dfc", backImage: "own" });
-    expect(flipPlan({ customBack: "pick", reducedMotion: true })).toMatchObject({ mode: "fade", backImage: null });
+  it("shows the picked back over a double-faced card's own back, and nothing for a plain card without a pick", () => {
+    expect(flyoutBack({ customBack: "pick", dfcBack: "own" })).toEqual({ kind: "custom", image: "pick" });
+    expect(flyoutBack({ customBack: null, dfcBack: "own" })).toEqual({ kind: "dfc", image: "own" });
+    expect(flyoutBack({ customBack: "pick" })).toEqual({ kind: "custom", image: "pick" });
+    expect(flyoutBack({ customBack: null, dfcBack: null })).toBeNull();
   });
 });
 

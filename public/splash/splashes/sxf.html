@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en" data-slug="sxf" data-duration="2200" data-poster="1650">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SxF — BeeLine splash</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../splash-base.css">
+<style>
+  body{background:#14231e}
+  .stage{background:radial-gradient(90vmax 70vmax at 50% 40%,#2f5446 0%,#1c352c 50%,#0e1b16 100%)}
+  .desk{position:absolute;inset:0;opacity:.25;background:repeating-linear-gradient(90deg,rgba(0,0,0,.25) 0 2px,transparent 2px 9px)}
+  .lamp{position:absolute;left:50%;top:40%;width:150vmax;height:150vmax;margin:-75vmax;background:radial-gradient(closest-side,rgba(255,240,200,.22),transparent 60%);animation:lamp .5s ease-out}
+  @keyframes lamp{from{opacity:0}to{opacity:1}}
+  .stage{--fw:min(94vw,calc(74vh * 1.28))}
+  .folder{position:absolute;left:50%;top:48%;width:var(--fw);height:calc(var(--fw) / 1.28);margin:calc(var(--fw) / -2.56) 0 0 calc(var(--fw) / -2);
+    animation:slide .42s cubic-bezier(.2,.85,.25,1)}
+  @keyframes slide{from{transform:translateY(70vh) rotate(8deg)}to{transform:rotate(-2deg)}}
+  .back{position:absolute;inset:0;background:#c7a86c;border-radius:calc(var(--fw)*.012);box-shadow:0 2vmin 5vmin rgba(0,0,0,.55)}
+  .tabf{position:absolute;left:6%;top:-6%;width:28%;height:8%;background:#c7a86c;border-radius:calc(var(--fw)*.012) calc(var(--fw)*.012) 0 0;
+    font:700 calc(var(--fw)*.022)/1 "BL Courier",monospace;color:#5a4220;display:flex;align-items:center;padding-left:6%;letter-spacing:.15em}
+  .paper{position:absolute;left:3.5%;right:3.5%;top:4%;bottom:4%;background:linear-gradient(180deg,#f6f0e0,#ebe2cb);box-shadow:0 1px 3px rgba(0,0,0,.25);
+    animation:paper .4s .22s cubic-bezier(.2,.85,.25,1)}
+  @keyframes paper{from{transform:translateY(-6%) rotate(-1.5deg)}to{transform:rotate(.6deg)}}
+  .paper::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(180deg,transparent 0 calc(var(--fw)*.038),rgba(40,70,60,.12) calc(var(--fw)*.038) calc(var(--fw)*.0385))}
+  .hdr{position:absolute;left:6%;top:6%;right:6%;display:flex;justify-content:space-between;font:700 calc(var(--fw)*.026)/1 "BL Courier",monospace;letter-spacing:.2em;color:#24433a;border-bottom:2px solid #24433a;padding-bottom:1.4%}
+  .lines{position:absolute;left:6%;top:17%;width:50%;font:400 calc(var(--fw)*.026)/2.05 "BL Courier",monospace;color:#2b2a26;letter-spacing:.04em}
+  .lines div{white-space:nowrap;clip-path:inset(0 100% 0 0);animation:type .3s var(--d) steps(18)}
+  @keyframes type{to{clip-path:inset(0 0 0 0)}}
+  .red{display:inline-block;height:.9em;vertical-align:-.12em;background:#141414;width:var(--w);transform-origin:0 50%;animation:redact .18s var(--d2) ease-out}
+  @keyframes redact{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+  .photo{position:absolute;right:7%;top:17%;width:32%;aspect-ratio:.82;background:#d9d3c2;border:calc(var(--fw)*.008) solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3);transform:rotate(3deg);overflow:hidden;
+    animation:pin .3s .38s cubic-bezier(.3,1.5,.5,1)}
+  @keyframes pin{from{opacity:0;transform:rotate(12deg) scale(1.2)}to{opacity:1;transform:rotate(3deg)}}
+  .photo .sil{position:absolute;inset:0;background:radial-gradient(28% 22% at 50% 36%,#6b7c74 98%,transparent 100%),radial-gradient(48% 34% at 50% 100%,#6b7c74 98%,transparent 100%),linear-gradient(180deg,#b7c2b8,#97a69c)}
+  .photo .q{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:400 calc(var(--fw)*.12)/1 "BL Abril",serif;color:#eef2ec;opacity:.85}
+  .clip{position:absolute;right:20%;top:13.5%;width:6%;height:9%;border:calc(var(--fw)*.006) solid #8d9499;border-bottom:none;border-radius:40% 40% 0 0;z-index:2}
+  .reticle{position:absolute;right:7%;top:17%;width:32%;aspect-ratio:.82;display:flex;align-items:center;justify-content:center;pointer-events:none}
+  .reticle svg{width:92%;height:92%;animation:aim .7s .5s cubic-bezier(.3,.6,.2,1)}
+  @keyframes aim{0%{opacity:0;transform:translate(-160%,40%) scale(1.6) rotate(-90deg)}20%{opacity:1}70%{transform:translate(4%,-3%) scale(.96) rotate(4deg)}100%{opacity:1;transform:none}}
+  .ring{fill:none;stroke:#c8102e;stroke-width:2.2}
+  .tick{stroke:#c8102e;stroke-width:2.2}
+  .heart{fill:#c8102e;transform-origin:50px 52px;animation:heart .45s 1.15s cubic-bezier(.3,1.8,.5,1)}
+  @keyframes heart{from{opacity:0;transform:scale(0)}to{opacity:1;transform:scale(1)}}
+  .dot{fill:#c8102e;animation:dot 2.2s steps(1)}
+  @keyframes dot{0%,52%{opacity:1}53%{opacity:0}100%{opacity:0}}
+  .title{position:absolute;left:6%;bottom:9%;font:400 calc(var(--fw)*.2)/1 "BL Abril",serif;color:#1a1a1a;letter-spacing:-.01em;animation:tIn .35s .85s cubic-bezier(.2,.8,.2,1)}
+  .title em{font-style:normal;color:#c8102e;font-size:.72em;margin:0 .03em}
+  @keyframes tIn{from{opacity:0;transform:translateY(20%)}to{opacity:1;transform:none}}
+  .eyes{position:absolute;left:6.4%;bottom:6%;font:700 calc(var(--fw)*.022)/1 "BL Courier",monospace;letter-spacing:.32em;color:#24433a;animation:tIn .35s .95s ease-out}
+  .stamp{position:absolute;right:4.5%;bottom:7%;padding:.25em .5em;border:.14em solid #c8102e;border-radius:.12em;outline:.05em solid #c8102e;outline-offset:.08em;
+    font:400 calc(var(--fw)*.058)/1 "BL BlackOps",sans-serif;letter-spacing:.06em;color:#c8102e;mix-blend-mode:multiply;filter:url(#ink);
+    animation:stamp .26s 1.3s cubic-bezier(.5,0,.75,0)}
+  @keyframes stamp{0%{opacity:0;transform:scale(2.6) rotate(-4deg)}100%{opacity:.92;transform:scale(1) rotate(-11deg)}}
+  .splat{position:absolute;right:10%;bottom:4%;width:20%;aspect-ratio:1;pointer-events:none;animation:splat .4s 1.55s ease-out}
+  @keyframes splat{from{opacity:0;transform:scale(.4)}to{opacity:.5;transform:scale(1)}}
+  .shake{position:absolute;inset:0;animation:shake .25s 1.55s linear}
+  @keyframes shake{0%,100%{transform:none}30%{transform:translate(.5vmin,.4vmin)}60%{transform:translate(-.4vmin,-.2vmin)}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="ink"><feTurbulence type="fractalNoise" baseFrequency=".7" numOctaves="2" seed="6" result="n"/>
+    <feColorMatrix in="n" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -7 4.6" result="m"/><feComposite in="SourceGraphic" in2="m" operator="in"/></filter>
+</svg>
+<main class="stage" aria-label="SxF deck intro">
+  <div class="desk"></div><div class="lamp"></div>
+  <div class="shake">
+  <div class="folder">
+    <div class="tabf">FILE · 07</div>
+    <div class="back"></div>
+    <div class="paper">
+      <div class="hdr"><span>EYES ONLY</span><span>№ 0417</span></div>
+      <div class="lines">
+        <div style="--d:.45s">AGENT ...... <span class="red" style="--w:5.5em;--d2:.78s"></span></div>
+        <div style="--d:.56s">COVER ...... A FAMILY</div>
+        <div style="--d:.67s">TARGET ..... <span class="red" style="--w:4.2em;--d2:.86s"></span></div>
+        <div style="--d:.78s">STATUS ..... ACTIVE</div>
+      </div>
+      <div class="photo"><div class="sil"></div><div class="q">?</div></div>
+      <div class="clip"></div>
+      <div class="reticle"><svg viewBox="0 0 100 100" aria-hidden="true">
+        <circle class="ring" cx="50" cy="50" r="34"/><circle class="ring" cx="50" cy="50" r="22" stroke-dasharray="6 5" stroke-width="1.4"/>
+        <path class="tick" d="M50 6V22M50 78V94M6 50H22M78 50H94"/>
+        <circle class="dot" cx="50" cy="50" r="2.4"/>
+        <path class="heart" d="M50 62 C36 52 38 40 45 40 C48 40 50 43 50 45 C50 43 52 40 55 40 C62 40 64 52 50 62Z"/>
+      </svg></div>
+      <div class="title">S<em>x</em>F</div>
+      <div class="eyes">MISSION: FAMILY</div>
+      <svg class="splat" viewBox="-50 -50 100 100" aria-hidden="true"><g fill="#c8102e"><circle cx="-30" cy="-18" r="3"/><circle cx="34" cy="12" r="2.2"/><circle cx="-22" cy="30" r="1.8"/><circle cx="26" cy="-30" r="2.6"/><circle cx="40" cy="-6" r="1.4"/></g></svg>
+      <div class="stamp">CLASSIFIED</div>
+    </div>
+  </div>
+  </div>
+</main>
+<script src="../splash-runtime.js"></script>
+</body>
+</html>
