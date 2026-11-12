@@ -14,6 +14,12 @@ export type Box = { left: number; top: number; width: number; height: number };
 export const MERIDIAN_WINDOW = { l: 0.119, t: 0.0773, r: 0.881, b: 0.9227 } as const;
 
 export const DURATION_MS = 4400;
+
+/**
+ * The flight is measured on the meridian art's original size (the v0.1.34 PNGs), not the shiny webp's
+ * (292 x 450, a hair narrower), so the bee's path is pixel for pixel what it was before the logo changed.
+ */
+export const MERIDIAN_ART = { width: 437, height: 673 } as const;
 export const LOOPS = 1;
 const FLIGHT_WIDTH = 40;
 const SPIRAL_START = 0.8;

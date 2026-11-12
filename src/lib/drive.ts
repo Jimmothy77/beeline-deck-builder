@@ -1,4 +1,4 @@
-import { isStandardEditionFolder, isTemplateOrFontFolder, plainEditionName, productEditionKind } from "@/lib/group";
+import { isStandardEditionFolder, isTemplateOrFontFolder, looksLikePaidName, plainEditionName, productEditionKind } from "@/lib/group";
 import { isDecklistFile } from "@/lib/decklist";
 import type { RawNode } from "@/lib/types";
 
@@ -260,9 +260,12 @@ function editionCrawlOrder(name: string): number {
   return 3;
 }
 
+/**
+ * A folder a free paste must not open: anything named like a paid edition, including the disguised names
+ * the public-root guard refuses (DLX, PF, Partial Foil Templates, a Cyrillic Deluxe).
+ */
 function isPaidEditionName(name: string): boolean {
-  const kind = productEditionKind(name);
-  return kind === "deluxe" || kind === "partial_foil";
+  return looksLikePaidName(name);
 }
 
 /**

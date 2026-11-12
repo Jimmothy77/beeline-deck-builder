@@ -26,13 +26,13 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { checkPublicTree } from "../../scripts/build-catalogue";
 import { deckForEntry, rootProblems } from "../../scripts/check-public-root";
-import { PUBLIC_FOLDER_NAMES } from "../../scripts/public-folder-names";
+import { PUBLIC_FOLDER_PATHS } from "../../scripts/public-folder-paths";
 import { listEmbedded, ListingError } from "../../scripts/public-root";
 
 const root = path.resolve(import.meta.dirname, "../..");
 const shipped = (JSON.parse(readFileSync(path.join(root, "public/decks/index.json"), "utf8")) as DeckIndex).decks;
 
-const NAMES = PUBLIC_FOLDER_NAMES;
+const NAMES = PUBLIC_FOLDER_PATHS;
 const FOLDER = "application/vnd.google-apps.folder";
 const SHORTCUT = "application/vnd.google-apps.shortcut";
 
@@ -195,21 +195,11 @@ describe("the public-root guard", () => {
       "BeeLine / 10_Persona 5 / 2_P5 Deluxe Edition",
     ],
     [
-      "an allowed name on a shortcut to a paid folder",
+      "an allowed shortcut path whose target is a paid folder",
       (world) => {
-        world.scutBonus001 = { name: "Extras", kind: "shortcut", target: "dlxSxf_fake" };
-        world.wrapTmnt0001!.children!.push("scutBonus001");
+        world.scutTmnt0001!.target = "dlxSxf_fake";
       },
-      "BeeLine / 1_TMNT / Extras (shortcut to “2_Spy x Family Deluxe Edition”)",
-    ],
-    [
-      "the deck parent itself reached through an allowed shortcut name",
-      (world) => {
-        delete world.parentSxf001!.restricted;
-        world.scutParent01 = { name: "Extras", kind: "shortcut", target: "parentSxf001" };
-        world.wrapSxf00001!.children!.push("scutParent01");
-      },
-      "BeeLine / 6_SxF / Extras / 2_Spy x Family Deluxe Edition",
+      "BeeLine / 1_TMNT / TMNT (shortcut to “2_Spy x Family Deluxe Edition”)",
     ],
   ];
   for (const [label, change, expected] of cases) {
@@ -246,16 +236,16 @@ describe("the public-root guard", () => {
 
   it("reports unreadable folders and an unreadable root by name", async () => {
     const world = beeLine();
-    world.scutGone0001 = { name: "Extras", kind: "shortcut", target: "parentSxf001" };
-    world.wrapSxf00001!.children!.push("scutGone0001");
+    // The SxF shortcut now leads to the Restricted deck parent.
+    world.scutSxf00001!.target = "parentSxf001";
     const { list } = embeddedLister(world);
     const report = await guardPublicTree("fakeRoot0001", list, NAMES);
     expect(report.paid).toEqual([]);
     expect(report.unknown).toEqual([]);
-    expect(report.unreadable).toEqual(["BeeLine / 6_SxF / Extras"]);
+    expect(report.unreadable).toEqual(["BeeLine / 6_SxF / 1_Spy x Family Standard Edition"]);
     const problems = rootProblems(report, shipped.filter((deck) => ["persona-5", "tmnt", "sxf"].includes(deck.id)));
-    expect(problems).toEqual(["can't list: BeeLine / 6_SxF / Extras"]);
-    expect(problems.join("\n")).not.toMatch(/parentSxf001|scutGone0001/);
+    expect(problems).toEqual(["can't list: BeeLine / 6_SxF / 1_Spy x Family Standard Edition", "6_SxF: no Standard folder found under it"]);
+    expect(problems.join("\n")).not.toMatch(/parentSxf001|scutSxf00001/);
     const gone = await guardPublicTree("noSuchRoot01", list, NAMES);
     expect(gone.unreadable).toEqual(["public root"]);
   });
@@ -265,8 +255,10 @@ describe("the public-root guard", () => {
     world.wrapNew00001 = { name: "Extras", kind: "folder", children: [] };
     world.wrapNew00002 = { name: "12_Brand New", kind: "folder", children: [] };
     world.fakeRoot0001!.children!.push("wrapNew00001", "wrapNew00002");
+    // Root entries that aren't shipped decks only get this far when their paths are on the list.
+    const allowed = new Set([...NAMES, "Extras", "1_Spy x Family Standard Edition", "1_Spy x Family Standard Edition / 1_Spy x Family Standard Edition"]);
     const { list } = embeddedLister(world);
-    const report = await guardPublicTree("fakeRoot0001", list, NAMES);
+    const report = await guardPublicTree("fakeRoot0001", list, allowed);
     const problems = rootProblems(report, shipped);
     expect(problems).toContain("Extras: no Standard folder found under it");
     expect(problems).toContain("Extras: not one of the shipped decks");
@@ -280,7 +272,7 @@ describe("the public-root guard", () => {
     // Two entries for one deck.
     world.wrapSxf00002 = { name: "1_Spy x Family Standard Edition", kind: "folder", children: ["scutSxf00001"] };
     world.fakeRoot0001!.children!.push("wrapSxf00002");
-    const twice = rootProblems(await guardPublicTree("fakeRoot0001", embeddedLister(world).list, NAMES), shipped);
+    const twice = rootProblems(await guardPublicTree("fakeRoot0001", embeddedLister(world).list, allowed), shipped);
     expect(twice).toContain("1_Spy x Family Standard Edition: a second entry for SxF");
   });
 
@@ -305,26 +297,34 @@ describe("the public-root guard is an allow-list", () => {
     // The Cyrillic one reads as plain "dluxe edition" to the old edition match, so only the new rule catches it.
     expect(productEditionKind("D\u0435luxe Edition")).toBeNull();
     expect(productEditionKind("DLX Edition")).toBeNull();
-    for (const name of PUBLIC_FOLDER_NAMES) expect(looksLikePaidName(name), name).toBe(false);
+    for (const name of [...PUBLIC_FOLDER_PATHS].flatMap((item) => item.split(" / "))) expect(looksLikePaidName(name), name).toBe(false);
     for (const name of ["Standard Edition", "Full Deck", "Extras", "Tokens", "Card Back", "PDF Decklist"]) expect(looksLikePaidName(name), name).toBe(false);
     // Separators are dropped before the word match, so a name that runs "p" into "f" across a space is refused
     // too. That errs toward stopping the build; no public name does it today (checked above).
     expect(looksLikePaidName("Top Fetch")).toBe(true);
   });
 
-  it("keeps the allow-list to plain public names: no duplicates, no paid word, ASCII only", () => {
-    expect(PUBLIC_FOLDER_NAMES.size).toBeGreaterThan(100);
-    for (const name of PUBLIC_FOLDER_NAMES) {
-      expect(name).toBe(name.trim());
-      expect(name).toMatch(/^[\x20-\x7e]+$/);
-      expect(looksLikePaidName(name), name).toBe(false);
+  it("keeps the allow-list to plain public name paths: no duplicates, no paid word, ASCII only, parents listed", () => {
+    expect(PUBLIC_FOLDER_PATHS.size).toBeGreaterThan(100);
+    for (const item of PUBLIC_FOLDER_PATHS) {
+      const names = item.split(" / ");
+      for (const name of names) {
+        expect(name, item).not.toBe("");
+        expect(name, item).toBe(name.trim());
+        expect(name, item).toMatch(/^[\x20-\x7e]+$/);
+        expect(looksLikePaidName(name), item).toBe(false);
+      }
+      // Every path's parent is on the list too, so nothing is reachable only through a gap.
+      if (names.length > 1) expect(PUBLIC_FOLDER_PATHS.has(names.slice(0, -1).join(" / ")), item).toBe(true);
     }
-    // Each name written once in the source list.
-    const listed = [...readFileSync(path.join(root, "scripts/public-folder-names.ts"), "utf8").matchAll(/^  ("(?:[^"\\]|\\.)*"),$/gm)].map((match) => JSON.parse(match[1]!) as string);
-    expect(listed).toHaveLength(PUBLIC_FOLDER_NAMES.size);
-    for (const name of ["1_X-Men Standard Edition", "Full Deck", "Extras", "Tokens", "Card Back", "10_Persona 5", "TMNT"]) {
-      expect(PUBLIC_FOLDER_NAMES.has(name), name).toBe(true);
+    // Each path written once in the source list.
+    const listed = [...readFileSync(path.join(root, "scripts/public-folder-paths.ts"), "utf8").matchAll(/^  ("(?:[^"\\]|\\.)*"),$/gm)].map((match) => JSON.parse(match[1]!) as string);
+    expect(listed).toHaveLength(PUBLIC_FOLDER_PATHS.size);
+    for (const item of ["2_X-Men / 1_X-Men Standard Edition", "10_Persona 5 / 1_P5 Standard Edition / Full Deck", "6_SxF / 1_Spy x Family Standard Edition / Extras", "10_Persona 5", "1_TMNT / TMNT"]) {
+      expect(PUBLIC_FOLDER_PATHS.has(item), item).toBe(true);
     }
+    // Bare names are not paths: "Extras" is allowed only where it is.
+    for (const name of ["Extras", "Full Deck", "TMNT", "6_SxF / Extras"]) expect(PUBLIC_FOLDER_PATHS.has(name), name).toBe(false);
   });
 
   for (const name of DISGUISED) {
@@ -333,7 +333,7 @@ describe("the public-root guard is an allow-list", () => {
       world.sneaky000001 = { name, kind: "folder", children: ["sneakyFile01"] };
       world.sneakyFile01 = { name: "Sol Ring.png", kind: "file" };
       world.fullSxf_fake!.children!.push("sneaky000001");
-      for (const allowed of [NAMES, new Set([...NAMES, name])]) {
+      for (const allowed of [NAMES, new Set([...NAMES, `6_SxF / 1_Spy x Family Standard Edition / Full Deck / ${name}`])]) {
         const { list, listed } = embeddedLister(world);
         const report = await guardPublicTree("fakeRoot0001", list, allowed);
         const where = `BeeLine / 6_SxF / 1_Spy x Family Standard Edition / Full Deck / ${name}`;
@@ -375,13 +375,105 @@ describe("the public-root guard is an allow-list", () => {
     const world = beeLine();
     world.oddTarget001 = { name: "Old Stuff", kind: "folder", children: ["oddInner001"] };
     world.oddInner001 = { name: "Full Deck", kind: "folder", children: [] };
-    world.scutOdd0001 = { name: "Extras", kind: "shortcut", target: "oddTarget001" };
-    world.wrapTmnt0001!.children!.push("scutOdd0001");
+    world.scutTmnt0001!.target = "oddTarget001";
     const { list, listed } = embeddedLister(world);
     const report = await guardPublicTree("fakeRoot0001", list, NAMES);
-    expect(report.unknown).toEqual(["BeeLine / 1_TMNT / Extras (shortcut to “Old Stuff”)"]);
+    expect(report.unknown).toEqual(["BeeLine / 1_TMNT / TMNT (shortcut to “Old Stuff”)"]);
     expect(listed).toContain("oddTarget001");
     expect(listed).not.toContain("oddInner001");
+  });
+
+  it("refuses an allowed name in the wrong place: an Extras shortcut to a paid edition's Extras folder, at deck level or deeper", async () => {
+    for (const where of ["deck", "standard"] as const) {
+      const world = beeLine();
+      world.dlxSxf_fake!.children!.push("dlxExtraSxf1");
+      world.dlxExtraSxf1 = { name: "Extras", kind: "folder", children: ["dlxExtraFil1"] };
+      world.dlxExtraFil1 = { name: "Sol Ring.png", kind: "file" };
+      world.scutExtra901 = { name: "Extras", kind: "shortcut", target: "dlxExtraSxf1" };
+      // At deck level the path isn't on the list; inside Standard the path is ("Extras" really is there), but
+      // a shortcut that deep is never followed.
+      (where === "deck" ? world.wrapSxf00001! : world.stdSxf_fake!).children!.push("scutExtra901");
+      const { list, listed } = embeddedLister(world);
+      const report = await guardPublicTree("fakeRoot0001", list, NAMES);
+      expect(report.paid).toEqual([]);
+      expect(report.unknown).toEqual([where === "deck" ? "BeeLine / 6_SxF / Extras" : "BeeLine / 6_SxF / 1_Spy x Family Standard Edition / Extras (shortcut below deck level)"]);
+      expect(listed).not.toContain("dlxExtraSxf1");
+      expect(listed.filter((id) => PAID_IDS.test(id))).toEqual([]);
+      expect(() => assertPublicTreeFree(report)).toThrow(PublicTreeError);
+      // With the old flat list, where "Extras" was allowed anywhere, this would have been walked.
+      expect(NAMES.has(`6_SxF / ${where === "deck" ? "" : "1_Spy x Family Standard Edition / "}Extras`)).toBe(where === "standard");
+    }
+  });
+
+  it("follows a shortcut only at deck level: not inside a folder reached through a shortcut", async () => {
+    const world = beeLine();
+    world.scutWrapTm01 = { name: "1_TMNT", kind: "shortcut", target: "wrapTmnt0001" };
+    world.fakeRoot0001!.children = ["wrapP500001", "scutWrapTm01", "wrapSxf00001"];
+    const { list, listed } = embeddedLister(world);
+    const report = await guardPublicTree("fakeRoot0001", list, NAMES);
+    expect(report.unknown).toEqual(["BeeLine / 1_TMNT / TMNT (shortcut below deck level)"]);
+    expect(listed).toContain("wrapTmnt0001");
+    expect(listed).not.toContain("stdTmnt_fake");
+    expect(report.decks.map((deck) => deck.standard)).toEqual(["1_P5 Standard Edition", null, "1_Spy x Family Standard Edition"]);
+
+    // Nor below a deck folder's own plain subfolder, even when every name on the path is on the list.
+    const plain = beeLine();
+    plain.boxSxf000001 = { name: "Box", kind: "folder", children: ["scutBoxExtra"] };
+    plain.scutBoxExtra = { name: "Extras", kind: "shortcut", target: "stdP5_fake" };
+    plain.wrapSxf00001!.children!.push("boxSxf000001");
+    plain.wrapP500001!.children = [];
+    const deeper = embeddedLister(plain);
+    const allowed = new Set([...NAMES, "6_SxF / Box", "6_SxF / Box / Extras"]);
+    const deep = await guardPublicTree("fakeRoot0001", deeper.list, allowed);
+    expect(deep.unknown).toEqual(["BeeLine / 6_SxF / Box / Extras (shortcut below deck level)"]);
+    expect(deeper.listed).toContain("boxSxf000001");
+    expect(deeper.listed).not.toContain("stdP5_fake");
+  });
+
+  it("refuses an empty or missing listing title instead of trusting the shortcut's name", async () => {
+    for (const title of ["", "   ", undefined]) {
+      const world = beeLine();
+      const { list: plain, listed } = embeddedLister(world);
+      // The TMNT Standard folder comes back with no title.
+      const list: Lister = async (id) => {
+        const listing = await plain(id);
+        return id === "stdTmnt_fake" ? ({ ...listing, title } as unknown as ListedFolder) : listing;
+      };
+      const report = await guardPublicTree("fakeRoot0001", list, NAMES);
+      expect(report.unknown).toEqual(["BeeLine / 1_TMNT / TMNT (listing has no title)"]);
+      expect(listed).toContain("stdTmnt_fake");
+      expect(listed).not.toContain("fullTmnt_fake");
+      expect(() => assertPublicTreeFree(report)).toThrow(PublicTreeError);
+    }
+  });
+
+  it("refuses a folder with no name, and a root with no title, without listing anything under them", async () => {
+    const world = beeLine();
+    world.blankName001 = { name: "", kind: "folder", children: ["dlxSxf_fake"] };
+    world.fakeRoot0001!.children!.push("blankName001");
+    const { list, listed } = embeddedLister(world);
+    const report = await guardPublicTree("fakeRoot0001", list, NAMES);
+    expect(report.unknown).toEqual(["BeeLine / (folder with no name)"]);
+    expect(report.decks).toHaveLength(3);
+    expect(listed).not.toContain("blankName001");
+
+    world.fakeRoot0001!.name = "";
+    const blank = embeddedLister(world);
+    const rootReport = await guardPublicTree("fakeRoot0001", blank.list, NAMES);
+    expect(rootReport.unknown).toEqual(["public root (listing has no title)"]);
+    expect(blank.listed).toEqual(["fakeRoot0001"]);
+    expect(() => assertPublicTreeFree(rootReport)).toThrow(PublicTreeError);
+  });
+
+  it("refuses the deck parent reached through an allowed shortcut path by its title, before walking it", async () => {
+    const world = beeLine();
+    delete world.parentSxf001!.restricted;
+    world.scutSxf00001!.target = "parentSxf001";
+    const { list, listed } = embeddedLister(world);
+    const report = await guardPublicTree("fakeRoot0001", list, NAMES);
+    expect(report.unknown).toEqual(["BeeLine / 6_SxF / 1_Spy x Family Standard Edition (shortcut to “6_SxF”)"]);
+    expect(listed.filter((id) => /^(dlx|pf)/.test(id))).toEqual([]);
+    expect(listed).not.toContain("stdSxf_fake");
   });
 
   it("build-catalogue stops on a paid folder, an unlisted name, or a folder it couldn't read, before building", async () => {
@@ -389,11 +481,10 @@ describe("the public-root guard is an allow-list", () => {
     await expect(checkPublicTree("fakeRoot0001", embeddedLister(good).list)).resolves.toMatchObject({ paid: [], unknown: [], unreadable: [] });
 
     const unreadable = beeLine();
-    unreadable.scutGone0001 = { name: "Extras", kind: "shortcut", target: "parentSxf001" };
-    unreadable.wrapSxf00001!.children!.push("scutGone0001");
+    unreadable.scutSxf00001!.target = "parentSxf001";
     const failed = await checkPublicTree("fakeRoot0001", embeddedLister(unreadable).list).catch((error: Error) => error);
     expect(failed).toBeInstanceOf(PublicTreeError);
-    expect((failed as Error).message).toContain("can't list: BeeLine / 6_SxF / Extras");
+    expect((failed as Error).message).toContain("can't list: BeeLine / 6_SxF / 1_Spy x Family Standard Edition");
     for (const id of Object.keys(unreadable)) expect((failed as Error).message).not.toContain(id);
 
     const rootGone = await checkPublicTree("noSuchRoot01", embeddedLister(good).list).catch((error: Error) => error);
@@ -514,6 +605,30 @@ describe("unlocking from a pasted link", () => {
       expect(catalogue.editions.map((edition) => edition.printType)).toEqual(["standard"]);
       expect(JSON.stringify(tree)).toContain("fileSxf_fake");
       expect([...api.listed, ...api.meta].filter((id) => PAID_IDS.test(id))).toEqual([]);
+      noParents(api.requests);
+    }
+  });
+
+  it("a free paste never opens a folder with a disguised paid name (DLX, PF, a Cyrillic Deluxe), as a folder or a shortcut", async () => {
+    const world = beeLine();
+    world.dlxInStd001 = { name: "DLX Edition", kind: "folder", children: ["dlxInStdF01"] };
+    world.dlxInStdF01 = { name: "Sol Ring 9.png", kind: "file" };
+    world.pfInStd0001 = { name: "PF Edition", kind: "folder", children: ["pfInStdF001"] };
+    world.pfInStdF001 = { name: "Sol Ring 8.pdf", kind: "file" };
+    world.cyrScut0001 = { name: "D\u0435luxe Edition", kind: "shortcut", target: "cyrTarget01" };
+    world.cyrTarget01 = { name: "D\u0435luxe Edition", kind: "folder", children: ["cyrFile0001"] };
+    world.cyrFile0001 = { name: "Sol Ring 7.png", kind: "file" };
+    world.stdSxf_fake!.children!.push("dlxInStd001", "pfInStd0001", "cyrScut0001");
+    for (const pasted of ["stdSxf_fake", "wrapSxf00001", "scutSxf00001"]) {
+      const { tree, api } = await unlock(world, pasted);
+      const flat = JSON.stringify(tree);
+      expect(flat).toContain("fileSxf_fake");
+      expect(flat).not.toMatch(/dlxInStdF01|pfInStdF001|cyrFile0001/);
+      expect(api.listed).not.toContain("dlxInStd001");
+      expect(api.listed).not.toContain("pfInStd0001");
+      expect(api.listed).not.toContain("cyrTarget01");
+      // None of these names is a paid edition to the old edition match, so only looksLikePaidName stops them.
+      for (const name of ["DLX Edition", "PF Edition", "D\u0435luxe Edition"]) expect(productEditionKind(name)).toBeNull();
       noParents(api.requests);
     }
   });

@@ -7,7 +7,7 @@
  *
  * Lists the public BeeLine folder through the embedded folder view (no sign-in), following shortcuts to
  * each deck's Standard folder. Before building, it walks the whole public root as an allow-list
- * (scripts/public-folder-names.ts) and fails on any folder named like a paid edition, any folder name not on
+ * (scripts/public-folder-paths.ts) and fails on any folder named like a paid edition, any folder name path not on
  * the list, and any folder it couldn't read, naming the folder path, never an id. Paid folders are never
  * requested, so their ids cannot land in the JSON.
  */
@@ -16,7 +16,7 @@ import path from "node:path";
 import { assertPublicTreeFree, buildShippedStandardTree, guardPublicTree, type Lister, type PublicTreeReport } from "../src/lib/crawl";
 import { catalogueFromTree, isCompleteCollectionName, isFullDeckFolderName } from "../src/lib/group";
 import type { DeckIndex, RawNode } from "../src/lib/types";
-import { PUBLIC_FOLDER_NAMES } from "./public-folder-names";
+import { PUBLIC_FOLDER_PATHS } from "./public-folder-paths";
 import { PUBLIC_ROOT, listEmbedded } from "./public-root";
 
 function treeHasDeckFolder(node: RawNode): boolean {
@@ -75,11 +75,11 @@ async function buildDeck(root: string, deckQuery: string, out: string, expectId?
 }
 
 /**
- * One walk of the whole public root before anything is built. A paid-looking folder, a folder name that
- * isn't on the allow-list, or a folder that couldn't be read (report.unreadable, as check-public-root
+ * One walk of the whole public root before anything is built. A paid-looking folder, a folder name path
+ * that isn't on the allow-list, or a folder that couldn't be read (report.unreadable, as check-public-root
  * treats it) stops the build.
  */
-export async function checkPublicTree(root: string, list: Lister, allowed: ReadonlySet<string> = PUBLIC_FOLDER_NAMES): Promise<PublicTreeReport> {
+export async function checkPublicTree(root: string, list: Lister, allowed: ReadonlySet<string> = PUBLIC_FOLDER_PATHS): Promise<PublicTreeReport> {
   const report = await guardPublicTree(root, list, allowed);
   assertPublicTreeFree(report);
   return report;

@@ -152,8 +152,9 @@ describe("the tour", () => {
     expect(inBuilder()).toBe(false);
     // Started from the prompt, whose buttons are gone now: focus lands on the Tour button, not the page.
     expect(document.activeElement?.getAttribute("data-tour-button")).toBe("");
-    // The preview is gone: no "You were building" banner, and nothing was saved or changed.
-    expect(document.body.textContent).not.toContain("You were building");
+    // The preview is gone: Continue still offers the saved deck, not the preview, and nothing was saved or changed.
+    expect(document.querySelectorAll("[data-resume]").length).toBe(1);
+    expect(document.querySelector("[data-resume] strong")!.textContent).toBe("My TMNT");
     expect(otherKeys()).toEqual(before);
     expect(document.body.textContent).toContain("My TMNT");
   });
@@ -259,7 +260,7 @@ describe("the tour", () => {
     await click(document.querySelector('button[aria-label^="More copies of"]'));
     await click(button("Decks"));
     expect(inBuilder()).toBe(false);
-    expect(document.body.textContent).toContain("You were building");
+    expect(document.body.textContent).toContain("Continue where you left off");
     const before = otherKeys();
     await click(button("Take the tour"));
     await click(button("Next"));
@@ -271,7 +272,7 @@ describe("the tour", () => {
     await click(button("Done"));
     expect(stepId()).toBeNull();
     expect(inBuilder()).toBe(false);
-    expect(document.body.textContent).toContain("You were building");
+    expect(document.body.textContent).toContain("Continue where you left off");
     await click(button("Continue"));
     expect(total()).toMatch(/^101 cards/);
     expect(otherKeys()).toEqual(before);

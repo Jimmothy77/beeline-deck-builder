@@ -172,11 +172,14 @@ export type PublicTreeReport = {
 };
 
 /**
- * Walk the public root, following shortcuts, as an allow-list. Below the root a folder (or folder
- * shortcut) is listed only when its exact name is one of `allowed` and nothing about the name looks paid
- * (looksLikePaidName); anything else is recorded by name path and never listed. A shortcut's own title is
- * checked before its target is listed; the target's title, which only comes with its listing, must pass
- * the same check before anything inside it is walked. Only names are reported, so nothing here prints an id.
+ * Walk the public root, following shortcuts, as an allow-list of name paths. Below the root a folder (or
+ * folder shortcut) is listed only when its whole name path from the root (names joined with " / ", the
+ * root left out) is one of `allowed` and no name on it looks paid (looksLikePaidName); anything else is
+ * recorded by name path and never listed. A shortcut is followed only at deck level: as an entry of the
+ * root, or inside a plain folder that is one. A shortcut's own name path is checked before its target is
+ * listed; the target's title, which only comes with its listing, must make an allowed path in the
+ * shortcut's place before anything inside it is walked. A missing or empty name or title is refused. Only
+ * names are reported, so nothing here prints an id.
  */
 export async function guardPublicTree(rootId: string, list: Lister, allowed: ReadonlySet<string>): Promise<PublicTreeReport> {
   const report: PublicTreeReport = { title: "", folders: 0, shortcuts: 0, paid: [], unknown: [], unreadable: [], decks: [] };
@@ -189,19 +192,37 @@ export async function guardPublicTree(rootId: string, list: Lister, allowed: Rea
     return report;
   }
   report.folders += 1;
-  report.title = root.title || "public root";
+  if (!hasName(root.title)) {
+    report.title = "public root";
+    report.unknown.push("public root (listing has no title)");
+    return report;
+  }
+  report.title = root.title;
   if (paidEditionName(report.title)) {
     report.paid.push(report.title);
     return report;
   }
   seen.add(rootId);
-  /** Where a name goes when it can't be walked, or null when it may be. */
-  const refusal = (name: string): "paid" | "unknown" | null => (paidEditionName(name) ? "paid" : allowed.has(name) ? null : "unknown");
-  async function walk(entry: ListedEntry, trail: string[], deck: PublicTreeReport["decks"][number] | null): Promise<void> {
+  const shown = (names: string[]) => [report.title, ...names].join(" / ");
+  /** Where a name path below the root goes when it can't be walked, or null when it may be. */
+  const refusal = (names: string[]): "paid" | "unknown" | null => {
+    if (names.some((name) => paidEditionName(name))) return "paid";
+    return names.every(hasName) && allowed.has(names.join(" / ")) ? null : "unknown";
+  };
+  /** `inShortcut`: some folder above this one was reached through a shortcut. */
+  async function walk(entry: ListedEntry, trail: string[], deck: PublicTreeReport["decks"][number] | null, inShortcut: boolean): Promise<void> {
     const here = [...trail, entry.name];
-    const refused = refusal(entry.name);
+    if (!hasName(entry.name)) {
+      report.unknown.push(`${shown(trail)} / (folder with no name)`);
+      return;
+    }
+    const refused = refusal(here);
     if (refused) {
-      report[refused].push(here.join(" / "));
+      report[refused].push(shown(here));
+      return;
+    }
+    if (entry.shortcut && (here.length > 2 || inShortcut)) {
+      report.unknown.push(`${shown(here)} (shortcut below deck level)`);
       return;
     }
     const id = listId(entry);
@@ -212,14 +233,18 @@ export async function guardPublicTree(rootId: string, list: Lister, allowed: Rea
     try {
       listing = await list(id);
     } catch {
-      report.unreadable.push(here.join(" / "));
+      report.unreadable.push(shown(here));
       return;
     }
     report.folders += 1;
-    const title = listing.title || entry.name;
-    const refusedTitle = title === entry.name ? null : refusal(title);
+    const title = listing.title;
+    if (!hasName(title)) {
+      report.unknown.push(`${shown(here)} (listing has no title)`);
+      return;
+    }
+    const refusedTitle = title === entry.name ? null : refusal([...trail, title]);
     if (refusedTitle) {
-      report[refusedTitle].push(`${here.join(" / ")} (shortcut to “${title}”)`);
+      report[refusedTitle].push(`${shown(here)} (shortcut to “${title}”)`);
       return;
     }
     if (deck) {
@@ -227,16 +252,21 @@ export async function guardPublicTree(rootId: string, list: Lister, allowed: Rea
       if (!deck.standard && looksLikeStandard(title, listing)) deck.standard = title;
     }
     for (const child of listing.entries) {
-      if (child.folder) await walk(child, here, deck);
+      if (child.folder) await walk(child, here, deck, inShortcut || Boolean(entry.shortcut));
     }
   }
   for (const entry of root.entries) {
     if (!entry.folder) continue;
-    const deck = refusal(entry.name) ? null : { entry: entry.name, via: [] as string[], standard: null as string | null };
+    const deck = refusal([entry.name]) ? null : { entry: entry.name, via: [] as string[], standard: null as string | null };
     if (deck) report.decks.push(deck);
-    await walk(entry, [report.title], deck);
+    await walk(entry, [], deck, false);
   }
   return report;
+}
+
+/** A name or title that is present and not just spaces. */
+function hasName(name: string | undefined | null): name is string {
+  return typeof name === "string" && name.trim() !== "";
 }
 
 /** A Standard edition folder, or a deck folder that holds the cards itself (TMNT, Horror). */

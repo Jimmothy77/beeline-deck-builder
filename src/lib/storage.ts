@@ -8,6 +8,8 @@ export const SAVED_KEY = "printabee.savedDecks.v1";
 /** One-time copy of the original v0.1.11 save, written on the first Save that converts it. */
 export const LEGACY_BACKUP_KEY = "printabee.savedDecks.v011";
 export const UNLOCK_KEY = "printabee.unlocked.v1";
+/** The deck being built when the page was last used, for "Continue where you left off". */
+export const LAST_SESSION_KEY = "printabee.lastSession.v1";
 
 export type SavedDeck = {
   id: string;
@@ -123,6 +125,28 @@ export function writeSaved(store: Store, decks: SavedDeck[]): string | null {
   return notice;
 }
 
+/**
+ * The deck to offer under "Continue where you left off": the last deck being built, or, for a save
+ * made before v0.1.35 (no record yet), the most recently saved deck. Null when nothing is saved.
+ * Both go through the saved-deck parser, so older save formats load the same way they do in the list.
+ */
+export function loadLastSession(store: Store, saved: SavedDeck[]): SavedDeck | null {
+  const last = parseSavedDeck(readJson(store, LAST_SESSION_KEY));
+  if (last) return last;
+  let newest: SavedDeck | null = null;
+  for (const deck of saved) if (!newest || deck.updatedAt > newest.updatedAt) newest = deck;
+  return newest;
+}
+
+/** Best effort. A full or blocked store only loses the Continue shortcut, never the deck. */
+export function writeLastSession(store: Store, deck: SavedDeck) {
+  try {
+    store.setItem(LAST_SESSION_KEY, JSON.stringify(deck));
+  } catch {
+    // The saved decks are untouched. Continue falls back to the newest saved deck.
+  }
+}
+
 /** Put the one-time v0.1.11 copy back. The backup itself stays, so it can be restored again. */
 export function restoreLegacyBackup(store: Store): SavedDeck[] | null {
   const raw = store.getItem(LEGACY_BACKUP_KEY);
@@ -205,7 +229,7 @@ export function forgetUnlocked(store: Store) {
 }
 
 /** Persist the catalogue and hashes. Folder ids and Drive links are not written. */
-function packForStorage(pack: UnlockedPack): Record<string, unknown> {
+export function packForStorage(pack: UnlockedPack): Record<string, unknown> {
   const stored: Record<string, unknown> = {
     packHash: pack.packHash || (pack.folderId ? packHash(pack.folderId) : ""),
     savedAt: pack.savedAt,
@@ -260,7 +284,7 @@ export function fnvPackHash(folderId: string): string {
   return ((a >>> 0).toString(16).padStart(8, "0") + (b >>> 0).toString(16).padStart(8, "0")).slice(0, 12);
 }
 
-function sha256Hex(message: string): string {
+export function sha256Hex(message: string): string {
   const data = new TextEncoder().encode(message);
   const bitLength = data.length * 8;
   const withPad = new Uint8Array(((data.length + 9 + 63) >> 6) << 6);
@@ -1076,7 +1100,7 @@ function parseEdition(value: unknown): Edition | null {
   };
 }
 
-function parseUnlocked(value: unknown): UnlockedPack | null {
+export function parseUnlocked(value: unknown): UnlockedPack | null {
   if (!value || typeof value !== "object") return null;
   const pack = value as Record<string, unknown>;
   const folderId = typeof pack.folderId === "string" && pack.folderId ? pack.folderId : undefined;

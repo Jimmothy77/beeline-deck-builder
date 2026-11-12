@@ -3,6 +3,7 @@ import path from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { BeeLineBanner } from "@/components/BeeLineBanner";
+import { MERIDIAN_ART } from "@/lib/flight";
 import { BANNER_COPY, SHOP_URL } from "@/components/banner-copy";
 
 const root = path.resolve(import.meta.dirname, "../..");
@@ -31,19 +32,32 @@ describe("BeeLine banner", () => {
 
   it("puts the slot left of the wordmark, the card in the orbit, and the yellow bee on top", () => {
     expect(html.indexOf("brand-slot")).toBeLessThan(html.indexOf("wordmark"));
-    expect(html).toMatch(/class="orbit"[^>]*><img class="emblem-back" src="[^"]*brand\/meridian-back\.png"[^>]*\/><img class="emblem-front" src="[^"]*brand\/meridian-front\.png"/);
+    expect(html).toMatch(/class="orbit"[^>]*><img class="emblem-back" src="[^"]*brand\/meridian-back\.webp"[^>]*\/><img class="emblem-front" src="[^"]*brand\/meridian-front\.webp"[^>]*\/><div class="emblem-shine"><\/div><\/div>/);
     expect(html).toMatch(/class="flyer" src="[^"]*brand\/beespair-bee-yellow\.svg"/);
   });
 
-  it("ships the traced mascot and meridian art unchanged from the mockups", () => {
+  it("ships the shiny meridian as copies of Frame Lab's splash art, byte for byte", () => {
+    for (const name of ["meridian-back.webp", "meridian-front.webp"]) {
+      const art = readFileSync(path.join(root, "public/brand", name));
+      expect(art.subarray(0, 4).toString("latin1")).toBe("RIFF");
+      expect(art.subarray(8, 12).toString("latin1")).toBe("WEBP");
+      expect(art.equals(readFileSync(path.join(root, "public/splash/assets", name)))).toBe(true);
+    }
+    // The old PNGs are gone; their size lives on only as the flight's measuring box.
+    expect(readdirSync(path.join(root, "public/brand")).filter((name) => name.endsWith(".png"))).toEqual([]);
+  });
+
+  it("measures the bee's flight on the original meridian size, so the path is unchanged", () => {
+    expect(MERIDIAN_ART).toEqual({ width: 437, height: 673 });
+    const source = readFileSync(path.join(root, "src/components/BeeLineBanner.tsx"), "utf8");
+    expect(source).toContain("containBox(relative(back.getBoundingClientRect(), bannerRect), MERIDIAN_ART)");
+    expect(source).not.toMatch(/naturalWidth|naturalHeight/);
+  });
+
+  it("ships the traced mascot unchanged from the mockups", () => {
     const bee = readFileSync(path.join(root, "public/brand/beespair-bee-yellow.svg"), "utf8");
     expect(bee).toMatch(/^<svg|<\?xml/);
     expect(readFileSync(path.join(root, "public/favicon.svg"), "utf8")).toBe(bee);
-    for (const name of ["meridian-back.png", "meridian-front.png"]) {
-      const png = readFileSync(path.join(root, "public/brand", name));
-      expect(png.readUInt32BE(16)).toBe(437);
-      expect(png.readUInt32BE(20)).toBe(673);
-    }
   });
 });
 
@@ -62,7 +76,25 @@ describe("banner stacking", () => {
     expect(z(/\.emblem-back\s*\{?$/)).toBe(1);
     expect(z(/\.flyer\.behind/)).toBe(2);
     expect(z(/\.emblem-front\s*$/)).toBe(3);
+    expect(z(/\.emblem-shine\s*$/)).toBe(3);
     expect(z(/\.flyer\s*$/)).toBe(4);
+  });
+
+  it("sweeps the gloss once like the splash, and holds it still for reduced motion", () => {
+    const shine = rules(/\.emblem-shine::before\s*$/);
+    expect(shine[0]).toMatch(/left: -60%;/);
+    expect(shine[0]).not.toMatch(/animation/);
+    expect(rules(/\.orbit\[data-gloss="play"\] \.emblem-shine::before\s*$/)[0]).toMatch(/^ animation: beeline-shine 0\.9s 0\.55s ease-in-out; $/);
+    const source = readFileSync(path.join(root, "src/components/BeeLineBanner.tsx"), "utf8");
+    expect(source).toMatch(/else \{\s*play\(\);[\s\S]{0,200}back\.parentElement\?\.setAttribute\("data-gloss", "play"\);\s*\}/);
+    // Only there: never on the reduced-motion path.
+    expect(source.match(/data-gloss/g)).toHaveLength(1);
+    expect(css).toMatch(/@keyframes beeline-shine \{\s*from \{ left: -60%; \}\s*to \{ left: 130%; \}\s*\}/);
+    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\) \{\s*\.beeline-banner \.emblem-shine::before \{ animation: none; \}\s*\}/);
+    const box = rules(/\.emblem-shine\s*$/)[0]!;
+    expect(box).toMatch(/mix-blend-mode: screen;/);
+    expect(box).toMatch(/overflow: hidden;/);
+    expect(box).toMatch(/top: 7\.7%;\s*bottom: 7\.7%;/);
   });
 
   it("lands at once for reduced motion", () => {
@@ -87,6 +119,6 @@ describe("rebrand", () => {
       expect(body, file).not.toMatch(new RegExp(["ja", "mes"].join(""), "i"));
     }
     expect(readFileSync(path.join(root, "index.html"), "utf8")).toContain("<title>BeeLine Deck Builder</title>");
-    expect(JSON.parse(readFileSync(path.join(root, "package.json"), "utf8"))).toMatchObject({ name: "beeline-deck-builder", version: "0.1.34" });
+    expect(JSON.parse(readFileSync(path.join(root, "package.json"), "utf8"))).toMatchObject({ name: "beeline-deck-builder", version: "0.1.35" });
   });
 });

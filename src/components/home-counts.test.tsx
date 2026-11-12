@@ -19,7 +19,7 @@ function cardLine(id: string): string {
       foil={[choice]}
       partial={[]}
       saved={[]}
-      sessionLabel={null}
+      resume={null}
       keyReady={false}
       unlockBusy={false}
       onBuild={noop}

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { publicUrl } from "@/lib/download";
 import { BANNER_COPY, SHOP_URL } from "@/components/banner-copy";
-import { buildFlight, containBox, DURATION_MS, measureFrom, poseAt, trailDots, type Flight } from "@/lib/flight";
+import { buildFlight, containBox, DURATION_MS, MERIDIAN_ART, measureFrom, poseAt, trailDots, type Flight } from "@/lib/flight";
 
 
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -15,8 +15,9 @@ function relative(rect: DOMRect, to: DOMRect) {
 }
 
 /**
- * Honey banner with the meridian Leyline mark and the yellow bee.
- * Stacking: the card back is z 1, the bee is z 2 (behind) or 4, the card front is z 3.
+ * Honey banner with the shiny meridian Leyline mark and the yellow bee.
+ * Stacking: the card back is z 1, the bee is z 2 (behind) or 4, the card front and its gloss are z 3.
+ * The meridian art and gloss sweep are lifted from Frame Lab's BeeLine splash (copied, not linked).
  * The orbit box and .banner-top set no z-index, filter, opacity, or transform,
  * so they do not form a stacking context and the bee can weave between the layers.
  */
@@ -44,8 +45,7 @@ export function BeeLineBanner() {
 
     const measure = (): Flight => {
       const bannerRect = banner.getBoundingClientRect();
-      const image = back.naturalWidth ? back : front;
-      const box = containBox(relative(image.getBoundingClientRect(), bannerRect), { width: image.naturalWidth, height: image.naturalHeight });
+      const box = containBox(relative(back.getBoundingClientRect(), bannerRect), MERIDIAN_ART);
       return buildFlight(measureFrom(bannerRect, box, relative(slot.getBoundingClientRect(), bannerRect)));
     };
 
@@ -96,7 +96,11 @@ export function BeeLineBanner() {
     const begin = () => {
       if (cancelled) return;
       if (prefersReducedMotion()) land();
-      else play();
+      else {
+        play();
+        // The gloss sweeps once, 0.55s into the flight, as it does 0.55s after the card lands on the splash.
+        back.parentElement?.setAttribute("data-gloss", "play");
+      }
     };
 
     const decode = (img: HTMLImageElement) => (img.decode ? img.decode().catch(() => undefined) : Promise.resolve());
@@ -126,8 +130,9 @@ export function BeeLineBanner() {
           <p className="blurb">{BANNER_COPY.blurb}</p>
         </div>
         <div className="orbit" aria-hidden="true">
-          <img ref={backRef} className="emblem-back" src={publicUrl("brand/meridian-back.png")} alt="" />
-          <img ref={frontRef} className="emblem-front" src={publicUrl("brand/meridian-front.png")} alt="" />
+          <img ref={backRef} className="emblem-back" src={publicUrl("brand/meridian-back.webp")} alt="" />
+          <img ref={frontRef} className="emblem-front" src={publicUrl("brand/meridian-front.webp")} alt="" />
+          <div className="emblem-shine" />
         </div>
       </div>
       <p className="credits">

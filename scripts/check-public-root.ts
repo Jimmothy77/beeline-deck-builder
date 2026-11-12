@@ -4,8 +4,8 @@
  *   npx tsx scripts/check-public-root.ts --check
  *
  * Walks the public BeeLine folder through its shortcuts as an allow-list (see guardPublicTree and
- * public-folder-names.ts) and fails when a folder is named like a paid edition, when a folder name isn't
- * on the list, when a folder can't be listed, or when a shipped deck has no entry
+ * public-folder-paths.ts) and fails when a folder is named like a paid edition, when a folder's name path
+ * isn't on the list, when a shortcut sits below deck level, when a name or title is empty, when a folder can't be listed, or when a shipped deck has no entry
  * leading to a Standard folder. It prints folder names only, never an id. It reads public folders only:
  * a paid-named or unlisted folder is never listed.
  */
@@ -15,7 +15,7 @@ import { canonicalDeckName } from "../src/data/deck-aliases";
 import { guardPublicTree, type PublicTreeReport } from "../src/lib/crawl";
 import { cleanDeckName, normalizeKey } from "../src/lib/names";
 import type { DeckIndex } from "../src/lib/types";
-import { PUBLIC_FOLDER_NAMES } from "./public-folder-names";
+import { PUBLIC_FOLDER_PATHS } from "./public-folder-paths";
 import { PUBLIC_ROOT, listEmbedded } from "./public-root";
 
 /** Which shipped deck a root entry is: by its own name, its shortcut's name, or its Standard folder's name. */
@@ -49,7 +49,7 @@ export function rootProblems(report: PublicTreeReport, shipped: DeckIndex["decks
 
 async function main() {
   const shipped = (JSON.parse(readFileSync(path.join("public", "decks", "index.json"), "utf8")) as DeckIndex).decks;
-  const report = await guardPublicTree(PUBLIC_ROOT, (id) => listEmbedded(id), PUBLIC_FOLDER_NAMES);
+  const report = await guardPublicTree(PUBLIC_ROOT, (id) => listEmbedded(id), PUBLIC_FOLDER_PATHS);
   console.log(`Public root “${report.title}”: ${report.decks.length} entries, ${report.folders} folders listed, ${report.shortcuts} shortcuts followed.`);
   for (const deck of report.decks) {
     const hit = deckForEntry(deck, shipped);
@@ -61,7 +61,7 @@ async function main() {
     for (const item of problems) console.error(`  ${item}`);
     process.exit(1);
   }
-  console.log(`Every folder below the root is on the allow-list (${PUBLIC_FOLDER_NAMES.size} names), none is named like a paid edition, every folder could be read, and all ${shipped.length} shipped decks lead to a Standard folder.`);
+  console.log(`Every folder below the root is on the allow-list (${PUBLIC_FOLDER_PATHS.size} paths), none is named like a paid edition, every folder could be read, and all ${shipped.length} shipped decks lead to a Standard folder.`);
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.meta.filename)) {

@@ -1,6 +1,8 @@
-import { useState } from "react";
-import { Download, FolderKey, Trash2 } from "lucide-react";
+import { useRef, useState } from "react";
+import { Download, FolderKey, Info, Trash2 } from "lucide-react";
 import { BeeLineBanner } from "@/components/BeeLineBanner";
+import { RestoreCode } from "@/components/RestoreCode";
+import { UnlockHere } from "@/components/UnlockHere";
 import { CardThumb } from "@/components/thumbs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,6 +15,8 @@ import { openingCopies } from "@/lib/draft";
 
 export type DeckChoice = { deck: DeckCatalogue; edition: Edition };
 
+export const PARTIAL_FOIL_NOTICE = "A Partial Foil link also unlocks that deck's Deluxe files.";
+
 export function HomeView({
   loading,
   error,
@@ -20,7 +24,12 @@ export function HomeView({
   partial,
   saved,
   legacyNotes,
-  sessionLabel,
+  resume,
+  unlockedCount = 0,
+  unlockedKey = "",
+  onMakeRestoreCode,
+  onRestoreCode,
+  hideFloating,
   keyReady,
   unlockBusy,
   onBuild,
@@ -41,7 +50,14 @@ export function HomeView({
   partial: DeckChoice[];
   saved: SavedDeck[];
   legacyNotes?: ReadonlyMap<string, string>;
-  sessionLabel: string | null;
+  /** The deck "Continue where you left off" reopens. Null hides it. */
+  resume: { name: string; detail: string } | null;
+  unlockedCount?: number;
+  unlockedKey?: string;
+  onMakeRestoreCode?: () => Promise<string>;
+  onRestoreCode?: (code: string) => Promise<string>;
+  /** Hides the floating Unlock Here button (tour or splash showing). */
+  hideFloating?: boolean;
   keyReady: boolean;
   unlockBusy: boolean;
   onBuild: (choice: DeckChoice) => void;
@@ -57,18 +73,25 @@ export function HomeView({
   onRestoreBackup: () => void;
 }) {
   const [link, setLink] = useState("");
+  const unlockRef = useRef<HTMLElement>(null);
+  const unlockHeadingRef = useRef<HTMLHeadingElement>(null);
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-10">
       <BeeLineBanner />
 
-      {sessionLabel && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/40 bg-primary/10 px-4 py-3">
-          <p className="text-sm">You were building <strong>{sessionLabel}</strong>.</p>
+      {resume && (
+        <section aria-labelledby="resume-heading" data-resume="" className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/40 bg-primary/10 px-4 py-3">
+          <div className="min-w-0">
+            <h2 id="resume-heading" className="text-sm font-semibold">Continue where you left off</h2>
+            <p className="truncate text-sm">
+              <strong>{resume.name}</strong> <span className="text-muted-foreground">· {resume.detail}</span>
+            </p>
+          </div>
           <Button type="button" onClick={onContinue}>
             Continue
           </Button>
-        </div>
+        </section>
       )}
 
       {error && (
@@ -100,13 +123,19 @@ export function HomeView({
         </div>
       )}
 
-      <section className="rounded-3xl border border-border bg-card/80 p-5 sm:p-6" data-tour="unlock">
+      <section ref={unlockRef} id="unlock" className="scroll-mt-4 rounded-3xl border border-border bg-card/80 p-5 sm:p-6" data-tour="unlock">
         <div className="flex items-start gap-3">
           <FolderKey className="mt-0.5 size-5 text-primary" aria-hidden="true" />
           <div>
-            <h2 className="font-heading text-2xl">Unlock a paid deck</h2>
+            <h2 ref={unlockHeadingRef} tabIndex={-1} className="font-heading text-2xl outline-none">
+              Unlock a paid deck
+            </h2>
             <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
               Paste the Google Drive folder link from your Ko-fi order. BeeLine lists it in this browser and keeps the deck list on this device. Paid file ids are not shipped with the site.
+            </p>
+            <p className="mt-2 flex max-w-2xl items-start gap-2 rounded-xl border border-cyan-100/30 bg-cyan-100/10 px-3 py-2 text-sm" data-partial-foil-notice="">
+              <Info className="mt-0.5 size-4 shrink-0 text-cyan-100" aria-hidden="true" />
+              <span>{PARTIAL_FOIL_NOTICE}</span>
             </p>
           </div>
         </div>
@@ -146,7 +175,9 @@ export function HomeView({
         <Button type="button" variant="ghost" className="mt-1 px-0 text-muted-foreground" onClick={onForgetUnlocks}>
           Forget unlocked folders on this device
         </Button>
+        {onMakeRestoreCode && onRestoreCode && <RestoreCode unlockedCount={unlockedCount} unlockedKey={unlockedKey} onMakeCode={onMakeRestoreCode} onRestore={onRestoreCode} />}
       </section>
+      <UnlockHere target={unlockRef} focusTarget={unlockHeadingRef} hidden={hideFloating} />
 
       <section>
         <div className="mb-3 flex flex-wrap items-end justify-between gap-3">

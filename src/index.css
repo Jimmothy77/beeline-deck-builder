@@ -185,6 +185,50 @@
 .beeline-banner .emblem-front { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
 .beeline-banner .emblem-back { z-index: 1; }
 .beeline-banner .emblem-front { z-index: 3; }
+/*
+ * v0.1.35 shiny meridian, lifted from Frame Lab's BeeLine splash (splashes/beeline.html): the webp art, the
+ * back's drop shadow, and one gloss sweep over the card window (screen blend, 0.9s after a 0.55s wait,
+ * counted from the start of the bee's flight: data-gloss="play" is set when the flight begins).
+ * Sizes follow the card's height (--orbit-h), as the splash's follow --H. The art is 292 x 450, so the
+ * card is 0.6489 of that height wide; the gloss covers 76% of that width and 84.6% of the height.
+ * At rest the gloss band's top edge catches the card's top-left corner (the reference still).
+ * Reduced motion: no sweep, just that still glossy frame.
+ */
+.beeline-banner .orbit { --orbit-h: 167px; }
+@media (min-width: 640px) {
+  .beeline-banner .orbit { --orbit-h: 200px; }
+}
+.beeline-banner .emblem-back { filter: drop-shadow(0 calc(var(--orbit-h) * 0.0318) calc(var(--orbit-h) * 0.0455) rgba(80, 35, 0, 0.35)); }
+.beeline-banner .emblem-shine {
+  position: absolute;
+  z-index: 3;
+  top: 7.7%;
+  bottom: 7.7%;
+  left: calc(50% - var(--orbit-h) * 0.2466);
+  width: calc(var(--orbit-h) * 0.4932);
+  overflow: hidden;
+  border-radius: 4%;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+.beeline-banner .emblem-shine::before {
+  content: "";
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  width: 45%;
+  left: -60%;
+  background: linear-gradient(100deg, transparent, rgba(255, 226, 140, 0.55), transparent);
+  transform: skewX(-18deg);
+}
+.beeline-banner .orbit[data-gloss="play"] .emblem-shine::before { animation: beeline-shine 0.9s 0.55s ease-in-out; }
+@keyframes beeline-shine {
+  from { left: -60%; }
+  to { left: 130%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .beeline-banner .emblem-shine::before { animation: none; }
+}
 .beeline-banner .flyer {
   position: absolute;
   left: 0;
@@ -255,4 +299,13 @@
   .beeline-flyout[data-flyout-motion] { animation: beeline-flyout-fade-in var(--flyout-fade-ms, 60ms) linear both; }
   /* Extras / Tokens overlay: fade only, no zoom. */
   .beeline-overlay { --tw-enter-scale: 1; --tw-exit-scale: 1; }
+}
+
+/* v0.1.35 floating Unlock Here button: the arrows nudge toward the unlock section. Still under reduced motion. */
+.unlock-here-arrow { animation: unlock-here-nudge 1.6s ease-in-out infinite; }
+[data-unlock-here="above"] .unlock-here-arrow { animation-name: unlock-here-nudge-up; }
+@keyframes unlock-here-nudge { 0%, 100% { transform: translateY(-1px); } 50% { transform: translateY(2px); } }
+@keyframes unlock-here-nudge-up { 0%, 100% { transform: translateY(1px); } 50% { transform: translateY(-2px); } }
+@media (prefers-reduced-motion: reduce) {
+  .unlock-here-arrow { animation: none; }
 }

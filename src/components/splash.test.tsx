@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi, type TestContext } from "vitest";
 import App from "@/App";
 import { Splash, type SplashEnd } from "@/components/Splash";
 import { SPLASH_ASSETS, SPLASH_FALLBACK } from "@/data/splash-assets";
@@ -24,7 +24,7 @@ import {
   splashLimitMs,
   type SplashChoice,
 } from "@/lib/splash";
-import { writeSaved } from "@/lib/storage";
+import { LAST_SESSION_KEY, writeSaved } from "@/lib/storage";
 import { TOUR_KEY } from "@/lib/tour";
 import type { DeckCatalogue } from "@/lib/types";
 
@@ -42,14 +42,82 @@ let reactRoot: Root;
 let reduced: boolean;
 
 /**
+ * v0.1.35 flake fix. Under a mutation run one test could crawl past its timeout while still inside an
+ * act() that wrapped vi.advanceTimersByTimeAsync. Its act() scope stayed open, the next tests' act() calls
+ * overlapped it ("You seem to have overlapping act() calls"), and its still-mounted app failed every test
+ * after it. Now:
+ *  - the fake clock is advanced outside act(), so no act() scope is open while timers run, and React's
+ *    work from them is flushed by a short act() afterwards;
+ *  - every step runs through one queue tagged with the test it belongs to. A step from a test that has
+ *    ended throws instead of touching the page, and afterEach waits for the last step before it unmounts.
+ *  - afterEach clears the fake timers, unmounts inside an awaited act() and empties the page, so nothing
+ *    of one test is left for the next; when a test fails or times out it logs what it was doing (the step
+ *    running and for how long, the steps done, pending fake timers, and what the page showed).
+ */
+let currentTest = 0;
+let lastStep: Promise<unknown> = Promise.resolve();
+/** The step running now (for the timeout log), and how many steps this test has finished. */
+let running: { label: string; since: number } | null = null;
+let stepsDone = 0;
+const realSetTimeout = globalThis.setTimeout;
+class EndedTest extends Error {}
+function step<T>(work: () => Promise<T>, label = "step"): Promise<T> {
+  const mine = currentTest;
+  const run = lastStep.then(async () => {
+    if (mine !== currentTest) throw new EndedTest("this test already ended");
+    running = { label, since: performance.now() };
+    try {
+      const out = await work();
+      if (mine !== currentTest) throw new EndedTest("this test already ended");
+      stepsDone += 1;
+      return out;
+    } finally {
+      running = null;
+    }
+  });
+  lastStep = run.catch(() => undefined);
+  return run;
+}
+/** One line of what the page and the clock were doing, for a test that failed or timed out. */
+function diagnostics(): string {
+  const text = (document.body.textContent ?? "").replace(/\s+/g, " ").trim().slice(0, 240);
+  const parts = [
+    running ? `running step “${running.label}” for ${Math.round(performance.now() - running.since)} ms` : "no step running",
+    `${stepsDone} steps done`,
+    `fake timers ${vi.isFakeTimers() ? `on, ${vi.getTimerCount()} pending` : "off"}`,
+    `splash ${splash() ? "open" : "closed"}`,
+    `builder ${inBuilder() ? "open" : "closed"}`,
+    `focus ${document.activeElement?.tagName.toLowerCase() ?? "none"}`,
+    `page “${text}”`,
+  ];
+  return parts.join("; ");
+}
+/** Fires due fake timers outside act(), with React's act-environment flag off so their updates schedule as in a browser. */
+async function fireTimers(ms: number) {
+  const env = globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean };
+  env.IS_REACT_ACT_ENVIRONMENT = false;
+  try {
+    await vi.advanceTimersByTimeAsync(ms);
+  } finally {
+    env.IS_REACT_ACT_ENVIRONMENT = true;
+  }
+}
+/** Lets React finish what is pending: a real macrotask turn (setImmediate is not faked) inside one act(). */
+async function flushReact() {
+  await act(async () => {
+    await new Promise<void>((resolve) => setImmediate(resolve));
+  });
+}
+/**
  * Lets React and pending promises run. Under the fake clock nothing moves on its own: time only passes
  * when a test says so, so `settle()` steps the fake clock by `ms` (0 runs only what is already due).
  */
-async function settle(ms = 0) {
-  await act(async () => {
-    if (vi.isFakeTimers()) await vi.advanceTimersByTimeAsync(ms);
+function settle(ms = 0) {
+  return step(async () => {
+    if (vi.isFakeTimers()) await fireTimers(ms);
     else await new Promise((resolve) => setTimeout(resolve, ms));
-  });
+    await flushReact();
+  }, `settle ${ms} ms`);
 }
 /**
  * Fake timers that do not tick with real time: a splash's seconds-long timers fire only when a test
@@ -60,27 +128,29 @@ function fakeClock() {
   vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"] });
 }
 async function elapse(ms: number) {
-  await act(async () => {
-    await vi.advanceTimersByTimeAsync(ms);
-  });
+  await settle(ms);
   await settle();
 }
 async function mount() {
-  await act(async () => {
-    reactRoot.render(<App />);
-  });
+  await step(() =>
+    act(async () => {
+      reactRoot.render(<App />);
+    }),
+  "mount");
   for (let i = 0; i < 5; i += 1) await settle();
 }
 const button = (text: string) => [...document.querySelectorAll<HTMLButtonElement>("button")].find((item) => item.textContent?.trim() === text || item.getAttribute("aria-label") === text);
 async function click(element: Element | null | undefined) {
   if (!element) throw new Error("nothing to click");
-  await act(async () => (element as HTMLElement).click());
+  await step(() => act(async () => (element as HTMLElement).click()), `click “${element.textContent?.trim().slice(0, 40) || element.getAttribute("aria-label") || element.tagName}”`);
   await settle();
 }
 async function press(key: string, target: EventTarget = document.activeElement ?? document.body) {
-  await act(async () => {
-    target.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true }));
-  });
+  await step(() =>
+    act(async () => {
+      target.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true }));
+    }),
+  `press ${key}`);
   await settle();
 }
 const splash = () => document.querySelector<HTMLElement>("[data-splash]");
@@ -91,11 +161,15 @@ const sessionKeys = () => Object.keys(sessionStorage).sort();
 const frameEl = () => document.querySelector<HTMLIFrameElement>("[data-splash] iframe");
 /** What Frame Lab's page posts to the app, from inside the splash's own frame. */
 async function fromFrame(type: string) {
-  await act(async () => window.dispatchEvent(new MessageEvent("message", { data: { type }, source: frameEl()!.contentWindow })));
+  await step(() => act(async () => window.dispatchEvent(new MessageEvent("message", { data: { type }, source: frameEl()!.contentWindow }))), `frame posts ${type}`);
   await settle();
 }
 
 beforeEach(() => {
+  currentTest += 1;
+  lastStep = Promise.resolve();
+  running = null;
+  stepsDone = 0;
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   localStorage.clear();
   sessionStorage.clear();
@@ -123,12 +197,45 @@ beforeEach(() => {
   // Every test runs on the fake clock, so no splash ends because the machine was slow.
   fakeClock();
 });
-afterEach(() => {
-  act(() => reactRoot.unmount());
+afterEach(async (context: TestContext) => {
+  const result = context.task.result;
+  const errors = result?.errors ?? [];
+  const timedOut = errors.some((error) => /timed out/i.test(String(error?.message ?? error)));
+  if (timedOut || result?.state === "fail") console.error(`[splash-diag] ${timedOut ? "timed out" : "failed"}: ${context.task.name}: ${diagnostics()}`);
+  // A step still running (a test cut off by its timeout) finishes before the app goes; then later steps
+  // throw. A step that never finishes is given 20 s of real time, then logged and left behind.
+  const pending = lastStep;
+  currentTest += 1;
+  const stuck = await Promise.race([pending.then(() => false), new Promise<boolean>((resolve) => realSetTimeout(() => resolve(true), 20_000))]);
+  if (stuck) console.error(`[splash-diag] a step never finished after ${context.task.name}: ${diagnostics()}`);
+  if (vi.isFakeTimers()) vi.clearAllTimers();
+  (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+  await act(async () => reactRoot.unmount());
   host.remove();
   document.body.innerHTML = "";
+  running = null;
   vi.useRealTimers();
   vi.unstubAllGlobals();
+});
+
+describe("splash test harness", () => {
+  it("refuses a step that outlives its test, and runs steps one at a time", async () => {
+    const order: string[] = [];
+    const first = step(async () => {
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      order.push("first");
+    });
+    const second = step(async () => {
+      order.push("second");
+    });
+    await Promise.all([first, second]);
+    expect(order).toEqual(["first", "second"]);
+    const late = step(async () => "ran");
+    currentTest += 1; // the test "ends" before the step gets its turn
+    await expect(late).rejects.toBeInstanceOf(EndedTest);
+    currentTest -= 1;
+    await expect(step(async () => "ran")).resolves.toBe("ran");
+  });
 });
 
 describe("splash bookkeeping", () => {
@@ -200,7 +307,10 @@ describe("the deck splash in the app", () => {
     await click(splash());
     expect(splash()).toBeNull();
     expect(sessionKeys()).toEqual(["printabee.splash.v1.tmnt", "printabee.splash.v1.x-men"]);
-    expect(localKeys()).toEqual(before);
+    // Only the Continue shortcut is new: the splash itself writes nothing to localStorage.
+    const { [LAST_SESSION_KEY]: last, ...rest } = localKeys();
+    expect(rest).toEqual(before);
+    expect(JSON.parse(last!).deckId).toBe("x-men");
   });
 
   it("is skipped by a click or tap anywhere, by the Skip button, and closes on its own after it plays", async () => {
@@ -315,18 +425,18 @@ describe("the deck splash in the app", () => {
     await click(button("Build"));
     const skip = document.querySelector<HTMLElement>("[data-splash-skip]")!;
     expect(host.hasAttribute("inert")).toBe(true);
-    await act(async () => button("Clear all")!.focus());
+    await step(() => act(async () => button("Clear all")!.focus()));
     expect(document.activeElement).toBe(skip);
-    await act(async () => button("Save")!.focus());
+    await step(() => act(async () => button("Save")!.focus()));
     expect(document.activeElement).toBe(skip);
     // Skip is the only control: Tab on it stays put instead of leaving for the browser and coming back.
     const tab = new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true });
-    await act(async () => skip.dispatchEvent(tab));
+    await step(() => act(async () => skip.dispatchEvent(tab)));
     expect(tab.defaultPrevented).toBe(true);
     expect(document.activeElement).toBe(skip);
-    await act(async () => skip.blur());
+    await step(() => act(async () => skip.blur()));
     const enter = new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true });
-    await act(async () => document.body.dispatchEvent(enter));
+    await step(() => act(async () => document.body.dispatchEvent(enter)));
     expect(enter.defaultPrevented).toBe(true);
     expect(document.activeElement).toBe(skip);
     expect(button("Undo Clear all")).toBeUndefined();

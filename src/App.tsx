@@ -17,6 +17,7 @@ import {
   forgetUnlocked,
   importSavedJson,
   LEGACY_BACKUP_KEY,
+  loadLastSession,
   loadSaved,
   loadUnlocked,
   mergeCatalogues,
@@ -25,6 +26,7 @@ import {
   resolveSavedDeck,
   restoreLegacyBackup,
   upsertUnlocked,
+  writeLastSession,
   writeSaved,
   writeUnlocked,
   type SavedDeck,
@@ -34,6 +36,8 @@ import { rememberSplash, shouldPlaySplash, splashFor, type SplashChoice } from "
 import { rememberTourAnswer, shouldOfferTour, TOUR_IN_DECK_INTRO, TOUR_STEPS, type TourStep, type TourView } from "@/lib/tour";
 import type { DeckCatalogue, DeckIndex, Edition } from "@/lib/types";
 import { assertIdsAllowed, splitExportByPrintType } from "@/lib/xml";
+import { makeRestoreCode, mergeRestored, readRestoreCode, restoredMessage } from "@/lib/restore-code";
+import { countCopies } from "@/lib/selection";
 
 /** sessionStorage, or null where it can't even be reached (some privacy modes throw on access). */
 function sessionStore(): Storage | null {
@@ -55,6 +59,11 @@ function keyReady(): boolean {
   }
 }
 
+function resumeDetail(deck: SavedDeck): string {
+  const copies = countCopies(deck.cards);
+  return `${deck.deckName} · ${deck.editionName} · ${copies} ${copies === 1 ? "card" : "cards"}`;
+}
+
 export default function App() {
   const [shipped, setShipped] = useState<DeckCatalogue[]>([]);
   const [unlocked, setUnlocked] = useState<UnlockedPack[]>([]);
@@ -64,6 +73,8 @@ export default function App() {
   const [toast, setToast] = useState<string | null>(null);
   const [view, setView] = useState<"home" | "builder">("home");
   const [session, setSession] = useState<SavedDeck | null>(null);
+  /** The deck from an earlier visit (or the newest saved deck), offered by Continue until a deck is opened. */
+  const [lastVisit, setLastVisit] = useState<SavedDeck | null>(null);
   const [unlockBusy, setUnlockBusy] = useState(false);
   const [legacyBackup, setLegacyBackup] = useState(false);
   const [offerTour, setOfferTour] = useState(() => shouldOfferTour(localStorage));
@@ -80,7 +91,9 @@ export default function App() {
     (async () => {
       try {
         setUnlocked(loadUnlocked(localStorage));
-        setSaved(loadSaved(localStorage));
+        const savedDecks = loadSaved(localStorage);
+        setSaved(savedDecks);
+        setLastVisit(loadLastSession(localStorage, savedDecks));
         const indexRes = await fetch(publicUrl("decks/index.json"));
         if (!indexRes.ok) throw new Error("The deck index didn't load.");
         const index = (await indexRes.json()) as DeckIndex;
@@ -114,6 +127,12 @@ export default function App() {
     const timer = window.setTimeout(() => setToast(null), 4200);
     return () => window.clearTimeout(timer);
   }, [toast]);
+
+  // The deck being built is kept for the next visit. The tour's preview deck is not.
+  useEffect(() => {
+    if (!session || touring) return;
+    writeLastSession(localStorage, session);
+  }, [session, touring]);
 
   const merged = useMemo(() => mergeCatalogues(shipped, unlocked), [shipped, unlocked]);
   const savedNotes = useMemo(() => {
@@ -153,6 +172,7 @@ export default function App() {
   }
 
   const located = session ? locate(session) : null;
+  const resumeDeck = session ?? lastVisit;
   const building = view === "builder" && session && located && "edition" in located ? { draft: located.saved, edition: located.edition } : null;
 
   function remember(next: SavedDeck[]): false | string | null {
@@ -333,7 +353,19 @@ export default function App() {
           partial={partial}
           saved={saved}
           legacyNotes={savedNotes}
-          sessionLabel={session ? session.name : null}
+          resume={resumeDeck ? { name: resumeDeck.name, detail: resumeDetail(resumeDeck) } : null}
+          unlockedCount={unlocked.length}
+          unlockedKey={unlocked.map((pack) => `${pack.packHash}@${pack.savedAt}`).join(" ")}
+          onMakeRestoreCode={() => makeRestoreCode(unlocked)}
+          onRestoreCode={async (code) => {
+            const incoming = await readRestoreCode(code);
+            const result = mergeRestored(unlocked, incoming);
+            writeUnlocked(localStorage, result.packs);
+            setUnlocked(result.packs);
+            setError(null);
+            return restoredMessage(result.added, result.refreshed);
+          }}
+          hideFloating={touring || splash !== null}
           keyReady={keyReady()}
           unlockBusy={unlockBusy}
           onBuild={(choice) => {
@@ -343,9 +375,17 @@ export default function App() {
             openDeckSplash(choice.deck.id, choice.deck.name);
           }}
           onContinue={() => {
-            if (!session) return;
+            if (!resumeDeck) return;
+            const found = locate(resumeDeck);
+            if (!("edition" in found)) {
+              setError(found.note);
+              return;
+            }
+            setError(null);
+            setSession(found.saved);
             setView("builder");
-            openDeckSplash(session.deckId, session.deckName);
+            openDeckSplash(found.deck.id, found.deck.name);
+            if (found.note) setToast(found.note);
           }}
           onUnlock={(url) => void unlock(url)}
           onForgetUnlocks={() => {
