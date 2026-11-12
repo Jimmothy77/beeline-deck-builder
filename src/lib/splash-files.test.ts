@@ -141,6 +141,10 @@ describe("splash files", () => {
     expect(problems).toContain("fonts/anton.woff2: sha256 differs from the manifest");
     expect(problems).toContain("assets/bee.svg: missing");
     expect(problems).toContain("splashes/horror.html: not on the allow-list");
+    // With --from, a file missing from Frame Lab's folder is named too (only the manifest check sees the source).
+    const source = fakeSource();
+    rmSync(path.join(source, "assets/bee.svg"));
+    expect(checkSplash(dest, manifest, source)).toContain("source assets/bee.svg: missing");
   });
 
   it("flags a network URL, a key, a Drive id, a user name, an unlisted font or file, a font path outside the folder, and a registry mismatch", () => {

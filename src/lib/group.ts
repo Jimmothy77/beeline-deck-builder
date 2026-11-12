@@ -1,3 +1,4 @@
+import { attachFoilMaps, splitFoilMasks } from "@/lib/foil-maps";
 import {
   cleanDeckName,
   isPrintImage,
@@ -1431,7 +1432,19 @@ function emptyEditionError(name: string, edition: Edition): Error {
   return new Error(reason || `No printable cards found in “${name}”.`);
 }
 
+/**
+ * The catalogue for a pasted or crawled tree. A Partial Foil unlock's mask folders (see
+ * splitFoilMasks) are taken out first, so cards, totals and XML never see them; then each Partial Foil
+ * print file gets its mask id by name.
+ */
 export function catalogueFromTree(root: RawNode, deckName?: string, external: DeckCatalogue[] = [], options: CatalogueOptions = {}): DeckCatalogue {
+  if (!root.maskScan) return catalogueFromPlainTree(root, deckName, external, options);
+  const { tree, masks } = splitFoilMasks(root);
+  const catalogue = catalogueFromPlainTree(tree, deckName, external, options);
+  return { ...catalogue, editions: attachFoilMaps(catalogue.editions, masks) };
+}
+
+function catalogueFromPlainTree(root: RawNode, deckName?: string, external: DeckCatalogue[] = [], options: CatalogueOptions = {}): DeckCatalogue {
   const name = (deckName ?? cleanDeckName(root.name)).trim() || root.name;
   const rootKind = productEditionKind(root.name);
   const childEditions = foldersOf(root).filter((child) => productEditionKind(child.name));

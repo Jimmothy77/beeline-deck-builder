@@ -10,8 +10,9 @@ import App from "@/App";
 import { RESTORE_WARNING } from "@/components/RestoreCode";
 import { PARTIAL_FOIL_NOTICE } from "@/components/HomeView";
 import { freshDraft } from "@/lib/draft";
+import { allPartialFoilPacks } from "@/lib/fixtures/all-pf-packs";
 import { RESTORE_ERRORS } from "@/lib/restore-code";
-import { LAST_SESSION_KEY, packHash, UNLOCK_KEY, writeSaved, type SavedDeck } from "@/lib/storage";
+import { LAST_SESSION_KEY, packForStorage, packHash, UNLOCK_KEY, writeSaved, type SavedDeck } from "@/lib/storage";
 import { splashKey } from "@/lib/splash";
 import { TOUR_KEY } from "@/lib/tour";
 import { unlockPlace } from "@/lib/unlock-place";
@@ -230,6 +231,25 @@ describe("Unlock Here button", () => {
     expect(floating()!.querySelectorAll(".lucide-chevrons-up").length).toBe(2);
   });
 
+  it("pads the footer by the floating button's height and offset, so the button never covers the footer text", async () => {
+    await mount();
+    const footer = document.querySelector<HTMLElement>("[data-home-footer]")!;
+    expect(footer.classList.contains("home-footer")).toBe(true);
+    expect(footer.className).not.toMatch(/(^|\s)pb-/);
+    const css = readFileSync(path.join(root, "src/index.css"), "utf8");
+    const rule = (selector: string) => new RegExp(`(^|\\n)${selector.replace(".", "\\.")}\\s*\\{([^}]*)\\}`).exec(css)?.[2] ?? "";
+    expect(rule(".unlock-here")).toMatch(/bottom:\s*var\(--unlock-here-bottom\)/);
+    expect(rule(".unlock-here")).toMatch(/height:\s*var\(--unlock-here-height\)/);
+    expect(rule(".home-footer")).toMatch(/padding-bottom:\s*calc\(var\(--unlock-here-bottom\) \+ var\(--unlock-here-height\) \+ var\(--unlock-here-gap\)\)/);
+    expect(css).toMatch(/--unlock-here-bottom:\s*max\(1rem, env\(safe-area-inset-bottom\)\)/);
+    expect(css).toMatch(/--unlock-here-height:\s*2\.75rem/);
+    expect(css).toMatch(/--unlock-here-gap:\s*1rem/);
+    // The button takes its place and height only from those variables, not from its own utilities.
+    const source = readFileSync(path.join(root, "src/components/UnlockHere.tsx"), "utf8");
+    const classes = /className="(unlock-here [^"]*)"/.exec(source)![1]!;
+    expect(classes).not.toMatch(/(^|\s)(bottom-|h-|top-)/);
+  });
+
   it("has an accessible name that starts with its label, and hides its arrows from screen readers", async () => {
     await mount();
     await observe(false, 1200);
@@ -262,7 +282,9 @@ describe("Unlock Here button", () => {
     await mount();
     await observe(false, 1200);
     const classes = floating()!.className.split(/\s+/);
-    expect(classes).toEqual(expect.arrayContaining(["fixed", "left-1/2", "-translate-x-1/2", "bottom-[max(1rem,env(safe-area-inset-bottom))]"]));
+    expect(classes).toEqual(expect.arrayContaining(["unlock-here", "fixed", "left-1/2", "-translate-x-1/2"]));
+    // Its bottom offset (max(1rem, safe area)) now comes from .unlock-here in index.css; see the footer test.
+    expect(readFileSync(path.join(root, "src/index.css"), "utf8")).toMatch(/--unlock-here-bottom:\s*max\(1rem, env\(safe-area-inset-bottom\)\)/);
     expect(classes.some((name) => /^(right|left)-(4|6)$/.test(name))).toBe(false);
     expect(document.querySelector("[data-back-to-top]")).toBeNull();
   });
@@ -318,7 +340,9 @@ describe("restore code", () => {
     await click(button("Get my restore code"));
     await untilShown(output);
     const field = output()!;
-    expect(field.type).toBe("password");
+    expect(field.type).toBe("text");
+    expect(field.dataset.masked).toBe("true");
+    expect(field.classList.contains("beeline-masked")).toBe(true);
     expect(field.readOnly).toBe(true);
     expect(field.value).toMatch(/^BEELINE-RESTORE-1\./);
     const code = field.value;
@@ -327,9 +351,12 @@ describe("restore code", () => {
     expect(reveal.getAttribute("aria-pressed")).toBe("false");
     await click(reveal);
     expect(output()!.type).toBe("text");
+    expect(output()!.dataset.masked).toBe("false");
+    expect(output()!.classList.contains("beeline-masked")).toBe(false);
     expect(button("Hide")!.getAttribute("aria-pressed")).toBe("true");
     await click(button("Hide"));
-    expect(output()!.type).toBe("password");
+    expect(output()!.dataset.masked).toBe("true");
+    expect(output()!.classList.contains("beeline-masked")).toBe(true);
     await click(button("Copy code"));
     expect(writeText).toHaveBeenCalledWith(code);
     expect(document.querySelector("[data-restore-code] [role=status]")!.textContent).toBe("Copied. Paste it only into BeeLine on your own device.");
@@ -367,15 +394,39 @@ describe("restore code", () => {
     seedUnlocks(fakePack(2, "Fake Two"), fakePack(3, "Fake Three"));
     reactRoot = createRoot(host);
     await mount();
-    expect(pasteBox().type).toBe("password");
+    expect(pasteBox().type).toBe("text");
+    expect(pasteBox().classList.contains("beeline-masked")).toBe(true);
     await type(pasteBox(), `\n${code}\n`);
     await submit(pasteBox().form!);
-    expect(document.querySelector("[data-restore-code] form [role=status]")!.textContent).toBe("Restored 1 unlocked folder on this device, and updated 1 already here.");
+    expect(document.querySelector("[data-restore-code] form [role=status]")!.textContent).toBe("Restored 1 unlocked folder on this device. 1 deck list here was as new or newer, so it was kept.");
     expect(pasteBox().value).toBe("");
     const stored = JSON.parse(localStorage.getItem(UNLOCK_KEY)!) as Array<{ packHash: string; folderId?: string }>;
     expect(stored.map((item) => item.packHash)).toEqual([2, 3, 1].map((n) => packHash(fakeFolder(n))));
     expect(stored.every((item) => item.folderId === undefined)).toBe(true);
     expect(document.body.textContent).toContain("Fake One");
+  });
+
+  it("never uses a password input: both code fields are text masked with CSS, so no browser offers to save the code", async () => {
+    seedUnlocks(fakePack(1, "Fake One"));
+    await mount();
+    await click(button("Get my restore code"));
+    await untilShown(output);
+    expect(document.querySelectorAll('input[type="password"]')).toHaveLength(0);
+    for (const field of [output()!, pasteBox()]) {
+      expect(field.getAttribute("type")).toBe("text");
+      expect(field.classList.contains("beeline-masked")).toBe(true);
+      expect(field.dataset.masked).toBe("true");
+      expect(field.getAttribute("autocomplete")).toBe("off");
+      expect(field.getAttribute("data-lpignore")).toBe("true");
+      expect(field.hasAttribute("data-1p-ignore")).toBe(true);
+    }
+    expect(pasteBox().form).not.toBeNull();
+    expect(pasteBox().form!.querySelector('input[type="password"]')).toBeNull();
+    const css = readFileSync(path.join(root, "src/index.css"), "utf8");
+    const rule = /\.beeline-masked\s*\{([^}]*)\}/.exec(css)?.[1] ?? "";
+    expect(rule).toMatch(/-webkit-text-security:\s*disc/);
+    expect(rule).toMatch(/(^|[^-])text-security:\s*disc/);
+    expect(css).toMatch(/@supports not \(\(-webkit-text-security: disc\) or \(text-security: disc\)\)\s*\{\s*[^@]*\.beeline-masked\s*\{[^}]*color:\s*transparent/);
   });
 
   it("fails with a clear message and changes nothing for a bad code", async () => {
@@ -395,6 +446,20 @@ describe("restore code", () => {
     expect(document.querySelector("[data-restore-code] [role=alert]")!.textContent).toBe(RESTORE_ERRORS.damaged);
     expect(localStorage.getItem(UNLOCK_KEY)).toBe(before);
   });
+
+  it("warns and shows no code when the unlocks here are too many for one code", async () => {
+    // Two buyers' worth of Partial Foil unlocks (22 folders): the code would be over 1 MB.
+    const packs = [...allPartialFoilPacks(), ...allPartialFoilPacks({ seed: 38 })];
+    localStorage.setItem(UNLOCK_KEY, JSON.stringify(packs.map(packForStorage)));
+    await mount();
+    await click(button("Get my restore code"));
+    await untilShown(() => document.querySelector("[data-restore-problem]"));
+    const problem = document.querySelector<HTMLElement>("[data-restore-problem]")!;
+    expect(problem.getAttribute("role")).toBe("alert");
+    expect(problem.textContent).toMatch(/^There are too many unlocked folders on this device for one restore code: it would be [\d,]+ KB, and BeeLine reads codes up to 1,024 KB\. No code was made\./);
+    expect(output()).toBeNull();
+    expect(document.body.textContent).not.toContain("BEELINE-RESTORE-1.");
+  }, 30_000);
 
   it("drops a shown code when the unlocks change", async () => {
     seedUnlocks(fakePack(1, "Fake One"));

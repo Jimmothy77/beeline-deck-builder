@@ -301,6 +301,18 @@
   .beeline-overlay { --tw-enter-scale: 1; --tw-exit-scale: 1; }
 }
 
+/*
+ * v0.1.36: the floating Unlock Here button's place and height live in these variables, and the home
+ * footer pads its bottom by the same amount plus a gap, so the button never covers the footer text.
+ */
+:root {
+  --unlock-here-bottom: max(1rem, env(safe-area-inset-bottom));
+  --unlock-here-height: 2.75rem;
+  --unlock-here-gap: 1rem;
+}
+.unlock-here { bottom: var(--unlock-here-bottom); height: var(--unlock-here-height); }
+.home-footer { padding-bottom: calc(var(--unlock-here-bottom) + var(--unlock-here-height) + var(--unlock-here-gap)); }
+
 /* v0.1.35 floating Unlock Here button: the arrows nudge toward the unlock section. Still under reduced motion. */
 .unlock-here-arrow { animation: unlock-here-nudge 1.6s ease-in-out infinite; }
 [data-unlock-here="above"] .unlock-here-arrow { animation-name: unlock-here-nudge-up; }
@@ -308,4 +320,22 @@
 @keyframes unlock-here-nudge-up { 0%, 100% { transform: translateY(1px); } 50% { transform: translateY(-2px); } }
 @media (prefers-reduced-motion: reduce) {
   .unlock-here-arrow { animation: none; }
+}
+
+/* Restore code fields: text inputs masked like a password without being type=password (see RestoreCode.tsx). */
+.beeline-masked {
+  -webkit-text-security: disc;
+  text-security: disc;
+}
+@supports not ((-webkit-text-security: disc) or (text-security: disc)) {
+  /* Fallback where text-security is unsupported: the characters are blurred out, the placeholder stays readable. */
+  .beeline-masked {
+    color: transparent;
+    text-shadow: 0 0 0.45em var(--foreground);
+    caret-color: var(--foreground);
+  }
+  .beeline-masked::placeholder {
+    color: var(--muted-foreground);
+    text-shadow: none;
+  }
 }

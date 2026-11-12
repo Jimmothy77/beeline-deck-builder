@@ -1,5 +1,6 @@
 import { isStandardEditionFolder, isTemplateOrFontFolder, looksLikePaidName, plainEditionName, productEditionKind } from "@/lib/group";
 import { isDecklistFile } from "@/lib/decklist";
+import { isFoilMaskFolderName } from "@/lib/foil-maps";
 import type { RawNode } from "@/lib/types";
 
 const FOLDER = "application/vnd.google-apps.folder";
@@ -236,7 +237,8 @@ function nameIsPdfPartialMap(name: string): boolean {
 
 /**
  * A Partial Foil paste keeps the Deluxe shortcut and the PDF map.
- * A mask folder is skipped only outside a PDF Partial Foil Map.
+ * A mask folder is not crawled as print files outside a PDF Partial Foil Map (since v0.1.36 it is
+ * listed for masks only instead; see isFoilMaskFolder).
  * "Color Partial Foil Map" inside that PDF tree is a real print folder.
  */
 export function skipOnPartialFoilCrawl(name: string, insidePdfMap = false): boolean {
@@ -244,6 +246,14 @@ export function skipOnPartialFoilCrawl(name: string, insidePdfMap = false): bool
   if (isStandardEditionFolder(name)) return true;
   const plain = plainEditionName(name);
   return !insidePdfMap && plain.includes("partialfoil") && plain.includes("map") && !plain.includes("pdf");
+}
+
+/**
+ * The Partial Foil Map mask folder of a Partial Foil paste: listed for its masks only, never as print
+ * files. Inside the PDF print map a "Partial Foil Map" is a print folder, not masks.
+ */
+export function isFoilMaskFolder(name: string, insidePdfMap = false): boolean {
+  return !insidePdfMap && !isTemplateOrFontFolder(name) && isFoilMaskFolderName(name);
 }
 
 /** A Deluxe paste keeps its own art folders. Standard editions and Templates are not opened. */
@@ -293,6 +303,9 @@ export async function readDriveTree(folderId: string, apiKey: string, fetchImpl:
     insidePdfMap: boolean,
     followedLink = false,
     item: DriveItem = PASTED,
+    mask = false,
+    /** The parent listed this folder as the mask folder, by the name it has there (a shortcut's own name). */
+    maskRoot = false,
   ): Promise<RawNode | null> {
     if (depth > 12) throw new Error("That Drive folder is nested too deeply to import.");
     if (!followedLink && ancestors.includes(id)) throw new Error("The Drive link loops back to a folder already opened.");
@@ -307,7 +320,7 @@ export async function readDriveTree(folderId: string, apiKey: string, fetchImpl:
       const target = own.shortcutDetails?.targetId;
       if (!target || own.shortcutDetails?.targetMimeType !== FOLDER) throw new Error("That link is a shortcut to something other than a folder.");
       if (target === id || ancestors.includes(target)) throw new Error("The Drive link loops back to a folder already opened.");
-      return resolve(target, own.name || fallbackName, hops, depth, [...ancestors, id], insidePdfMap, true, { kind: "shortcut", name: own.name || fallbackName });
+      return resolve(target, own.name || fallbackName, hops, depth, [...ancestors, id], insidePdfMap, true, { kind: "shortcut", name: own.name || fallbackName }, mask, maskRoot);
     }
     const folderName = own.name || fallbackName;
     // The words for this folder if listing it fails: its own name once its metadata could be read.
@@ -333,7 +346,7 @@ export async function readDriveTree(folderId: string, apiKey: string, fetchImpl:
         const chain = [...ancestors, id];
         const stripped = chain.filter((item) => item !== next);
         if (stripped.length !== chain.length) throw new Error("The Drive link loops back to a folder already opened.");
-        return resolve(next, folderName, hops + 1, depth, stripped, insidePdfMap, true, { kind: "linked", from: folderName });
+        return resolve(next, folderName, hops + 1, depth, stripped, insidePdfMap, true, { kind: "linked", from: folderName }, mask, maskRoot);
       }
     }
     const pdfMap = insidePdfMap || nameIsPdfPartialMap(folderName);
@@ -349,22 +362,26 @@ export async function readDriveTree(folderId: string, apiKey: string, fetchImpl:
       const childId = file.shortcutDetails?.targetId || file.id;
       if (mime === FOLDER) {
         if (!partialFoilPaste && !deluxePaste && isPaidEditionName(file.name)) continue;
-        if (partialFoilPaste && skipOnPartialFoilCrawl(file.name, pdfMap)) continue;
+        // A Partial Foil paste lists its mask folder for masks only (marked, then kept out of the cards).
+        const maskFolder = partialFoilPaste && !mask && isFoilMaskFolder(file.name, pdfMap);
+        if (partialFoilPaste && !maskFolder && skipOnPartialFoilCrawl(file.name, pdfMap)) continue;
         if (deluxePaste && skipOnDeluxeCrawl(file.name)) continue;
-        const child = await resolve(childId, file.name, hops, depth + 1, nextAncestors, pdfMap || nameIsPdfPartialMap(file.name), false, file.shortcutDetails?.targetId ? { kind: "shortcut", name: file.name } : { kind: "subfolder", name: file.name });
+        const child = await resolve(childId, file.name, hops, depth + 1, nextAncestors, pdfMap || nameIsPdfPartialMap(file.name), false, file.shortcutDetails?.targetId ? { kind: "shortcut", name: file.name } : { kind: "subfolder", name: file.name }, mask || maskFolder, maskFolder);
         if (child) children.push(child);
       } else {
         children.push({ id: file.id, name: file.name, folder: false });
       }
     }
-    const node = { id, name: folderName, folder: true, children };
+    const node: RawNode = { id, name: folderName, folder: true, children };
+    // Decided where the folder was listed: a "Partial Foil Map" shortcut marks its target whatever the target is called.
+    if (maskRoot && item.kind !== "file") node.masks = true;
     cache.set(id, node);
     return node;
   }
 
   const tree = await resolve(folderId, "Unlocked folder", 0, 0, [], false);
   if (!tree) throw new Error("The Drive link loops back to a folder already opened.");
-  return tree;
+  return partialFoilPaste ? { ...tree, maskScan: true } : tree;
 }
 
 /** Most deck lists one unlock will read. A Floating World edition has six. */

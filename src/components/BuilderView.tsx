@@ -1,4 +1,5 @@
-import { Component, type ReactNode, useCallback, useMemo, useRef, useState } from "react";
+import { canShowFoil, FOIL_CAPTION, FOIL_MAPS_MISSING_NOTE, foilMapsMissing, foilView, NO_FOIL_MAP, readShowFoil, writeShowFoil } from "@/lib/foil-maps";
+import { Component, type ReactNode, useCallback, useId, useMemo, useRef, useState } from "react";
 import { ChevronLeft, Copy, Dices, Download, Eraser, Lock, LockOpen, Save, SlidersHorizontal, Undo2 } from "lucide-react";
 import { BackToTop } from "@/components/BackToTop";
 import { CardFilterPanel } from "@/components/CardFilterPanel";
@@ -99,9 +100,18 @@ export class BuilderBoundary extends Component<{ onBack: () => void; children: R
   }
 }
 
+/** sessionStorage, or null where it can't be reached (some privacy modes throw on access). */
+function sessionStore(): Storage | null {
+  try {
+    return typeof window === "undefined" ? null : window.sessionStorage;
+  } catch {
+    return null;
+  }
+}
+
 export function BuilderView({
   draft,
-  edition,
+  edition: baseEdition,
   notice,
   onChange,
   onBack,
@@ -129,6 +139,14 @@ export function BuilderView({
   const [xml, setXml] = useState<string | null>(null);
   const [xmlError, setXmlError] = useState<string | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
+  // "Show foiled area": one switch for the session, shown only on an unlocked Partial Foil edition.
+  const [showFoil, setShowFoil] = useState(() => readShowFoil(sessionStore()));
+  const foilable = canShowFoil(baseEdition);
+  const foilOn = foilable && showFoil;
+  const foilMissing = foilable && foilMapsMissing(baseEdition);
+  // Only thumbnails change (thumbId); export, counts and ids read the same edition either way.
+  const edition = useMemo(() => (foilOn ? foilView(baseEdition) : baseEdition), [foilOn, baseEdition]);
+  const foilCaptionId = useId();
 
   const byId = useMemo(() => new Map(draft.cards.map((card) => [card.cardId, card])), [draft.cards]);
   const treatmentOptions = treatmentsFor(edition.printType);
@@ -466,6 +484,33 @@ export function BuilderView({
             </div>
           </div>
         )}
+        {foilable && (
+          <div className="grid gap-1 self-end text-sm" data-foil-switch="">
+            <div className="flex h-10 items-center gap-2">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={foilOn}
+                aria-describedby={foilOn ? foilCaptionId : undefined}
+                onClick={() => {
+                  writeShowFoil(sessionStore(), !foilOn);
+                  setShowFoil(!foilOn);
+                }}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border border-border transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${foilOn ? "bg-primary" : "bg-muted"}`}
+              >
+                <span className="sr-only">Show foiled area</span>
+                <span aria-hidden="true" className={`inline-block size-4 rounded-full bg-background shadow transition-transform ${foilOn ? "translate-x-6" : "translate-x-1"}`} />
+              </button>
+              <span aria-hidden="true">Show foiled area</span>
+            </div>
+            {foilOn ? (
+              <p id={foilCaptionId} data-foil-caption="" className="text-xs text-muted-foreground">
+                {FOIL_CAPTION}
+                {foilMissing ? <span className="mt-1 block text-amber-100" data-foil-missing="">{FOIL_MAPS_MISSING_NOTE}</span> : null}
+              </p>
+            ) : null}
+          </div>
+        )}
         {edition.printType === "partial_foil" && (
           <label className="flex items-center gap-2 self-end text-sm">
             <input
@@ -636,7 +681,7 @@ export function BuilderView({
                     onClick={() => artCard && artTarget && chooseArt(artCard, artTarget.pairIndex, artTarget.side, art.id)}
                     className={`w-full rounded-xl border p-2 text-left ${selected ? "border-primary ring-2 ring-primary" : "border-border"}`}
                   >
-                    <CardThumb id={art.thumbId} alt={art.label} />
+                    <CardThumb id={art.thumbId} alt={art.label} tag={art.noFoilMap ? NO_FOIL_MAP : undefined} />
                     <span className="mt-2 block text-xs leading-snug">{art.label}</span>
                     {inDeck && (
                       <Badge variant="secondary" className="mt-1">
@@ -891,11 +936,11 @@ function CardTile({
           return (
             <li key={`${pair.art}:${index}`} className="flex items-center gap-2 lg:flex-wrap lg:justify-center lg:gap-y-1">
               <button type="button" {...flyout?.(preview)} onClick={() => saved && onArt(index, "front")} className="w-12 shrink-0 text-left lg:w-40" aria-label={`Choose front art ${index + 1} for ${card.name}`}>
-                <CardThumb id={art?.thumbId} alt={card.name} />
+                <CardThumb id={art?.thumbId} alt={card.name} tag={art?.noFoilMap ? NO_FOIL_MAP : undefined} />
               </button>
               {back ? (
                 <button type="button" {...flyout?.(preview)} onClick={() => saved && onArt(index, "back")} className="w-12 shrink-0 text-left lg:w-[clamp(4rem,calc(100%_-_10.5rem),10rem)]" aria-label={`Choose back art ${index + 1} for ${card.name}`}>
-                  <CardThumb id={customBack?.thumbId ?? backArt?.thumbId} alt={customBack?.label ?? back.name} />
+                  <CardThumb id={customBack?.thumbId ?? backArt?.thumbId} alt={customBack?.label ?? back.name} tag={!customBack && backArt?.noFoilMap ? NO_FOIL_MAP : undefined} />
                 </button>
               ) : null}
               {/* Desktop: the count controls go on their own line under the art, so every tile lines up. */}
@@ -1008,7 +1053,7 @@ export function AddItem({
         return (
           <div key={`${pair.art}:${index}`} className="flex items-center gap-2">
             <button type="button" {...flyout?.({ key: `${card.id}:${index}`, front: art?.thumbId, dfcBack: backArt?.thumbId, customBack: customBack?.thumbId, alt: card.name })} className="w-12 shrink-0 lg:w-20" onClick={() => face && saved && onArt(index, "front")} aria-label={`Choose art ${index + 1} for ${card.name}`}>
-              <CardThumb id={art?.thumbId} alt={card.name} />
+              <CardThumb id={art?.thumbId} alt={card.name} tag={art?.noFoilMap ? NO_FOIL_MAP : undefined} />
             </button>
             <Qty name={`${card.name} art ${index + 1}`} value={pair.qty} onChange={(qty) => onQty(index, qty)} />
           </div>

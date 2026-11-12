@@ -4,6 +4,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+/**
+ * The code fields are plain text inputs masked with CSS (.beeline-masked in index.css), never
+ * type=password: a password field in a form makes browsers and password managers offer to save the
+ * code as a site password. These attributes also ask the common managers to leave the field alone.
+ */
+const NOT_A_PASSWORD = {
+  type: "text",
+  autoComplete: "off",
+  autoCorrect: "off",
+  autoCapitalize: "off",
+  spellCheck: false,
+  "data-1p-ignore": "",
+  "data-lpignore": "true",
+  "data-bwignore": "",
+  "data-form-type": "other",
+} as const;
+
 export const RESTORE_WARNING = "Keep this code private. It works like your paid Drive links: anyone who has it gets your unlocked decks. Don't post it publicly or send it to anyone.";
 
 /**
@@ -86,13 +103,12 @@ export function RestoreCode({
           <div className="flex flex-col gap-2 sm:flex-row">
             <Input
               id={`${ids}-code`}
-              type={revealed ? "text" : "password"}
+              {...NOT_A_PASSWORD}
               readOnly
               value={code}
-              autoComplete="off"
-              spellCheck={false}
+              data-masked={revealed ? "false" : "true"}
               data-restore-output=""
-              className="h-10 flex-1 font-mono text-xs"
+              className={`h-10 flex-1 font-mono text-xs ${revealed ? "" : "beeline-masked"}`}
               onFocus={(event) => {
                 if (revealed) event.currentTarget.select();
               }}
@@ -125,9 +141,15 @@ export function RestoreCode({
           </div>
         </div>
       )}
-      {(status || problem) && (
+      {problem && (
+        <p role="alert" className="mt-2 flex max-w-2xl items-start gap-2 rounded-xl border border-destructive/50 bg-destructive/10 px-3 py-2 text-xs text-foreground" data-restore-problem="">
+          <TriangleAlert className="mt-0.5 size-4 shrink-0 text-destructive" aria-hidden="true" />
+          <span>{problem}</span>
+        </p>
+      )}
+      {status && !problem && (
         <p role="status" className="mt-2 text-xs text-muted-foreground">
-          {problem ?? status}
+          {status}
         </p>
       )}
 
@@ -156,19 +178,18 @@ export function RestoreCode({
         <div className="flex flex-col gap-2 sm:flex-row">
           <Input
             id={`${ids}-paste`}
-            type="password"
+            {...NOT_A_PASSWORD}
             value={pasted}
             onChange={(event) => {
               setPasted(event.target.value);
               setRestoreError(null);
             }}
             placeholder="BEELINE-RESTORE-1…"
-            autoComplete="off"
-            spellCheck={false}
+            data-masked="true"
             aria-invalid={restoreError ? true : undefined}
             aria-describedby={restoreError ? `${ids}-error` : undefined}
             data-restore-input=""
-            className="h-10 flex-1 font-mono text-xs"
+            className="beeline-masked h-10 flex-1 font-mono text-xs"
           />
           <Button type="submit" variant="outline" className="h-10" disabled={busy || !pasted.trim()}>
             {busy ? "Restoring…" : "Restore unlocks"}

@@ -49,6 +49,11 @@ export type UnlockedPack = {
   /** v0.1.5 FNV hash, kept so a deck saved with that hash still finds this pack. */
   legacyHash?: string;
   savedAt: string;
+  /**
+   * When this catalogue was read from Drive (v0.1.36+). A restore code replaces a catalogue here only
+   * when its own stamp (refreshedAt, else savedAt) is newer. Older saves fall back to savedAt.
+   */
+  refreshedAt?: string;
   catalogue: DeckCatalogue;
   /** In memory during unlock. Never written. */
   folderId?: string;
@@ -236,6 +241,7 @@ export function packForStorage(pack: UnlockedPack): Record<string, unknown> {
     catalogue: pack.catalogue,
   };
   if (pack.legacyHash) stored.legacyHash = pack.legacyHash;
+  if (pack.refreshedAt) stored.refreshedAt = pack.refreshedAt;
   return stored;
 }
 
@@ -349,9 +355,21 @@ function samePack(left: UnlockedPack, right: UnlockedPack): boolean {
   );
 }
 
+/** When a pack's catalogue was read: refreshedAt, else (saves before v0.1.36) savedAt. Milliseconds; 0 when unreadable. */
+export function catalogueStamp(pack: Pick<UnlockedPack, "refreshedAt" | "savedAt">): number {
+  const at = Date.parse(pack.refreshedAt || pack.savedAt);
+  return Number.isFinite(at) ? at : 0;
+}
+
+/** The stored pack that is the same folder as `pack`, if any. */
+export function findUnlocked(current: UnlockedPack[], pack: UnlockedPack): UnlockedPack | undefined {
+  const probe: UnlockedPack = { ...pack, packHash: hashOf(pack) };
+  return current.find((item) => samePack(item, probe));
+}
+
 /** Re-pasting a folder keeps its place and its first unlock time. A new folder goes last. */
 export function upsertUnlocked(current: UnlockedPack[], pack: UnlockedPack): UnlockedPack[] {
-  const nextPack: UnlockedPack = { ...pack, packHash: hashOf(pack) };
+  const nextPack: UnlockedPack = { ...pack, packHash: hashOf(pack), refreshedAt: pack.refreshedAt || pack.savedAt };
   const index = current.findIndex((item) => samePack(item, nextPack));
   if (index === -1) return [...current, nextPack];
   const next = current.slice();
@@ -1063,6 +1081,12 @@ export function parseDecklists(value: unknown): Decklist[] {
   });
 }
 
+function isFoilMapCount(value: unknown): value is { found: number; total: number } {
+  if (!value || typeof value !== "object") return false;
+  const count = value as Record<string, unknown>;
+  return Number.isInteger(count.found) && Number.isInteger(count.total) && (count.found as number) >= 0 && (count.found as number) <= (count.total as number);
+}
+
 function parseEdition(value: unknown): Edition | null {
   if (!value || typeof value !== "object") return null;
   const edition = value as Record<string, unknown>;
@@ -1097,6 +1121,7 @@ function parseEdition(value: unknown): Edition | null {
     notes,
     ...(decklists.length ? { decklists } : {}),
     origin: edition.origin === "shipped" || edition.origin === "unlocked" ? edition.origin : undefined,
+    ...(edition.printType === "partial_foil" && isFoilMapCount(edition.foilMaps) ? { foilMaps: { found: edition.foilMaps.found, total: edition.foilMaps.total } } : {}),
   };
 }
 
@@ -1120,6 +1145,7 @@ export function parseUnlocked(value: unknown): UnlockedPack | null {
     packHash: packHashValue,
     legacyHash: legacyHash && legacyHash !== packHashValue ? legacyHash : undefined,
     savedAt: typeof pack.savedAt === "string" && pack.savedAt ? pack.savedAt : FALLBACK_STAMP,
+    ...(typeof pack.refreshedAt === "string" && Number.isFinite(Date.parse(pack.refreshedAt)) ? { refreshedAt: pack.refreshedAt } : {}),
     catalogue: { id: catalogue.id, name: catalogue.name, creator: "Beespair", editions },
   };
 }

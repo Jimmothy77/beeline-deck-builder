@@ -7,11 +7,14 @@ export function CardThumb({
   alt,
   className,
   gate = thumbGate,
+  tag,
 }: {
   id?: string | null;
   alt: string;
   className?: string;
   gate?: ThumbGate;
+  /** A short word over the bottom of the card, such as "no foil map". */
+  tag?: string;
 }) {
   const [visible, setVisible] = useState(false);
   const [slot, setSlot] = useState(false);
@@ -67,7 +70,7 @@ export function CardThumb({
   const src = sources[Math.min(source, sources.length - 1)];
 
   return (
-    <div ref={rootRef} className={cn("w-full", className)}>
+    <div ref={rootRef} className={cn("relative w-full", className)}>
       {waiting || !src ? (
         <div className="flex aspect-[63/88] w-full items-center justify-center rounded-md bg-black/25 px-2 text-center text-[10px] leading-tight text-muted-foreground">
           {alt}
@@ -97,6 +100,11 @@ export function CardThumb({
           className="aspect-[63/88] w-full rounded-md bg-black/20 object-cover"
         />
       )}
+      {tag ? (
+        <span data-thumb-tag="" className="pointer-events-none absolute inset-x-1 bottom-1 rounded bg-black/75 px-1 py-0.5 text-center text-[9px] leading-tight font-medium text-white lg:text-[11px]">
+          {tag}
+        </span>
+      ) : null}
     </div>
   );
 }

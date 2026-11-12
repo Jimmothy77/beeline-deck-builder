@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { assertApiKey, extractFolderIdFromText, listChildren, parseDriveFolderId, readDriveTree, skipOnPartialFoilCrawl } from "@/lib/drive";
+import { splitFoilMasks } from "@/lib/foil-maps";
 import { catalogueFromTree } from "@/lib/group";
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -169,7 +170,51 @@ describe("mocked Drive API", () => {
     expect(() => catalogueFromTree(tree)).toThrow(/one deck or one edition/);
   });
 
-  it("does not list mask or Standard folders on a Partial Foil paste, and still opens Deluxe and the PDF map", async () => {
+  it("marks a mask folder by the name it is listed under, so a Partial Foil Map shortcut to a differently named folder still gives masks", async () => {
+    const listed: string[] = [];
+    const folderMime = "application/vnd.google-apps.folder";
+    const fetchImpl = async (input: string) => {
+      const url = String(input);
+      const meta: Record<string, string> = {
+        pfShortRoot1: "3_KPDH Partial Foil Edition",
+        pfMaskTarget: "KPDH masks (white = foil)",
+        pfMaskExtra1: "Extras",
+        pfPdfMap0001: "PDF Partial Foil Map",
+      };
+      const metaId = Object.keys(meta).find((id) => url.includes(`/files/${id}`));
+      if (metaId) return jsonResponse({ id: metaId, name: meta[metaId], mimeType: folderMime });
+      const parent = decodeURIComponent(url).replace(/\+/g, " ").match(/'([^']+)' in parents/)?.[1];
+      if (parent) listed.push(parent);
+      if (parent === "pfShortRoot1") {
+        return jsonResponse({
+          files: [
+            { id: "pfMaskShort1", name: "Partial Foil Map", mimeType: "application/vnd.google-apps.shortcut", shortcutDetails: { targetId: "pfMaskTarget", targetMimeType: folderMime } },
+            { id: "pfPdfMap0001", name: "PDF Partial Foil Map", mimeType: folderMime },
+          ],
+        });
+      }
+      if (parent === "pfMaskTarget") return jsonResponse({ files: [{ id: "pfMaskSol001", name: "Sol Ring.png", mimeType: "image/png" }, { id: "pfMaskExtra1", name: "Extras", mimeType: folderMime }] });
+      if (parent === "pfMaskExtra1") return jsonResponse({ files: [{ id: "pfMaskAlela1", name: "Alela.png", mimeType: "image/png" }] });
+      if (parent === "pfPdfMap0001") return jsonResponse({ files: [{ id: "pfPdfSol0001", name: "Sol Ring.pdf", mimeType: "application/pdf" }, { id: "pfPdfAlela01", name: "Alela.pdf", mimeType: "application/pdf" }] });
+      return jsonResponse({ error: { message: "missing" } }, 404);
+    };
+    const tree = await readDriveTree("pfShortRoot1", "test-api-key-value", fetchImpl);
+    expect(listed).toEqual(expect.arrayContaining(["pfMaskTarget", "pfMaskExtra1"]));
+    const target = tree.children?.find((child) => child.id === "pfMaskTarget");
+    expect(target?.name).toBe("KPDH masks (white = foil)");
+    expect(target?.masks).toBe(true);
+    // Only the folder the parent chose is the mask root; its subfolders are read as part of it.
+    expect(target?.children?.find((child) => child.id === "pfMaskExtra1")?.masks).toBeUndefined();
+    const { masks } = splitFoilMasks(tree);
+    expect(masks.map((mask) => mask.id).sort()).toEqual(["pfMaskAlela1", "pfMaskSol001"]);
+    const partial = catalogueFromTree(tree).editions.find((edition) => edition.printType === "partial_foil")!;
+    expect(partial.foilMaps?.found).toBeGreaterThan(0);
+    expect(partial.cards.find((card) => card.name === "Sol Ring")?.faces[0]?.defaultArt).toMatchObject({ id: "pfPdfSol0001", maskId: "pfMaskSol001" });
+    const arts = partial.cards.flatMap((card) => card.faces.flatMap((face) => [face.defaultArt, ...face.alternates]));
+    expect(arts.some((art) => art?.id.startsWith("pfMask"))).toBe(false);
+  });
+
+  it("lists the mask folder of a Partial Foil paste for masks only, never Standard folders, and still opens Deluxe and the PDF map", async () => {
     const listed: string[] = [];
     const fetchImpl = async (input: string) => {
       const url = String(input);
@@ -229,21 +274,31 @@ describe("mocked Drive API", () => {
       if (parent === "deluxeFull01") {
         return jsonResponse({ files: [{ id: "deluxeSolArt", name: "Sol Ring.png", mimeType: "image/png" }] });
       }
-      if (parent === "maskFolder01" || parent === "stdFolder001" || parent === "stdInside001" || parent === "templates001") {
+      if (parent === "maskFolder01") return jsonResponse({ files: [{ id: "maskSolRing1", name: "Sol Ring.png", mimeType: "image/png" }] });
+      if (parent === "stdFolder001" || parent === "stdInside001" || parent === "templates001") {
         return jsonResponse({ files: [{ id: "shouldNotList", name: "Secret.jpg", mimeType: "image/jpeg" }] });
       }
       return jsonResponse({ error: { message: "missing" } }, 404);
     };
     const tree = await readDriveTree("partialRoot1", "test-api-key-value", fetchImpl);
-    expect(listed).toEqual(expect.arrayContaining(["partialRoot1", "pdfMapFolder1", "pdfFullDeck1", "deluxeFold01", "deluxeFull01"]));
-    for (const skipped of ["maskFolder01", "stdFolder001", "stdInside001", "templates001"]) {
+    expect(listed).toEqual(expect.arrayContaining(["partialRoot1", "pdfMapFolder1", "pdfFullDeck1", "deluxeFold01", "deluxeFull01", "maskFolder01"]));
+    for (const skipped of ["stdFolder001", "stdInside001", "templates001"]) {
       expect(listed).not.toContain(skipped);
     }
+    // The mask folder is marked, and its images are masks, never cards.
+    expect(tree.maskScan).toBe(true);
+    expect(tree.children?.find((child) => child.id === "maskFolder01")?.masks).toBe(true);
+    const foilCatalogue = catalogueFromTree(tree);
+    const partialEdition = foilCatalogue.editions.find((edition) => edition.printType === "partial_foil")!;
+    const arts = foilCatalogue.editions.flatMap((edition) => edition.cards.flatMap((card) => card.faces.flatMap((face) => [face.defaultArt, ...face.alternates])));
+    expect(arts.some((art) => art?.id === "maskSolRing1" || art?.thumbId === "maskSolRing1")).toBe(false);
+    expect(partialEdition.cards.find((card) => card.name === "Sol Ring")?.faces[0]?.defaultArt).toMatchObject({ id: "pdfSolRing01", maskId: "maskSolRing1" });
+    expect(partialEdition.foilMaps).toEqual({ found: 1, total: 1 });
     const flat = JSON.stringify(tree);
     expect(flat).toContain("pdfSolRing01");
     expect(flat).toContain("deluxeSolArt");
     expect(flat).not.toContain("shouldNotList");
-    expect(flat).not.toContain("maskFolder01");
+    expect(splitFoilMasks(tree).tree.children?.map((child) => child.id)).not.toContain("maskFolder01");
     const catalogue = catalogueFromTree(tree);
     const partial = catalogue.editions.find((edition) => edition.printType === "partial_foil")!;
     const deluxe = catalogue.editions.find((edition) => edition.id.includes("deluxe"))!;
@@ -457,7 +512,7 @@ describe("mocked Drive API", () => {
     const partialTree = JSON.stringify(await readDriveTree("partialFold9", "test-api-key-value", partial.fetchImpl));
     expect(partialTree).toContain("colorPdf00009");
     expect(partialTree).toContain("bwPdf00000009");
-    expect(partial.listed).not.toContain("maskMap000009");
+    expect(partial.listed).toContain("maskMap000009");
     expect(partial.listed).not.toContain("foilTemplates");
     expect(partial.listed).not.toContain("foilFonts0009");
     const deluxe = pack("deluxe-first");

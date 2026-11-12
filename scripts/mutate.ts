@@ -1,11 +1,18 @@
 /**
  * Apply each review mutation, run the test that should kill it, and restore the file.
- * A mutation that still passes is a failure of this script.
+ * A mutation counts as killed only when vitest's JSON report shows at least one test that ran and
+ * failed. A non-zero exit alone is not a kill: a patch that breaks parsing, a suite that fails to load,
+ * or a filter that matches no test is reported as INVALID. A mutation that still passes, an invalid
+ * one, or a patch that no longer applies is a failure of this script.
  *
  *   npx tsx scripts/mutate.ts
+ *   MUTATE_ONLY='^v36-' npx tsx scripts/mutate.ts   # only the mutations whose name matches
  */
-import { execSync } from "node:child_process";
-import { readFileSync, writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { verdictOf, type Report, type Verdict } from "./mutate-verdict";
 
 const root = new URL("..", import.meta.url).pathname;
 
@@ -94,7 +101,7 @@ const mutations: Mutation[] = [
     name: "x-legacy last art",
     file: "src/lib/storage.ts",
     test: "reads both faces",
-    edits: [{ from: "      else if (!front) front = artId.trim();", to: "      else front = artId.trim();" }],
+    edits: [{ from: "      else if (!front) front = artId.trim();", to: "      else if (true) front = artId.trim();" }],
   },
   {
     name: "x-pairs no clamp",
@@ -701,7 +708,7 @@ const mutations: Mutation[] = [
     file: "src/components/BuilderView.tsx",
     test: "a pick replaces that face",
     edits: [
-      { from: "<CardThumb id={customBack?.thumbId ?? backArt?.thumbId} alt={customBack?.label ?? back.name} />", to: "<CardThumb id={backArt?.thumbId} alt={back.name} />" },
+      { from: "<CardThumb id={customBack?.thumbId ?? backArt?.thumbId} alt={customBack?.label ?? back.name} tag=", to: "<CardThumb id={backArt?.thumbId} alt={back.name} tag=" },
     ],
   },
   {
@@ -2056,19 +2063,19 @@ const mutations: Mutation[] = [
   {
     name: "cs-check ignores extra files",
     file: "scripts/copy-splash.ts",
-    test: "--check finds",
+    test: "check finds a changed, missing or extra file",
     edits: [{ from: "    ...strayFiles(dir).map((file) => `${file}: not on the allow-list`),\n", to: "" }],
   },
   {
     name: "cs-check ignores hashes",
     file: "scripts/copy-splash.ts",
-    test: "--check finds",
+    test: "check finds a changed, missing or extra file",
     edits: [{ from: "else if (sha256(readFileSync(full)) !== hash) problems.push(`${file}: sha256 differs from the manifest`);", to: "" }],
   },
   {
     name: "cs-check ignores missing files",
     file: "scripts/copy-splash.ts",
-    test: "--check finds",
+    test: "check finds a changed, missing or extra file",
     edits: [{ from: "if (!existsSync(full)) problems.push(`${file}: missing`);\n    else if", to: "if (!existsSync(full)) continue;\n    else if" }],
   },
   {
@@ -2116,7 +2123,7 @@ const mutations: Mutation[] = [
   {
     name: "cs-check skips the content checks",
     file: "scripts/copy-splash.ts",
-    test: "--check finds",
+    test: "check finds a changed, missing or extra file",
     edits: [{ from: "    ...contentProblems(dir),\n", to: "" }],
   },
   {
@@ -2512,7 +2519,7 @@ const mutations: Mutation[] = [
   {
     name: "v34-mf --check skips the drift",
     file: "scripts/copy-splash.ts",
-    test: "--check finds",
+    test: "checks against a derived 39-line manifest",
     edits: [{ from: "    ...(texts ? manifestProblems(texts.final, texts.shipped) : []),\n", to: "" }],
   },
   {
@@ -2597,7 +2604,7 @@ const mutations: Mutation[] = [
     name: "v34-de subfolder named as the paste",
     file: "src/lib/drive.ts",
     test: "is named, inside a pasted Deluxe folder",
-    edits: [{ from: ": { kind: \"subfolder\", name: file.name });", to: ": PASTED);" }],
+    edits: [{ from: ": { kind: \"subfolder\", name: file.name }, mask || maskFolder, maskFolder);", to: ": PASTED, mask || maskFolder, maskFolder);" }],
   },
   {
     name: "v34-de shortcut child named as subfolder",
@@ -2609,7 +2616,7 @@ const mutations: Mutation[] = [
     name: "v34-de pasted shortcut item lost",
     file: "src/lib/drive.ts",
     test: "a pasted shortcut whose target answers",
-    edits: [{ from: "insidePdfMap, true, { kind: \"shortcut\", name: own.name || fallbackName });", to: "insidePdfMap, true, item);" }],
+    edits: [{ from: "insidePdfMap, true, { kind: \"shortcut\", name: own.name || fallbackName }, mask, maskRoot);", to: "insidePdfMap, true, item, mask, maskRoot);" }],
   },
   {
     name: "v34-de listing ignores the read name",
@@ -2621,7 +2628,7 @@ const mutations: Mutation[] = [
     name: "v34-de New Drive Link hop named as the paste",
     file: "src/lib/drive.ts",
     test: "names a New Drive Link.txt hop",
-    edits: [{ from: "insidePdfMap, true, { kind: \"linked\", from: folderName });", to: "insidePdfMap, true, PASTED);" }],
+    edits: [{ from: "insidePdfMap, true, { kind: \"linked\", from: folderName }, mask, maskRoot);", to: "insidePdfMap, true, PASTED, mask, maskRoot);" }],
   },
   {
     name: "v34-tok new Eggman extra missing from the token lookup",
@@ -2675,7 +2682,7 @@ const mutations: Mutation[] = [
     name: "v35-rc folder id in the code",
     file: "src/lib/restore-code.ts",
     test: "never carries a folder id",
-    edits: [{ from: "packs: packs.map(packForStorage) })", to: "packs })" }],
+    edits: [{ from: "packs: stored })", to: "packs })" }],
   },
   {
     name: "v35-rc never compressed",
@@ -2693,7 +2700,7 @@ const mutations: Mutation[] = [
     name: "v35-rc merge counts every pack as new",
     file: "src/lib/restore-code.ts",
     test: "merges into the unlocks already here",
-    edits: [{ from: "    if (packs.length > before) added += 1;", to: "    added += 1;" }],
+    edits: [{ from: "    if (existing) refreshed += 1;\n    else added += 1;", to: "    added += 1;" }],
   },
   {
     name: "v35-rc message ignores nothing new",
@@ -2819,7 +2826,7 @@ const mutations: Mutation[] = [
     name: "v35-uh on top of Back to top",
     file: "src/components/UnlockHere.tsx",
     test: "sits bottom centre",
-    edits: [{ from: "left-1/2 z-40 h-11 -translate-x-1/2", to: "right-6 z-40 h-11" }],
+    edits: [{ from: "left-1/2 z-40 -translate-x-1/2", to: "right-6 z-40" }],
   },
   {
     name: "v35-uh not observed",
@@ -2843,7 +2850,7 @@ const mutations: Mutation[] = [
     name: "v35-rcui code shown in clear",
     file: "src/components/RestoreCode.tsx",
     test: "shows the code masked until Reveal",
-    edits: [{ from: "type={revealed ? \"text\" : \"password\"}", to: "type=\"text\"" }],
+    edits: [{ from: "className={`h-10 flex-1 font-mono text-xs ${revealed ? \"\" : \"beeline-masked\"}`}", to: "className=\"h-10 flex-1 font-mono text-xs\"" }],
   },
   {
     name: "v35-rcui Reveal state not announced",
@@ -2879,7 +2886,7 @@ const mutations: Mutation[] = [
     name: "v35-rcui paste box in clear",
     file: "src/components/RestoreCode.tsx",
     test: "restores on another device",
-    edits: [{ from: "            type=\"password\"\n            value={pasted}", to: "            type=\"text\"\n            value={pasted}" }],
+    edits: [{ from: "className=\"beeline-masked h-10 flex-1 font-mono text-xs\"", to: "className=\"h-10 flex-1 font-mono text-xs\"" }],
   },
   {
     name: "v35-rcui code offered with nothing unlocked",
@@ -3013,10 +3020,883 @@ const mutations: Mutation[] = [
     test: "a free paste never opens a folder with a disguised paid name",
     edits: [{ from: "function isPaidEditionName(name: string): boolean {\n  return looksLikePaidName(name);", to: "function isPaidEditionName(name: string): boolean {\n  const kind = productEditionKind(name);\n  return kind === \"deluxe\" || kind === \"partial_foil\";" }],
   },
+  // v0.1.36: foil maps (A), restore-code limits and no rollback (B1, B2), no password input (B3),
+  // footer padding (B5) and the harness's own verdicts (B4).
+  {
+    name: "v36-fm apostrophe underscore kept",
+    file: "src/lib/foil-maps.ts",
+    test: "matches across the apostrophe underscore",
+    edits: [
+      { from: ".replace(/[’‘'_]/g, \"'\")", to: ".replace(/[’‘']/g, \"'\")" },
+    ],
+  },
+  {
+    name: "v36-fm no NFC",
+    file: "src/lib/foil-maps.ts",
+    test: "matches across the apostrophe underscore",
+    edits: [
+      { from: "name.normalize(\"NFC\").trim()", to: "name.trim()" },
+    ],
+  },
+  {
+    name: "v36-fm case kept",
+    file: "src/lib/foil-maps.ts",
+    test: "matches across the apostrophe underscore",
+    edits: [
+      { from: "const words = stem.toLowerCase()", to: "const words = stem" },
+    ],
+  },
+  {
+    name: "v36-fm outer spaces kept",
+    file: "src/lib/foil-maps.ts",
+    test: "matches across the apostrophe underscore",
+    edits: [
+      { from: ".replace(/\\.[a-z0-9]{2,4}$/i, \"\").trim();", to: ".replace(/\\.[a-z0-9]{2,4}$/i, \"\");" },
+      { from: ".replace(/\\s+/g, \" \").trim();\n  return face + words;", to: ".replace(/\\s+/g, \" \");\n  return face + words;" },
+    ],
+  },
+  {
+    name: "v36-fm face dropped",
+    file: "src/lib/foil-maps.ts",
+    test: "matches across the apostrophe underscore",
+    edits: [
+      { from: "face = `${prefix[1]}_${prefix[2]} `;", to: "face = \"\";" },
+    ],
+  },
+  {
+    name: "v36-fm face dropped pairs",
+    file: "src/lib/foil-maps.ts",
+    test: "but never guesses between two",
+    edits: [
+      { from: "face = `${prefix[1]}_${prefix[2]} `;", to: "face = \"\";" },
+    ],
+  },
+  {
+    name: "v36-fm own group ignored",
+    file: "src/lib/foil-maps.ts",
+    test: "pairs each print file with its mask by name",
+    edits: [
+      { from: "const pool = own.length ? own : list;", to: "const pool = list;" },
+    ],
+  },
+  {
+    name: "v36-fm guesses between two",
+    file: "src/lib/foil-maps.ts",
+    test: "but never guesses between two",
+    edits: [
+      { from: "    if (unique && pool.length !== 1) return undefined;\n", to: "" },
+    ],
+  },
+  {
+    name: "v36-fm name fallbacks off",
+    file: "src/lib/foil-maps.ts",
+    test: "but never guesses between two",
+    edits: [
+      { from: "            byCardPick(artParts, manyArts, group) ??\n            (artParts.face ? undefined : byCardPick(asName(face.name), manyArts, group)) ??\n            (card.faces.length === 1 && index === 0 ? byCardPick(asName(card.name), manyArts, group) : undefined);", to: "            undefined;\n          void asName;\n          void index;" },
+    ],
+  },
+  {
+    name: "v36-fm mask becomes thumbnail",
+    file: "src/lib/foil-maps.ts",
+    test: "never turns a mask into a card",
+    edits: [
+      { from: "return { ...plain, maskId: mask.id };", to: "return { ...plain, maskId: mask.id, thumbId: mask.id };" },
+    ],
+  },
+  {
+    name: "v36-fm mask folder kept in tree",
+    file: "src/lib/group.ts",
+    test: "never turns a mask into a card",
+    edits: [
+      { from: "  const { tree, masks } = splitFoilMasks(root);", to: "  const { masks } = splitFoilMasks(root);\n  const tree = { ...root, maskScan: undefined };" },
+    ],
+  },
+  {
+    name: "v36-fm mask folder kept in split",
+    file: "src/lib/foil-maps.ts",
+    test: "takes the mask folder out of the tree",
+    edits: [
+      { from: "      if (child.folder && child.masks) collect(child, \"main\");\n      else children.push", to: "      if (child.folder && child.masks) { collect(child, \"main\"); children.push(child); }\n      else children.push" },
+    ],
+  },
+  {
+    name: "v36-fm maskScan path off",
+    file: "src/lib/group.ts",
+    test: "pairs each print file with its mask by name",
+    edits: [
+      { from: "  if (!root.maskScan) return catalogueFromPlainTree", to: "  if (true) return catalogueFromPlainTree" },
+    ],
+  },
+  {
+    name: "v36-fm Standard gets maps",
+    file: "src/lib/foil-maps.ts",
+    test: "but never guesses between two",
+    edits: [
+      { from: "    if (edition.printType !== \"partial_foil\") return edition;\n    let found", to: "    let found" },
+    ],
+  },
+  {
+    name: "v36-fm non-images are masks",
+    file: "src/lib/foil-maps.ts",
+    test: "takes the mask folder out of the tree",
+    edits: [
+      { from: "} else if (MASK_IMAGE.test(child.name)) {", to: "} else if (child.name) {" },
+    ],
+  },
+  {
+    name: "v36-fm Tokens folder not a group",
+    file: "src/lib/foil-maps.ts",
+    test: "takes the mask folder out of the tree",
+    edits: [
+      { from: "plain.includes(\"token\") ? \"tokens\"", to: "plain.includes(\"tokenzz\") ? \"tokens\"" },
+    ],
+  },
+  {
+    name: "v36-fm unmatched still counted found",
+    file: "src/lib/foil-maps.ts",
+    test: "leaves a card with no mask on its own art",
+    edits: [
+      { from: "          if (!mask) return plain;\n          found += 1;", to: "          found += 1;\n          if (!mask) return plain;" },
+    ],
+  },
+  {
+    name: "v36-fm folder name takes the PDF map",
+    file: "src/lib/foil-maps.ts",
+    test: "knows the mask folder from the PDF print map",
+    edits: [
+      { from: " && !plain.includes(\"pdf\");", to: ";" },
+    ],
+  },
+  {
+    name: "v36-drive mask folder skipped",
+    file: "src/lib/drive.ts",
+    test: "lists the mask folder of a Partial Foil paste for masks only",
+    edits: [
+      { from: "const maskFolder = partialFoilPaste && !mask && isFoilMaskFolder(file.name, pdfMap);", to: "const maskFolder = false;" },
+    ],
+  },
+  {
+    name: "v36-drive masks not marked",
+    file: "src/lib/drive.ts",
+    test: "lists the mask folder of a Partial Foil paste for masks only",
+    edits: [
+      { from: "    if (maskRoot && item.kind !== \"file\") node.masks = true;\n", to: "" },
+    ],
+  },
+  {
+    name: "v36-drive no maskScan",
+    file: "src/lib/drive.ts",
+    test: "lists the mask folder of a Partial Foil paste for masks only",
+    edits: [
+      { from: "return partialFoilPaste ? { ...tree, maskScan: true } : tree;", to: "return tree;" },
+    ],
+  },
+  {
+    name: "v36-drive Standard folders opened",
+    file: "src/lib/drive.ts",
+    test: "lists the mask folder of a Partial Foil paste for masks only",
+    edits: [
+      { from: "if (partialFoilPaste && !maskFolder && skipOnPartialFoilCrawl(file.name, pdfMap)) continue;", to: "if (partialFoilPaste && !maskFolder && false) continue;" },
+    ],
+  },
+  {
+    name: "v36-view no swap",
+    file: "src/lib/foil-maps.ts",
+    test: "swaps only thumbnails to masks",
+    edits: [
+      { from: "art.maskId ? { ...art, thumbId: art.maskId }", to: "art.maskId ? { ...art }" },
+    ],
+  },
+  {
+    name: "v36-view swaps the export id",
+    file: "src/lib/foil-maps.ts",
+    test: "swaps only thumbnails to masks",
+    edits: [
+      { from: "art.maskId ? { ...art, thumbId: art.maskId }", to: "art.maskId ? { ...art, id: art.maskId, thumbId: art.maskId }" },
+    ],
+  },
+  {
+    name: "v36-view no tag",
+    file: "src/lib/foil-maps.ts",
+    test: "swaps only thumbnails to masks",
+    edits: [
+      { from: ": { ...art, noFoilMap: true });", to: ": { ...art });" },
+    ],
+  },
+  {
+    name: "v36-can show Standard",
+    file: "src/lib/foil-maps.ts",
+    test: "shows only on an unlocked Partial Foil edition",
+    edits: [
+      { from: "return edition.printType === \"partial_foil\" && edition.origin === \"unlocked\";", to: "return edition.origin === \"unlocked\";" },
+    ],
+  },
+  {
+    name: "v36-can show shipped",
+    file: "src/lib/foil-maps.ts",
+    test: "shows only on an unlocked Partial Foil edition",
+    edits: [
+      { from: "return edition.printType === \"partial_foil\" && edition.origin === \"unlocked\";", to: "return edition.printType === \"partial_foil\";" },
+    ],
+  },
+  {
+    name: "v36-view old unlock swapped",
+    file: "src/lib/foil-maps.ts",
+    test: "leaves other editions, and an old unlock",
+    edits: [
+      { from: "if (!canShowFoil(edition) || foilMapsMissing(edition)) return edition;", to: "if (!canShowFoil(edition)) return edition;" },
+    ],
+  },
+  {
+    name: "v36-session never read",
+    file: "src/lib/foil-maps.ts",
+    test: "remembers the switch for the session, and treats",
+    edits: [
+      { from: "return store?.getItem(FOIL_SESSION_KEY) === \"1\";", to: "return store?.getItem(FOIL_SESSION_KEY) === \"true\";" },
+    ],
+  },
+  {
+    name: "v36-session write throws",
+    file: "src/lib/foil-maps.ts",
+    test: "remembers the switch for the session, and treats",
+    edits: [
+      { from: "  try {\n    if (on) store?.setItem(FOIL_SESSION_KEY, \"1\");\n    else store?.removeItem(FOIL_SESSION_KEY);\n  } catch {\n    // Not remembered; the switch still works for this view.\n  }", to: "  if (on) store?.setItem(FOIL_SESSION_KEY, \"1\");\n  else store?.removeItem(FOIL_SESSION_KEY);" },
+    ],
+  },
+  {
+    name: "v36-storage foilMaps dropped",
+    file: "src/lib/storage.ts",
+    test: "keeps mask ids in the stored pack",
+    edits: [
+      { from: "    ...(edition.printType === \"partial_foil\" && isFoilMapCount(edition.foilMaps) ? { foilMaps: { found: edition.foilMaps.found, total: edition.foilMaps.total } } : {}),\n", to: "" },
+    ],
+  },
+  {
+    name: "v36-storage bad count kept",
+    file: "src/lib/storage.ts",
+    test: "keeps mask ids in the stored pack",
+    edits: [
+      { from: "(count.found as number) <= (count.total as number)", to: "true" },
+    ],
+  },
+  {
+    name: "v36-ui switch on every edition",
+    file: "src/components/BuilderView.tsx",
+    test: "appears only on an unlocked Partial Foil edition",
+    edits: [
+      { from: "{foilable && (\n          <div className=\"grid gap-1 self-end text-sm\" data-foil-switch=\"\">", to: "{(true) && (\n          <div className=\"grid gap-1 self-end text-sm\" data-foil-switch=\"\">" },
+    ],
+  },
+  {
+    name: "v36-ui aria-checked stuck",
+    file: "src/components/BuilderView.tsx",
+    test: "is an accessible switch",
+    edits: [
+      { from: "aria-checked={foilOn}", to: "aria-checked={false}" },
+    ],
+  },
+  {
+    name: "v36-ui not a switch role",
+    file: "src/components/BuilderView.tsx",
+    test: "is an accessible switch",
+    edits: [
+      { from: "role=\"switch\"", to: "role=\"button\"" },
+    ],
+  },
+  {
+    name: "v36-ui describedby while off",
+    file: "src/components/BuilderView.tsx",
+    test: "shows the caption only while on",
+    edits: [
+      { from: "aria-describedby={foilOn ? foilCaptionId : undefined}", to: "aria-describedby={foilCaptionId}" },
+    ],
+  },
+  {
+    name: "v36-ui caption while off",
+    file: "src/components/BuilderView.tsx",
+    test: "shows the caption only while on",
+    edits: [
+      { from: "{foilOn ? (\n              <p id={foilCaptionId}", to: "{true ? (\n              <p id={foilCaptionId}" },
+    ],
+  },
+  {
+    name: "v36-ui caption not linked",
+    file: "src/components/BuilderView.tsx",
+    test: "shows the caption only while on",
+    edits: [
+      { from: "<p id={foilCaptionId} data-foil-caption=\"\"", to: "<p data-foil-caption=\"\"" },
+    ],
+  },
+  {
+    name: "v36-ui view not used",
+    file: "src/components/BuilderView.tsx",
+    test: "swaps thumbnails to the masks and back",
+    edits: [
+      { from: "useMemo(() => (foilOn ? foilView(baseEdition) : baseEdition), [foilOn, baseEdition]);", to: "useMemo(() => baseEdition, [baseEdition]);" },
+    ],
+  },
+  {
+    name: "v36-ui view not used flyout",
+    file: "src/components/BuilderView.tsx",
+    test: "puts the mask in the desktop hover flyout",
+    edits: [
+      { from: "useMemo(() => (foilOn ? foilView(baseEdition) : baseEdition), [foilOn, baseEdition]);", to: "useMemo(() => baseEdition, [baseEdition]);" },
+    ],
+  },
+  {
+    name: "v36-ui view not used picker",
+    file: "src/components/BuilderView.tsx",
+    test: "a tapped card's art picker follows the switch",
+    edits: [
+      { from: "useMemo(() => (foilOn ? foilView(baseEdition) : baseEdition), [foilOn, baseEdition]);", to: "useMemo(() => baseEdition, [baseEdition]);" },
+    ],
+  },
+  {
+    name: "v36-ui picker uses the base edition",
+    file: "src/components/BuilderView.tsx",
+    test: "a tapped card's art picker follows the switch",
+    edits: [
+      { from: "<CardThumb id={art.thumbId} alt={art.label} tag={art.noFoilMap ? NO_FOIL_MAP : undefined} />", to: "<CardThumb id={baseEdition.cards.flatMap((c) => c.faces).flatMap((f) => [f.defaultArt, ...f.alternates]).find((a) => a?.id === art.id)?.thumbId} alt={art.label} />" },
+    ],
+  },
+  {
+    name: "v36-ui switch not remembered",
+    file: "src/components/BuilderView.tsx",
+    test: "remembers the switch for the session across",
+    edits: [
+      { from: "                  writeShowFoil(sessionStore(), !foilOn);\n", to: "" },
+    ],
+  },
+  {
+    name: "v36-ui row tag missing",
+    file: "src/components/BuilderView.tsx",
+    test: "swaps thumbnails to the masks and back",
+    edits: [
+      { from: "<CardThumb id={art?.thumbId} alt={card.name} tag={art?.noFoilMap ? NO_FOIL_MAP : undefined} />", to: "<CardThumb id={art?.thumbId} alt={card.name} />" },
+    ],
+  },
+  {
+    name: "v36-ui missing note hidden",
+    file: "src/components/BuilderView.tsx",
+    test: "tells the user in one line",
+    edits: [
+      { from: "{foilMissing ? <span", to: "{false ? <span" },
+    ],
+  },
+  {
+    name: "v36-thumb tag not drawn",
+    file: "src/components/thumbs.tsx",
+    test: "swaps thumbnails to the masks and back",
+    edits: [
+      { from: "      {tag ? (\n        <span data-thumb-tag=\"\"", to: "      {false ? (\n        <span data-thumb-tag=\"\"" },
+    ],
+  },
+  {
+    name: "v36-rc no inflate cap",
+    file: "src/lib/restore-code.ts",
+    test: "refuses a deflate bomb",
+    edits: [
+      { from: "await pipe(bytes, new DecompressionStream(\"deflate-raw\"), MAX_JSON_BYTES)", to: "await pipe(bytes, new DecompressionStream(\"deflate-raw\"))" },
+    ],
+  },
+  {
+    name: "v36-rc inflate cap loose",
+    file: "src/lib/restore-code.ts",
+    test: "stops just past the inflate limit",
+    edits: [
+      { from: "    if (total > limit) {", to: "    if (total > limit + 1024) {" },
+    ],
+  },
+  {
+    name: "v36-rc no length cap",
+    file: "src/lib/restore-code.ts",
+    test: "refuses a pasted code over the length limit",
+    edits: [
+      { from: "  if (text.length > MAX_CODE_CHARS) throw new RestoreCodeError(TOO_BIG);\n", to: "" },
+    ],
+  },
+  {
+    name: "v36-rc no raw length cap",
+    file: "src/lib/restore-code.ts",
+    test: "refuses a pasted code over the length limit",
+    edits: [
+      { from: "  if (input.length > MAX_CODE_CHARS * 2) throw new RestoreCodeError(TOO_BIG);\n", to: "" },
+    ],
+  },
+  {
+    name: "v36-rc restore replaces any",
+    file: "src/lib/restore-code.ts",
+    test: "keeps the catalogue here when the code's copy is older",
+    edits: [
+      { from: "if (existing && catalogueStamp(pack) <= catalogueStamp(existing)) {", to: "if (false) {" },
+    ],
+  },
+  {
+    name: "v36-rc same age replaces",
+    file: "src/lib/restore-code.ts",
+    test: "keeps the catalogue here when the code's copy is older",
+    edits: [
+      { from: "catalogueStamp(pack) <= catalogueStamp(existing)", to: "catalogueStamp(pack) < catalogueStamp(existing)" },
+    ],
+  },
+  {
+    name: "v36-rc newer kept",
+    file: "src/lib/restore-code.ts",
+    test: "replaces it when the code's copy was read later",
+    edits: [
+      { from: "if (existing && catalogueStamp(pack) <= catalogueStamp(existing)) {", to: "if (existing) {" },
+    ],
+  },
+  {
+    name: "v36-rc older code drops packs",
+    file: "src/lib/restore-code.ts",
+    test: "an older code that lacks some folders",
+    edits: [
+      { from: "      kept += 1;\n      continue;", to: "      kept += 1;\n      packs = packs.filter((item) => item !== existing);\n      continue;" },
+    ],
+  },
+  {
+    name: "v36-st stamp ignores refreshedAt",
+    file: "src/lib/storage.ts",
+    test: "falls back to the first unlock time",
+    edits: [
+      { from: "Date.parse(pack.refreshedAt || pack.savedAt)", to: "Date.parse(pack.savedAt)" },
+    ],
+  },
+  {
+    name: "v36-st refreshedAt not stored",
+    file: "src/lib/storage.ts",
+    test: "carries the refresh time through storage",
+    edits: [
+      { from: "  if (pack.refreshedAt) stored.refreshedAt = pack.refreshedAt;\n", to: "" },
+    ],
+  },
+  {
+    name: "v36-st refreshedAt not parsed",
+    file: "src/lib/storage.ts",
+    test: "carries the refresh time through storage",
+    edits: [
+      { from: "    ...(typeof pack.refreshedAt === \"string\" && Number.isFinite(Date.parse(pack.refreshedAt)) ? { refreshedAt: pack.refreshedAt } : {}),\n", to: "" },
+    ],
+  },
+  {
+    name: "v36-st paste not stamped",
+    file: "src/lib/storage.ts",
+    test: "carries the refresh time through storage",
+    edits: [
+      { from: "refreshedAt: pack.refreshedAt || pack.savedAt };", to: "refreshedAt: pack.refreshedAt };" },
+    ],
+  },
+  {
+    name: "v36-app kept not told",
+    file: "src/App.tsx",
+    test: "restores on another device",
+    edits: [
+      { from: "restoredMessage(result.added, result.refreshed, result.kept, result.empty)", to: "restoredMessage(result.added, result.refreshed, 0, result.empty)" },
+    ],
+  },
+  {
+    name: "v36-rs paste is a password",
+    file: "src/components/RestoreCode.tsx",
+    test: "never uses a password input",
+    edits: [
+      { from: "            {...NOT_A_PASSWORD}\n            value={pasted}", to: "            {...NOT_A_PASSWORD}\n            type=\"password\"\n            value={pasted}" },
+    ],
+  },
+  {
+    name: "v36-rs output is a password",
+    file: "src/components/RestoreCode.tsx",
+    test: "never uses a password input",
+    edits: [
+      { from: "              {...NOT_A_PASSWORD}\n              readOnly", to: "              {...NOT_A_PASSWORD}\n              type={revealed ? \"text\" : \"password\"}\n              readOnly" },
+    ],
+  },
+  {
+    name: "v36-rs paste unmasked",
+    file: "src/components/RestoreCode.tsx",
+    test: "never uses a password input",
+    edits: [
+      { from: "className=\"beeline-masked h-10 flex-1 font-mono text-xs\"", to: "className=\"h-10 flex-1 font-mono text-xs\"" },
+    ],
+  },
+  {
+    name: "v36-rs manager hints off",
+    file: "src/components/RestoreCode.tsx",
+    test: "never uses a password input",
+    edits: [
+      { from: "  \"data-lpignore\": \"true\",\n", to: "" },
+    ],
+  },
+  {
+    name: "v36-css no text-security",
+    file: "src/index.css",
+    test: "never uses a password input",
+    edits: [
+      { from: ".beeline-masked {\n  -webkit-text-security: disc;\n  text-security: disc;\n}", to: ".beeline-masked {\n}" },
+    ],
+  },
+  {
+    name: "v36-css no fallback",
+    file: "src/index.css",
+    test: "never uses a password input",
+    edits: [
+      { from: "    color: transparent;\n    text-shadow: 0 0 0.45em var(--foreground);", to: "    text-shadow: 0 0 0.45em var(--foreground);" },
+    ],
+  },
+  {
+    name: "v36-footer old padding",
+    file: "src/components/HomeView.tsx",
+    test: "pads the footer by the floating button",
+    edits: [
+      { from: "<footer className=\"home-footer text-xs", to: "<footer className=\"pb-6 text-xs" },
+    ],
+  },
+  {
+    name: "v36-css footer misses button height",
+    file: "src/index.css",
+    test: "pads the footer by the floating button",
+    edits: [
+      { from: "calc(var(--unlock-here-bottom) + var(--unlock-here-height) + var(--unlock-here-gap))", to: "calc(var(--unlock-here-bottom) + var(--unlock-here-gap))" },
+    ],
+  },
+  {
+    name: "v36-css button taller than padded",
+    file: "src/index.css",
+    test: "pads the footer by the floating button",
+    edits: [
+      { from: "  --unlock-here-height: 2.75rem;", to: "  --unlock-here-height: 2.75rem;\n  --unlock-here-gap-unused: 0;" },
+      { from: ".unlock-here { bottom: var(--unlock-here-bottom); height: var(--unlock-here-height); }", to: ".unlock-here { bottom: var(--unlock-here-bottom); height: 4rem; }" },
+    ],
+  },
+  {
+    name: "v36-uh own bottom",
+    file: "src/components/UnlockHere.tsx",
+    test: "pads the footer by the floating button",
+    edits: [
+      { from: "className=\"unlock-here fixed left-1/2", to: "className=\"unlock-here fixed bottom-4 left-1/2" },
+    ],
+  },
+  {
+    name: "v36-mv load failure is a kill",
+    file: "scripts/mutate-verdict.ts",
+    test: "does not count a file that failed to load",
+    edits: [
+      { from: "  if (brokenFiles.length || (report.numFailedTestSuites ?? 0) > 0) {\n    return { kind: \"invalid\"", to: "  if (brokenFiles.length || (report.numFailedTestSuites ?? 0) > 0) {\n    return { kind: \"killed\"" },
+    ],
+  },
+  {
+    name: "v36-mv failure count trusted",
+    file: "scripts/mutate-verdict.ts",
+    test: "does not count a filter that matched nothing",
+    edits: [
+      { from: "if ((report.numFailedTests ?? 0) > 0 && failedTests.length > 0) {", to: "if ((report.numFailedTests ?? 0) > 0) {" },
+    ],
+  },
+  {
+    name: "v36-mv no-match survives",
+    file: "scripts/mutate-verdict.ts",
+    test: "does not count a filter that matched nothing",
+    edits: [
+      { from: "  if (passedTests.length === 0) return { kind: \"invalid\", detail: [\"the test filter matched no test\"] };\n", to: "" },
+    ],
+  },
+  {
+    name: "v36-mv any failure kills",
+    file: "scripts/mutate-verdict.ts",
+    test: "counts a kill only when a test ran and failed",
+    edits: [
+      { from: "  if ((report.numFailedTests ?? 0) > 0 && failedTests.length > 0) {\n    return { kind: \"killed\", detail: [`Tests ${failedTests.length} failed`", to: "  if ((report.numFailedTests ?? 0) > 0 && failedTests.length > 0) {\n    return { kind: \"killed\", detail: [`Tests ${report.numFailedTests} failed!`" },
+    ],
+  },
+  // v0.1.37: restore-code limits and make-side checks (1), future stamps and empty deck lists (2),
+  // variant and art number in mask pairing (3), the mask folder decided by its listed name (4).
+  {
+    name: "v37-rc paste limit back to 256 KB",
+    file: "src/lib/restore-code.ts",
+    test: "every shipped deck unlocked as Partial Foil makes a code",
+    edits: [
+      { from: "export const MAX_CODE_CHARS = 1024 * 1024;", to: "export const MAX_CODE_CHARS = 256 * 1024;" },
+    ],
+  },
+  {
+    name: "v37-rc paste limit 4 MB",
+    file: "src/lib/restore-code.ts",
+    test: "uses 1 MB pasted and 8 MB unpacked",
+    edits: [
+      { from: "export const MAX_CODE_CHARS = 1024 * 1024;", to: "export const MAX_CODE_CHARS = 4 * 1024 * 1024;" },
+    ],
+  },
+  {
+    name: "v37-rc inflate limit back to 2 MB",
+    file: "src/lib/restore-code.ts",
+    test: "uses 1 MB pasted and 8 MB unpacked",
+    edits: [
+      { from: "export const MAX_JSON_BYTES = 8 * 1024 * 1024;", to: "export const MAX_JSON_BYTES = 2 * 1024 * 1024;" },
+    ],
+  },
+  {
+    name: "v37-rc inflate limit 32 MB",
+    file: "src/lib/restore-code.ts",
+    test: "uses 1 MB pasted and 8 MB unpacked",
+    edits: [
+      { from: "export const MAX_JSON_BYTES = 8 * 1024 * 1024;", to: "export const MAX_JSON_BYTES = 32 * 1024 * 1024;" },
+    ],
+  },
+  {
+    name: "v37-rc make skips the code size check",
+    file: "src/lib/restore-code.ts",
+    test: "refuses to make a code a restore would refuse",
+    edits: [
+      { from: "  if (code.length > MAX_CODE_CHARS) throw new RestoreCodeError(codeTooBigMessage(code.length));\n", to: "" },
+    ],
+  },
+  {
+    name: "v37-rc make skips the unpacked size check",
+    file: "src/lib/restore-code.ts",
+    test: "refuses to make a code a restore would refuse",
+    edits: [
+      { from: "  if (raw.length > MAX_JSON_BYTES) throw new RestoreCodeError(codeTooBigMessage(raw.length, MAX_JSON_BYTES));\n", to: "" },
+    ],
+  },
+  {
+    name: "v37-rc make never reads its code back",
+    file: "src/lib/restore-code.ts",
+    test: "refuses to show a code that doesn't read back",
+    edits: [
+      { from: "  let back: UnlockedPack[];\n  try {\n    back = await readRestoreCode(code);\n  } catch {\n    throw new RestoreCodeError(CODE_CHECK_FAILED);\n  }\n  if (JSON.stringify(back.map(packForStorage)) !== JSON.stringify(stored)) throw new RestoreCodeError(CODE_CHECK_FAILED);\n", to: "" },
+    ],
+  },
+  {
+    name: "v37-rc make returns a code that failed to read",
+    file: "src/lib/restore-code.ts",
+    test: "refuses to show a code that doesn't read back",
+    edits: [
+      { from: "  } catch {\n    throw new RestoreCodeError(CODE_CHECK_FAILED);\n  }\n  if (JSON.stringify(back.map(packForStorage))", to: "  } catch {\n    return code;\n  }\n  if (JSON.stringify(back.map(packForStorage))" },
+    ],
+  },
+  {
+    name: "v37-rc code carries in-memory fields",
+    file: "src/lib/restore-code.ts",
+    test: "every shipped deck unlocked as Partial Foil makes a code",
+    edits: [
+      { from: "const json = JSON.stringify({ kind: KIND, version: RESTORE_VERSION, packs: stored });", to: "const json = JSON.stringify({ kind: KIND, version: RESTORE_VERSION, packs: packs.map(packForStorage) });" },
+    ],
+  },
+  {
+    name: "v37-rc message names the wrong limit",
+    file: "src/lib/restore-code.ts",
+    test: "refuses to make a code a restore would refuse",
+    edits: [
+      { from: "export function codeTooBigMessage(size: number, limit = MAX_CODE_CHARS): string {", to: "export function codeTooBigMessage(size: number, limit = MAX_JSON_BYTES): string {" },
+    ],
+  },
+  {
+    name: "v37-rc message size rounded down",
+    file: "src/lib/restore-code.ts",
+    test: "refuses to make a code a restore would refuse",
+    edits: [
+      { from: "const kb = (n: number) => Math.ceil(n / 1024).toLocaleString(\"en-US\");", to: "const kb = (n: number) => String(Math.floor(n / 1024 / 1024));" },
+    ],
+  },
+  {
+    name: "v37-ui make problem not an alert",
+    file: "src/components/RestoreCode.tsx",
+    test: "warns and shows no code when the unlocks here are too many",
+    edits: [
+      { from: "<p role=\"alert\" className=\"mt-2 flex max-w-2xl items-start gap-2 rounded-xl border border-destructive/50", to: "<p role=\"status\" className=\"mt-2 flex max-w-2xl items-start gap-2 rounded-xl border border-destructive/50" },
+    ],
+  },
+  {
+    name: "v37-ui make problem hidden",
+    file: "src/components/RestoreCode.tsx",
+    test: "warns and shows no code when the unlocks here are too many",
+    edits: [
+      { from: "      {problem && (\n", to: "      {false && (\n" },
+    ],
+  },
+  {
+    name: "v37-rc future stamps not capped",
+    file: "src/lib/restore-code.ts",
+    test: "counts a stamp later than this device's clock plus a day",
+    edits: [
+      { from: "  if (!ahead(pack.refreshedAt) && !ahead(pack.savedAt)) return pack;", to: "  return pack;" },
+    ],
+  },
+  {
+    name: "v37-rc cap a week ahead",
+    file: "src/lib/restore-code.ts",
+    test: "counts a stamp later than this device's clock plus a day",
+    edits: [
+      { from: "export const MAX_STAMP_AHEAD_MS = 24 * 60 * 60 * 1000;", to: "export const MAX_STAMP_AHEAD_MS = 7 * 24 * 60 * 60 * 1000;" },
+    ],
+  },
+  {
+    name: "v37-rc cap at now (no skew allowed)",
+    file: "src/lib/restore-code.ts",
+    test: "counts a stamp later than this device's clock plus a day",
+    edits: [
+      { from: "  const latest = now + MAX_STAMP_AHEAD_MS;", to: "  const latest = now;" },
+    ],
+  },
+  {
+    name: "v37-rc first unlock time not capped",
+    file: "src/lib/restore-code.ts",
+    test: "counts a stamp later than this device's clock plus a day",
+    edits: [
+      { from: "savedAt: ahead(pack.savedAt) ? cap : pack.savedAt", to: "savedAt: pack.savedAt" },
+    ],
+  },
+  {
+    name: "v37-rc merge ignores the given clock",
+    file: "src/lib/restore-code.ts",
+    test: "counts a stamp later than this device's clock plus a day",
+    edits: [
+      { from: "    const pack = capStamps(given, now);", to: "    const pack = capStamps(given, Date.now());" },
+    ],
+  },
+  {
+    name: "v37-rc empty deck list replaces",
+    file: "src/lib/restore-code.ts",
+    test: "never lets a deck list with no cards replace one here",
+    edits: [
+      { from: "    if (existing && cardCount(pack) === 0) {\n      empty += 1;\n      continue;\n    }\n", to: "" },
+    ],
+  },
+  {
+    name: "v37-rc empty checked before the stamp counts as kept",
+    file: "src/lib/restore-code.ts",
+    test: "never lets a deck list with no cards replace one here",
+    edits: [
+      { from: "    if (existing && cardCount(pack) === 0) {\n      empty += 1;", to: "    if (existing && cardCount(pack) === 0) {\n      kept += 1;" },
+    ],
+  },
+  {
+    name: "v37-msg empty note missing",
+    file: "src/lib/restore-code.ts",
+    test: "never lets a deck list with no cards replace one here",
+    edits: [
+      { from: "  const notes = keptNote + emptyNote;", to: "  const notes = keptNote;" },
+    ],
+  },
+  {
+    name: "v37-msg empty not counted as matched",
+    file: "src/lib/restore-code.ts",
+    test: "never lets a deck list with no cards replace one here",
+    edits: [
+      { from: "return `Your restore code matched ${folders(kept + empty)} already on this device.${notes}`;", to: "return `Your restore code matched ${folders(kept)} already on this device.${notes}`;" },
+    ],
+  },
+  {
+    name: "v37-fm variants ignored",
+    file: "src/lib/foil-maps.ts",
+    test: "never gives a print another variant's mask",
+    edits: [
+      { from: "  if (target.variant && mask.variant && target.variant !== mask.variant) return false;\n", to: "" },
+    ],
+  },
+  {
+    name: "v37-fm variant needed on both sides",
+    file: "src/lib/foil-maps.ts",
+    test: "never gives a print another variant's mask",
+    edits: [
+      { from: "  if (target.variant && mask.variant && target.variant !== mask.variant) return false;", to: "  if (target.variant !== mask.variant) return false;" },
+    ],
+  },
+  {
+    name: "v37-fm variant spacing not normalised",
+    file: "src/lib/foil-maps.ts",
+    test: "never gives a print another variant's mask",
+    edits: [
+      { from: ".map((match) => match[1]!.replace(/\\s+/g, \" \").trim())", to: ".map((match) => match[1]!)" },
+    ],
+  },
+  {
+    name: "v37-fm art number ignored",
+    file: "src/lib/foil-maps.ts",
+    test: "keeps the art number when a card has more than one art",
+    edits: [
+      { from: "  if (manyArts && (target.art ?? \"1\") !== (mask.art ?? \"1\")) return false;\n", to: "" },
+    ],
+  },
+  {
+    name: "v37-fm art number checked on one-art cards",
+    file: "src/lib/foil-maps.ts",
+    test: "keeps the art number when a card has more than one art",
+    edits: [
+      { from: "  if (manyArts && (target.art ?? \"1\")", to: "  if ((target.art ?? \"1\")" },
+    ],
+  },
+  {
+    name: "v37-fm unnumbered is not art 1",
+    file: "src/lib/foil-maps.ts",
+    test: "keeps the art number when a card has more than one art",
+    edits: [
+      { from: "(target.art ?? \"1\") !== (mask.art ?? \"1\")", to: "target.art !== mask.art" },
+    ],
+  },
+  {
+    name: "v37-fm name fallback drops the art number",
+    file: "src/lib/foil-maps.ts",
+    test: "keeps the art number when a card has more than one art",
+    edits: [
+      { from: "return { face: \"\", base: parts.base, variant: artParts.variant ?? parts.variant, art: artParts.art };", to: "return { face: \"\", base: parts.base, variant: artParts.variant ?? parts.variant, art: parts.art };" },
+    ],
+  },
+  {
+    name: "v37-fm many arts counted by card",
+    file: "src/lib/foil-maps.ts",
+    test: "keeps the art number when a card has more than one art",
+    edits: [
+      { from: "const manyArts = (face.defaultArt ? 1 : 0) + face.alternates.length > 1;", to: "const manyArts = card.faces.length > 1;" },
+    ],
+  },
+  {
+    name: "v37-drive target's own name decides again",
+    file: "src/lib/drive.ts",
+    test: "marks a mask folder by the name it is listed under",
+    edits: [
+      { from: "    if (maskRoot && item.kind !== \"file\") node.masks = true;", to: "    if (maskRoot && item.kind !== \"file\" && isFoilMaskFolderName(folderName)) node.masks = true;" },
+    ],
+  },
+  {
+    name: "v37-drive parent's decision not passed",
+    file: "src/lib/drive.ts",
+    test: "marks a mask folder by the name it is listed under",
+    edits: [
+      { from: ": { kind: \"subfolder\", name: file.name }, mask || maskFolder, maskFolder);", to: ": { kind: \"subfolder\", name: file.name }, mask || maskFolder, false);" },
+    ],
+  },
+  {
+    name: "v37-drive every folder inside marked",
+    file: "src/lib/drive.ts",
+    test: "marks a mask folder by the name it is listed under",
+    edits: [
+      { from: ": { kind: \"subfolder\", name: file.name }, mask || maskFolder, maskFolder);", to: ": { kind: \"subfolder\", name: file.name }, mask || maskFolder, mask || maskFolder);" },
+    ],
+  },
 ];
 
-let failed = 0;
-for (const mutation of mutations) {
+function runTest(test: string): Verdict {
+  const out = join(tmpdir(), `beeline-mutate-${process.pid}.json`);
+  rmSync(out, { force: true });
+  const result = spawnSync("npx", ["vitest", "run", "-t", test, "--reporter=json", `--outputFile=${out}`], { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+  let report: Report | null = null;
+  try {
+    if (existsSync(out)) report = JSON.parse(readFileSync(out, "utf8")) as Report;
+  } catch {
+    report = null;
+  } finally {
+    rmSync(out, { force: true });
+  }
+  const verdict = verdictOf(report);
+  if (!report) verdict.detail.push(`exit ${result.status}: ${`${result.stderr ?? ""}`.split("\n").filter(Boolean).slice(0, 3).join(" | ").slice(0, 300)}`);
+  return verdict;
+}
+
+const only = process.env.MUTATE_ONLY ? new RegExp(process.env.MUTATE_ONLY) : null;
+const selected = only ? mutations.filter((mutation) => only.test(mutation.name)) : mutations;
+const counts = { killed: 0, survived: 0, invalid: 0, missing: 0 };
+for (const mutation of selected) {
   const path = `${root}${mutation.file}`;
   const original = readFileSync(path, "utf8");
   let patched = original;
@@ -3030,28 +3910,20 @@ for (const mutation of mutations) {
     patched = patched.replace(edit.from, edit.to);
   }
   if (missing) {
-    failed += 1;
+    counts.missing += 1;
     continue;
   }
   writeFileSync(path, patched);
   console.log(`\n===== ${mutation.name} =====`);
   try {
-    const out = execSync(`npx vitest run -t ${JSON.stringify(mutation.test)} --reporter=verbose`, {
-      cwd: root,
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "pipe"],
-    });
-    failed += 1;
-    console.log("STILL PASSED");
-    console.log(out);
-  } catch (error) {
-    const err = error as { stdout?: string; stderr?: string };
-    console.log("KILLED");
-    console.log(`${err.stdout ?? ""}${err.stderr ?? ""}`);
+    const verdict = runTest(mutation.test);
+    counts[verdict.kind] += 1;
+    console.log(verdict.kind === "killed" ? "KILLED" : verdict.kind === "survived" ? "STILL PASSED" : "INVALID (not a kill)");
+    console.log(verdict.detail.join("\n"));
   } finally {
     writeFileSync(path, original);
   }
 }
 
-console.log(`\n${mutations.length - failed} killed, ${failed} still passed, ${mutations.length} total`);
-if (failed) process.exit(1);
+console.log(`\n${counts.killed} killed by a failing test, ${counts.survived} still passed, ${counts.invalid} invalid, ${counts.missing} patch missing, ${selected.length} total`);
+if (counts.survived || counts.invalid || counts.missing) process.exit(1);

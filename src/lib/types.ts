@@ -13,6 +13,13 @@ export type ArtFile = {
    * SxF's Color and Black and White options. Absent when there is only one.
    */
   tone?: ArtTone;
+  /**
+   * Partial Foil only: the file id of this print's foil mask ("Partial Foil Map", white = foil).
+   * Device-only, like every unlocked file id. Absent when the print has no mask.
+   */
+  maskId?: string;
+  /** Set only on the display copy made by foilView, for a print with no mask. Never stored. */
+  noFoilMap?: true;
 };
 
 export type ArtTone = "color" | "bw";
@@ -100,6 +107,11 @@ export type Edition = {
   sourceId?: string;
   /** Short hash of the unlocked folder. Memory and localStorage only, never a Drive id. */
   packHash?: string;
+  /**
+   * Partial Foil editions unlocked by v0.1.36 or later: how many print files got a foil mask, of how
+   * many. Absent on older unlocks (masks were never read) and on every other edition.
+   */
+  foilMaps?: { found: number; total: number };
 };
 
 export type DeckCatalogue = {
@@ -119,4 +131,8 @@ export type RawNode = {
   name: string;
   folder: boolean;
   children?: RawNode[];
+  /** A Partial Foil Map mask folder, listed for masks only (see splitFoilMasks). */
+  masks?: true;
+  /** On the root of a Partial Foil unlock: mask folders were looked for. */
+  maskScan?: true;
 };

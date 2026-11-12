@@ -355,7 +355,7 @@ export default function App() {
           legacyNotes={savedNotes}
           resume={resumeDeck ? { name: resumeDeck.name, detail: resumeDetail(resumeDeck) } : null}
           unlockedCount={unlocked.length}
-          unlockedKey={unlocked.map((pack) => `${pack.packHash}@${pack.savedAt}`).join(" ")}
+          unlockedKey={unlocked.map((pack) => `${pack.packHash}@${pack.savedAt}@${pack.refreshedAt ?? ""}`).join(" ")}
           onMakeRestoreCode={() => makeRestoreCode(unlocked)}
           onRestoreCode={async (code) => {
             const incoming = await readRestoreCode(code);
@@ -363,7 +363,7 @@ export default function App() {
             writeUnlocked(localStorage, result.packs);
             setUnlocked(result.packs);
             setError(null);
-            return restoredMessage(result.added, result.refreshed);
+            return restoredMessage(result.added, result.refreshed, result.kept, result.empty);
           }}
           hideFloating={touring || splash !== null}
           keyReady={keyReady()}

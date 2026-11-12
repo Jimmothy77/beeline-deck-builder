@@ -8,7 +8,8 @@ import { unlockPlace, type UnlockPlace } from "@/lib/unlock-place";
  * Floating "Unlock Here" button for the home page. It shows only while the unlock section is out of
  * view (IntersectionObserver), and the arrows point toward it. It sits bottom centre, clear of the Tour
  * button (bottom left) and of Back to top (bottom right, deck view only). Without IntersectionObserver
- * it stays hidden.
+ * it stays hidden. Its bottom offset and height come from index.css (.unlock-here), which the home
+ * footer's padding (.home-footer) also uses.
  */
 export function UnlockHere({ target, focusTarget, hidden }: { target: RefObject<HTMLElement | null>; focusTarget?: RefObject<HTMLElement | null>; hidden?: boolean }) {
   const [place, setPlace] = useState<UnlockPlace>("in-view");
@@ -30,7 +31,7 @@ export function UnlockHere({ target, focusTarget, hidden }: { target: RefObject<
     <Button
       type="button"
       data-unlock-here={place}
-      className="unlock-here fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 z-40 h-11 -translate-x-1/2 gap-1.5 rounded-full px-4 shadow-lg shadow-black/40"
+      className="unlock-here fixed left-1/2 z-40 -translate-x-1/2 gap-1.5 rounded-full px-4 shadow-lg shadow-black/40"
       onClick={() => {
         const reduced = typeof window.matchMedia === "function" && window.matchMedia(REDUCED_MOTION_MEDIA).matches;
         target.current?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });

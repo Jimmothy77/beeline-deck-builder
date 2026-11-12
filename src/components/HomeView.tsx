@@ -244,7 +244,7 @@ export function HomeView({
         )}
       </section>
 
-      <footer className="pb-6 text-xs leading-relaxed text-muted-foreground">
+      <footer className="home-footer text-xs leading-relaxed text-muted-foreground" data-home-footer="">
         Card designs and deck lists by Beespair. BeeLine only writes the print order. It is a fan project for personal printing and is not affiliated with Wizards of the Coast.
       </footer>
     </div>
