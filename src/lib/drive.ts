@@ -1,6 +1,7 @@
 import { isStandardEditionFolder, isTemplateOrFontFolder, looksLikePaidName, plainEditionName, productEditionKind } from "@/lib/group";
 import { isDecklistFile } from "@/lib/decklist";
 import { isFoilMaskFolderName } from "@/lib/foil-maps";
+import { mapFolderInChain, PartialFoilMapLinkError } from "@/lib/pf-map";
 import type { RawNode } from "@/lib/types";
 
 const FOLDER = "application/vnd.google-apps.folder";
@@ -293,6 +294,8 @@ export async function readDriveTree(folderId: string, apiKey: string, fetchImpl:
   let partialFoilPaste = false;
   let deluxePaste = false;
   let rootDecided = false;
+  /** The names the paste went through before its folder is listed (see mapFolderInChain). */
+  const rootChain: string[] = [];
 
   async function resolve(
     id: string,
@@ -329,6 +332,13 @@ export async function readDriveTree(folderId: string, apiKey: string, fetchImpl:
       : item.kind === "shortcut" ? { kind: "shortcut", name: metaRead && own.name ? own.name : item.name }
       : item.kind === "linked" ? { ...item, ...(metaRead && own.name ? { name: own.name } : {}) }
       : item;
+    if (depth === 0) {
+      // A Partial Foil Map folder (or one inside it) is never opened: refused before it is listed.
+      if (item.kind === "shortcut") rootChain.push(item.name);
+      rootChain.push(folderName);
+      const map = mapFolderInChain(rootChain);
+      if (map) throw new PartialFoilMapLinkError(map.deck);
+    }
     if (hops === 0 && depth === 0 && !rootDecided) {
       rootDecided = true;
       const kind = productEditionKind(folderName);

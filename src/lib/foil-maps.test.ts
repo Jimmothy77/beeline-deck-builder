@@ -243,13 +243,41 @@ describe("variant and art number in the by-card match (v0.1.37)", () => {
       { id: "m1", name: "Sol Ring.png", group: "main" },
       { id: "m3", name: "Sol Ring 3.png", group: "main" },
     ]);
-    // Art 1 has its own mask, art 2 has none (never art 1's), art 3 matches its number across the variant.
-    expect(masksOf(out!)).toEqual([["p1=m1", "p2=-", "p3=m3"]]);
+    // Art 1 has its own mask, art 2 has none (never art 1's). Art 3 has a variant its mask doesn't name, so
+    // since v0.1.38 it has none either: on a card with more than one art the variant must be the same.
+    expect(masksOf(out!)).toEqual([["p1=m1", "p2=-", "p3=-"]]);
     // With a single art the number is not a different print: "Sol Ring 2" alone still takes "Sol Ring".
     const [single] = attachFoilMaps([edition([oneFace("sol", "Sol Ring", [art("p2", "Sol Ring 2.pdf")])])], [{ id: "m1", name: "Sol Ring.png", group: "main" }]);
     expect(masksOf(single!)).toEqual([["p2=m1"]]);
     // "Sol Ring 1" and an unnumbered "Sol Ring" are the same art.
     const [first] = attachFoilMaps([edition([oneFace("sol", "Sol Ring", [art("p1", "Sol Ring.pdf"), art("p2", "Sol Ring 2.pdf")])])], [{ id: "m1", name: "Sol Ring 1.png", group: "main" }]);
     expect(masksOf(first!)).toEqual([["p1=m1", "p2=-"]]);
+  });
+});
+
+describe("no variant is its own variant on a card with more than one art (v0.1.38)", () => {
+  const art = (id: string, name: string): ArtFile => ({ id, name, thumbId: id, label: "" });
+  const forest = (arts: ArtFile[]): Edition => ({
+    id: "pf",
+    name: "Partial Foil",
+    printType: "partial_foil",
+    backs: [],
+    notes: [],
+    cards: [{ id: "forest", name: "Forest", role: "main", defaultQty: 1, faces: [{ id: "forest:f", name: "Forest", defaultArt: arts[0]!, alternates: arts.slice(1) }] }],
+  });
+  const masksOf = (out: Edition) => [out.cards[0]!.faces[0]!.defaultArt!, ...out.cards[0]!.faces[0]!.alternates].map((file) => `${file.id}=${file.maskId ?? "-"}`);
+
+  it("never gives a plain Forest the Forest (Greenpath) mask, and never the other way round", () => {
+    const [out] = attachFoilMaps([forest([art("p", "Forest.pdf"), art("p-g", "Forest (Greenpath).pdf"), art("p-f", "Forest (Fog Canyon) 3.pdf")])], [{ id: "m-g", name: "forest ( greenpath ) 1.png", group: "main" }]);
+    expect(masksOf(out!)).toEqual(["p=-", "p-g=m-g", "p-f=-"]);
+    const [back] = attachFoilMaps([forest([art("p", "Forest 1.pdf"), art("p-g", "Forest (Greenpath) 2.pdf")])], [{ id: "m", name: "Forest.png", group: "main" }]);
+    expect(masksOf(back!)).toEqual(["p=m", "p-g=-"]);
+    const [variantsOnly] = attachFoilMaps([forest([art("p-g", "Forest (Greenpath).pdf"), art("p-f", "Forest (Fog Canyon).pdf")])], [{ id: "m", name: "Forest.png", group: "main" }]);
+    expect(masksOf(variantsOnly!)).toEqual(["p-g=-", "p-f=-"]);
+  });
+
+  it("still lets a one-art card's plain file take a variant mask", () => {
+    const [out] = attachFoilMaps([forest([art("p", "Forest.pdf")])], [{ id: "m-g", name: "Forest (Greenpath).png", group: "main" }]);
+    expect(masksOf(out!)).toEqual(["p=m-g"]);
   });
 });

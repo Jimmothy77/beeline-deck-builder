@@ -23,6 +23,8 @@ type Mutation = {
   file: string;
   test: string;
   edits: Edit[];
+  /** Files the mutated code leaves in the repo, removed once the mutant has run. */
+  leaves?: string[];
 };
 
 const mutations: Mutation[] = [
@@ -2694,7 +2696,7 @@ const mutations: Mutation[] = [
     name: "v35-rc empty code made",
     file: "src/lib/restore-code.ts",
     test: "has nothing to make when nothing is unlocked",
-    edits: [{ from: "  if (!packs.length) throw new RestoreCodeError(RESTORE_ERRORS.nothing);\n", to: "" }],
+    edits: [{ from: "  if (!carried.length) throw new RestoreCodeError(RESTORE_ERRORS.nothing);\n", to: "" }],
   },
   {
     name: "v35-rc merge counts every pack as new",
@@ -3492,7 +3494,7 @@ const mutations: Mutation[] = [
     file: "src/App.tsx",
     test: "restores on another device",
     edits: [
-      { from: "restoredMessage(result.added, result.refreshed, result.kept, result.empty)", to: "restoredMessage(result.added, result.refreshed, 0, result.empty)" },
+      { from: "restoredMessage(result.added, result.refreshed, result.kept, result.empty, result.maps)", to: "restoredMessage(result.added, result.refreshed, 0, result.empty, result.maps)" },
     ],
   },
   {
@@ -3874,6 +3876,428 @@ const mutations: Mutation[] = [
       { from: ": { kind: \"subfolder\", name: file.name }, mask || maskFolder, maskFolder);", to: ": { kind: \"subfolder\", name: file.name }, mask || maskFolder, mask || maskFolder);" },
     ],
   },
+  // v0.1.38: Partial Foil Map links refused (1) and saved or restored map unlocks dropped (2), exact variant
+  // on cards with more than one art (4a), and the planting test kept out of the repo's public/ and src/ (4b).
+  {
+    name: "v38-pm the PDF map is not a map folder",
+    file: "src/lib/pf-map.ts",
+    test: "knows both map folders, whatever the case and spacing",
+    edits: [
+      { from: "const MAP_NAMES = new Set([\"partialfoilmap\", \"pdfpartialfoilmap\"]);", to: "const MAP_NAMES = new Set([\"partialfoilmap\"]);" },
+    ],
+  },
+  {
+    name: "v38-pm the mask folder is not a map folder",
+    file: "src/lib/pf-map.ts",
+    test: "refuses the Partial Foil Map folder and lists nothing",
+    edits: [
+      { from: "const MAP_NAMES = new Set([\"partialfoilmap\", \"pdfpartialfoilmap\"]);", to: "const MAP_NAMES = new Set([\"pdfpartialfoilmap\"]);" },
+    ],
+  },
+  {
+    name: "v38-pm case matters",
+    file: "src/lib/pf-map.ts",
+    test: "knows both map folders, whatever the case and spacing",
+    edits: [
+      { from: "return MAP_NAMES.has(name.normalize(\"NFKC\").toLowerCase().replace(/\\s+/g, \"\"));", to: "return MAP_NAMES.has(name.normalize(\"NFKC\").replace(/\\s+/g, \"\"));" },
+    ],
+  },
+  {
+    name: "v38-pm spacing matters",
+    file: "src/lib/pf-map.ts",
+    test: "knows both map folders, whatever the case and spacing",
+    edits: [
+      { from: "return MAP_NAMES.has(name.normalize(\"NFKC\").toLowerCase().replace(/\\s+/g, \"\"));", to: "return MAP_NAMES.has(name.normalize(\"NFKC\").toLowerCase().trim().replace(/ /g, \"\"));" },
+    ],
+  },
+  {
+    name: "v38-pm no NFKC",
+    file: "src/lib/pf-map.ts",
+    test: "knows both map folders, whatever the case and spacing",
+    edits: [
+      { from: "return MAP_NAMES.has(name.normalize(\"NFKC\").toLowerCase().replace(/\\s+/g, \"\"));", to: "return MAP_NAMES.has(name.toLowerCase().replace(/\\s+/g, \"\"));" },
+    ],
+  },
+  {
+    name: "v38-pm any name holding the words",
+    file: "src/lib/pf-map.ts",
+    test: "leaves every other folder alone",
+    edits: [
+      { from: "return MAP_NAMES.has(name.normalize(\"NFKC\").toLowerCase().replace(/\\s+/g, \"\"));", to: "return [...MAP_NAMES].some((map) => name.normalize(\"NFKC\").toLowerCase().replace(/\\s+/g, \"\").includes(map));" },
+    ],
+  },
+  {
+    name: "v38-pm punctuation ignored too",
+    file: "src/lib/pf-map.ts",
+    test: "leaves every other folder alone",
+    edits: [
+      { from: "return MAP_NAMES.has(name.normalize(\"NFKC\").toLowerCase().replace(/\\s+/g, \"\"));", to: "return MAP_NAMES.has(name.normalize(\"NFKC\").toLowerCase().replace(/[^a-z0-9]+/g, \"\"));" },
+    ],
+  },
+  {
+    name: "v38-pm deck from any folder",
+    file: "src/lib/pf-map.ts",
+    test: "names the deck from a Partial Foil edition folder only",
+    edits: [
+      { from: "  if (!name || productEditionKind(name) !== \"partial_foil\") return null;", to: "  if (!name) return null;" },
+    ],
+  },
+  {
+    name: "v38-pm deck name not cleaned",
+    file: "src/lib/pf-map.ts",
+    test: "names the deck from a Partial Foil edition folder only",
+    edits: [
+      { from: "  return cleanDeckName(name) || null;", to: "  return name || null;" },
+    ],
+  },
+  {
+    name: "v38-pm warning never names the deck",
+    file: "src/lib/pf-map.ts",
+    test: "words the warning with the deck when it is known",
+    edits: [
+      { from: "  return deck ? `That's the Partial Foil Map folder. Paste the link for the folder labeled ${deck} Partial Foil Edition instead.` : MAP_LINK_GENERIC;", to: "  return MAP_LINK_GENERIC;" },
+    ],
+  },
+  {
+    name: "v38-pm generic wording changed",
+    file: "src/lib/pf-map.ts",
+    test: "words the warning with the deck when it is known",
+    edits: [
+      { from: "export const MAP_LINK_GENERIC = \"That's the Partial Foil Map folder. Paste the link for the deck's folder labeled Partial Foil Edition instead.\";", to: "export const MAP_LINK_GENERIC = \"That's the Partial Foil Map folder. Paste the edition folder link instead.\";" },
+    ],
+  },
+  {
+    name: "v38-pm named wording changed",
+    file: "src/lib/pf-map.ts",
+    test: "refuses the map's Tokens folder reached from an edition's New Drive Link",
+    edits: [
+      { from: "Paste the link for the folder labeled ${deck} Partial Foil Edition instead.", to: "Paste the link for the ${deck} folder instead." },
+    ],
+  },
+  {
+    name: "v38-pm error carries no deck",
+    file: "src/lib/pf-map.ts",
+    test: "refuses the map's Tokens folder reached from an edition's New Drive Link",
+    edits: [
+      { from: "    this.deck = deck;", to: "    this.deck = null;" },
+    ],
+  },
+  {
+    name: "v38-pm chain checks only the last name",
+    file: "src/lib/pf-map.ts",
+    test: "finds a map folder anywhere in the chain",
+    edits: [
+      { from: "  const at = names.findIndex(isPartialFoilMapName);", to: "  const at = names.length && isPartialFoilMapName(names[names.length - 1]!) ? names.length - 1 : -1;" },
+    ],
+  },
+  {
+    name: "v38-pm deck from the farthest edition",
+    file: "src/lib/pf-map.ts",
+    test: "finds a map folder anywhere in the chain",
+    edits: [
+      { from: "  for (let i = at - 1; i >= 0; i -= 1) {", to: "  for (let i = 0; i < at; i += 1) {" },
+    ],
+  },
+  {
+    name: "v38-pm deck looked for after the map",
+    file: "src/lib/pf-map.ts",
+    test: "finds a map folder anywhere in the chain",
+    edits: [
+      { from: "    const deck = deckFromEditionFolder(names[i]);", to: "    const deck = deckFromEditionFolder(names[i + 1]);" },
+    ],
+  },
+  {
+    name: "v38-drive map check removed",
+    file: "src/lib/drive.ts",
+    test: "refuses the Partial Foil Map folder and lists nothing",
+    edits: [
+      { from: "      if (map) throw new PartialFoilMapLinkError(map.deck);\n", to: "" },
+    ],
+  },
+  {
+    name: "v38-drive shortcut's own name not in the chain",
+    file: "src/lib/drive.ts",
+    test: "refuses the map's Extras folder reached through a shortcut",
+    edits: [
+      { from: "      if (item.kind === \"shortcut\") rootChain.push(item.name);\n", to: "" },
+    ],
+  },
+  {
+    name: "v38-drive checked only before a link hop",
+    file: "src/lib/drive.ts",
+    test: "falls back to the generic wording when no edition name is known",
+    edits: [
+      { from: "    if (depth === 0) {\n      // A Partial Foil Map folder", to: "    if (depth === 0 && hops === 0) {\n      // A Partial Foil Map folder" },
+    ],
+  },
+  {
+    name: "v38-drive checked at every depth",
+    file: "src/lib/drive.ts",
+    test: "still accepts a real Partial Foil edition root",
+    edits: [
+      { from: "    if (depth === 0) {\n      // A Partial Foil Map folder", to: "    if (depth >= 0) {\n      // A Partial Foil Map folder" },
+    ],
+  },
+  {
+    name: "v38-drive deck not passed on",
+    file: "src/lib/drive.ts",
+    test: "refuses the map's Tokens folder reached from an edition's New Drive Link",
+    edits: [
+      { from: "      if (map) throw new PartialFoilMapLinkError(map.deck);", to: "      if (map) throw new PartialFoilMapLinkError(null);" },
+    ],
+  },
+  {
+    name: "v38-drive checked after listing",
+    file: "src/lib/drive.ts",
+    test: "refuses the Partial Foil Map folder and lists nothing",
+    edits: [
+      { from: "      const map = mapFolderInChain(rootChain);\n      if (map) throw new PartialFoilMapLinkError(map.deck);\n    }", to: "    }" },
+      { from: "    const files = await listChildren(id, apiKey, fetchImpl, here);\n", to: "    const files = await listChildren(id, apiKey, fetchImpl, here);\n    if (depth === 0) {\n      const map = mapFolderInChain(rootChain);\n      if (map) throw new PartialFoilMapLinkError(map.deck);\n    }\n" },
+    ],
+  },
+  {
+    name: "v38-app map refusal shown as the page error",
+    file: "src/App.tsx",
+    test: "refuses a pasted",
+    edits: [
+      { from: "      if (caught instanceof PartialFoilMapLinkError) setUnlockWarning(caught.message);\n      else setError(", to: "      setError(" },
+    ],
+  },
+  {
+    name: "v38-app warning kept on the next paste",
+    file: "src/App.tsx",
+    test: "refuses a pasted",
+    edits: [
+      { from: "    setError(null);\n    setUnlockWarning(null);\n", to: "    setError(null);\n" },
+    ],
+  },
+  {
+    name: "v38-ui warning not an alert",
+    file: "src/components/HomeView.tsx",
+    test: "refuses a pasted",
+    edits: [
+      { from: "<p role=\"alert\" className=\"mt-3 flex max-w-2xl items-start gap-2 rounded-xl border border-destructive/50", to: "<p role=\"status\" className=\"mt-3 flex max-w-2xl items-start gap-2 rounded-xl border border-destructive/50" },
+    ],
+  },
+  {
+    name: "v38-ui warning hidden",
+    file: "src/components/HomeView.tsx",
+    test: "refuses a pasted",
+    edits: [
+      { from: "        {unlockWarning && (\n", to: "        {false && (\n" },
+    ],
+  },
+  {
+    name: "v38-ui warning without its icon",
+    file: "src/components/HomeView.tsx",
+    test: "refuses a pasted",
+    edits: [
+      { from: "            <TriangleAlert className=\"mt-0.5 size-4 shrink-0 text-destructive\" aria-hidden=\"true\" />\n            <span>{unlockWarning}</span>", to: "            <span>{unlockWarning}</span>" },
+    ],
+  },
+  {
+    name: "v38-pm purge keeps every unlock",
+    file: "src/lib/pf-map.ts",
+    test: "drops unlocks named for a map folder",
+    edits: [
+      { from: "  const kept = packs.filter((pack) => !isPartialFoilMapName(pack.catalogue.name));", to: "  const kept = [...packs];" },
+    ],
+  },
+  {
+    name: "v38-pm purge drops by edition name",
+    file: "src/lib/pf-map.ts",
+    test: "drops unlocks named for a map folder",
+    edits: [
+      { from: "  const kept = packs.filter((pack) => !isPartialFoilMapName(pack.catalogue.name));", to: "  const kept = packs.filter((pack) => !pack.catalogue.editions.some((edition) => isPartialFoilMapName(edition.name)));" },
+    ],
+  },
+  {
+    name: "v38-pm dropped not counted",
+    file: "src/lib/pf-map.ts",
+    test: "drops unlocks named for a map folder",
+    edits: [
+      { from: "  return { packs: kept, dropped: packs.length - kept.length };", to: "  return { packs: kept, dropped: 0 };" },
+    ],
+  },
+  {
+    name: "v38-app load purge skipped",
+    file: "src/App.tsx",
+    test: "drops map unlocks saved by an older BeeLine on load",
+    edits: [
+      { from: "        const stored = purgeMapUnlocks(loadUnlocked(localStorage));", to: "        const stored = { packs: loadUnlocked(localStorage), dropped: 0 };" },
+    ],
+  },
+  {
+    name: "v38-app load purge not saved",
+    file: "src/App.tsx",
+    test: "drops map unlocks saved by an older BeeLine on load",
+    edits: [
+      { from: "          try {\n            writeUnlocked(localStorage, stored.packs);\n          } catch {", to: "          try {\n            void writeUnlocked;\n          } catch {" },
+    ],
+  },
+  {
+    name: "v38-app load purge silent",
+    file: "src/App.tsx",
+    test: "drops map unlocks saved by an older BeeLine on load",
+    edits: [
+      { from: "        if (stored.dropped) {\n          setUnlockWarning(mapLinkWarning(null));", to: "        if (stored.dropped) {" },
+    ],
+  },
+  {
+    name: "v38-app load purge warns every time",
+    file: "src/App.tsx",
+    test: "drops map unlocks saved by an older BeeLine on load",
+    edits: [
+      { from: "        if (stored.dropped) {\n          setUnlockWarning(mapLinkWarning(null));", to: "        setUnlockWarning(mapLinkWarning(null));\n        if (stored.dropped) {" },
+    ],
+  },
+  {
+    name: "v38-app restore warning not shown",
+    file: "src/App.tsx",
+    test: "leaves map folders in an older restore code out",
+    edits: [
+      { from: "            if (result.maps) setUnlockWarning(mapLinkWarning(null));\n", to: "" },
+    ],
+  },
+  {
+    name: "v38-app restore maps not told",
+    file: "src/App.tsx",
+    test: "leaves map folders in an older restore code out",
+    edits: [
+      { from: "restoredMessage(result.added, result.refreshed, result.kept, result.empty, result.maps)", to: "restoredMessage(result.added, result.refreshed, result.kept, result.empty, 0)" },
+    ],
+  },
+  {
+    name: "v38-rc code carries map unlocks",
+    file: "src/lib/restore-code.ts",
+    test: "never carries a map unlock in a restore code",
+    edits: [
+      { from: "  const carried = purgeMapUnlocks(packs).packs;", to: "  const carried = packs;" },
+    ],
+  },
+  {
+    name: "v38-rc restore keeps map unlocks",
+    file: "src/lib/restore-code.ts",
+    test: "leaves map unlocks in an older code out of a restore",
+    edits: [
+      { from: "  const { packs: wanted, dropped: maps } = purgeMapUnlocks(incoming);", to: "  const wanted = incoming;\n  const maps = 0;" },
+    ],
+  },
+  {
+    name: "v38-rc restore drops but does not count",
+    file: "src/lib/restore-code.ts",
+    test: "leaves map unlocks in an older code out of a restore",
+    edits: [
+      { from: "  const { packs: wanted, dropped: maps } = purgeMapUnlocks(incoming);", to: "  const { packs: wanted } = purgeMapUnlocks(incoming);\n  const maps = 0;" },
+    ],
+  },
+  {
+    name: "v38-msg map note missing",
+    file: "src/lib/restore-code.ts",
+    test: "leaves map unlocks in an older code out of a restore",
+    edits: [
+      { from: "  return restoredCounts(added, refreshed, kept, empty) + mapNote;", to: "  return restoredCounts(added, refreshed, kept, empty);" },
+    ],
+  },
+  {
+    name: "v38-msg only maps reads as matched",
+    file: "src/lib/restore-code.ts",
+    test: "says only the warning when every folder in an older code is a map folder",
+    edits: [
+      { from: "  if (maps && !added && !refreshed && !kept && !empty) return mapLinkWarning(null);\n", to: "" },
+    ],
+  },
+  {
+    name: "v38-msg one map counted as many",
+    file: "src/lib/restore-code.ts",
+    test: "leaves map unlocks in an older code out of a restore",
+    edits: [
+      { from: " ${maps === 1 ? \"1 Partial Foil Map folder in the code was\"", to: " ${maps === 0 ? \"1 Partial Foil Map folder in the code was\"" },
+    ],
+  },
+  {
+    name: "v38-golden v0.1.37 map unlocks kept on load",
+    file: "src/lib/pf-map.ts",
+    test: "drops the Partial Foil Map unlocks v0.1.37 stored",
+    edits: [
+      { from: "  return { packs: kept, dropped: packs.length - kept.length };", to: "  return { packs: [...packs], dropped: 0 };" },
+    ],
+  },
+  {
+    name: "v38-fm no variant takes any variant",
+    file: "src/lib/foil-maps.ts",
+    test: "never gives a plain Forest the Forest",
+    edits: [
+      { from: "  if (manyArts && target.variant !== mask.variant) return false;\n", to: "" },
+    ],
+  },
+  {
+    name: "v38-fm exact variant on one-art cards too",
+    file: "src/lib/foil-maps.ts",
+    test: "still lets a one-art card's plain file take a variant mask",
+    edits: [
+      { from: "  if (manyArts && target.variant !== mask.variant) return false;", to: "  if (target.variant !== mask.variant) return false;" },
+    ],
+  },
+  {
+    name: "v38-fm only the print's missing variant checked",
+    file: "src/lib/foil-maps.ts",
+    test: "never gives a plain Forest the Forest",
+    edits: [
+      { from: "  if (manyArts && target.variant !== mask.variant) return false;", to: "  if (manyArts && !target.variant && mask.variant) return false;" },
+    ],
+  },
+  {
+    name: "v38-test plants into public/ again",
+    file: "src/lib/public-ids.test.ts",
+    test: "reports paid ids in binary files, zip entries",
+    edits: [
+      { from: "    const stored = path.join(tree, \"public\", \"paid-stored.zip\");", to: "    const stored = path.join(root, \"public\", \"paid-stored.zip\");" },
+    ],
+    leaves: ["public/paid-stored.zip"],
+  },
+  {
+    name: "v38-test plants into src/ again",
+    file: "src/lib/public-ids.test.ts",
+    test: "reports paid ids in binary files, zip entries",
+    edits: [
+      { from: "    const nestedSrc = path.join(tree, \"src\", \"dist\", \"tracked.txt\");", to: "    const nestedSrc = path.join(root, \"src\", \"dist\", \"tracked.txt\");" },
+    ],
+    leaves: ["src/dist"],
+  },
+  {
+    name: "v38-golden map folders skipped below the root",
+    file: "src/lib/drive.ts",
+    test: "reads its PDFs from PDF Partial Foil Map",
+    edits: [
+      { from: 'import { mapFolderInChain, PartialFoilMapLinkError } from "@/lib/pf-map";', to: 'import { isPartialFoilMapName, mapFolderInChain, PartialFoilMapLinkError } from "@/lib/pf-map";' },
+      { from: "      if (LINK_FILE.test(file.name)) continue;\n", to: "      if (LINK_FILE.test(file.name)) continue;\n      if (isPartialFoilMapName(file.name)) continue;\n" },
+    ],
+  },
+  {
+    name: "v38-golden map refused at every depth (byte check)",
+    file: "src/lib/drive.ts",
+    test: "the same Drive requests, tree, catalogue",
+    edits: [
+      { from: "    if (depth === 0) {\n      // A Partial Foil Map folder", to: "    if (depth >= 0) {\n      // A Partial Foil Map folder" },
+    ],
+  },
+  {
+    name: "v38-golden purge by note path",
+    file: "src/lib/pf-map.ts",
+    test: "survives the load and restore purge",
+    edits: [
+      { from: "  const kept = packs.filter((pack) => !isPartialFoilMapName(pack.catalogue.name));", to: "  const kept = packs.filter((pack) => !isPartialFoilMapName(pack.catalogue.name) && !pack.catalogue.editions.some((edition) => edition.notes.some((note) => /^(pdf )?partial foil map\\//i.test(note.path))));" },
+    ],
+  },
+  {
+    name: "v38-golden purge by any Partial Foil name",
+    file: "src/lib/pf-map.ts",
+    test: "never purges an edition stored under its own folder's name",
+    edits: [
+      { from: "  const kept = packs.filter((pack) => !isPartialFoilMapName(pack.catalogue.name));", to: "  const kept = packs.filter((pack) => !isPartialFoilMapName(pack.catalogue.name) && !/partial\\s*foil/i.test(pack.catalogue.name));" },
+    ],
+  },
 ];
 
 function runTest(test: string): Verdict {
@@ -3922,6 +4346,7 @@ for (const mutation of selected) {
     console.log(verdict.detail.join("\n"));
   } finally {
     writeFileSync(path, original);
+    for (const left of mutation.leaves ?? []) rmSync(join(root, left), { recursive: true, force: true });
   }
 }
 

@@ -12,7 +12,8 @@ import { PARTIAL_FOIL_NOTICE } from "@/components/HomeView";
 import { freshDraft } from "@/lib/draft";
 import { allPartialFoilPacks } from "@/lib/fixtures/all-pf-packs";
 import { RESTORE_ERRORS } from "@/lib/restore-code";
-import { LAST_SESSION_KEY, packForStorage, packHash, UNLOCK_KEY, writeSaved, type SavedDeck } from "@/lib/storage";
+import { MAP_LINK_GENERIC } from "@/lib/pf-map";
+import { LAST_SESSION_KEY, packForStorage, packHash, sha256Hex, UNLOCK_KEY, writeSaved, type SavedDeck } from "@/lib/storage";
 import { splashKey } from "@/lib/splash";
 import { TOUR_KEY } from "@/lib/tour";
 import { unlockPlace } from "@/lib/unlock-place";
@@ -473,3 +474,130 @@ describe("restore code", () => {
     expect(button("Get my restore code")!.disabled).toBe(true);
   });
 });
+
+describe("Partial Foil Map links and unlocks (v0.1.38)", () => {
+  // A Partial Foil unlock as an older BeeLine saved it from a pasted map folder: named for the folder.
+  const mapPack = (n: number, name: string, cards: number) => ({
+    packHash: packHash(fakeFolder(n)),
+    savedAt: `2026-11-0${n}T00:00:00.000Z`,
+    catalogue: {
+      ...TMNT,
+      id: `map-${n}`,
+      name,
+      editions: TMNT.editions.slice(0, 1).map((edition) => ({ ...edition, id: `pf-${n}`, name: "Partial Foil", printType: "partial_foil" as const, cards: edition.cards.slice(0, cards) })),
+    },
+  });
+  const realPack = () => ({ ...mapPack(3, "KPDH", 5), catalogue: { ...mapPack(3, "KPDH", 5).catalogue, id: "kpdh" } });
+  const warning = () => unlockSection().querySelector<HTMLElement>("[data-unlock-warning]");
+  /** A restore code as v0.1.37 made it: plain JSON, packs as stored, map folders included. */
+  const olderCode = (packs: unknown[]) => {
+    const text = JSON.stringify({ kind: "beeline-unlocks", version: 1, packs });
+    const body = btoa(text).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    return `BEELINE-RESTORE-1.j${body}.${sha256Hex(text).slice(0, 8)}`;
+  };
+
+  function driveWith(items: Record<string, { name: string; children?: string[]; mimeType?: string }>) {
+    const listed: string[] = [];
+    window.PRINTABEE_CONFIG = { googleApiKey: "test-key-made-up" } as typeof window.PRINTABEE_CONFIG;
+    vi.stubGlobal("fetch", async (input: string) => {
+      const url = decodeURIComponent(String(input)).replace(/\+/g, " ");
+      if (url.includes("googleapis.com")) {
+        const parent = /'([^']+)' in parents/.exec(url)?.[1];
+        if (parent) {
+          listed.push(parent);
+          return new Response(JSON.stringify({ files: (items[parent]?.children ?? []).map((id) => ({ id, name: items[id]!.name, mimeType: items[id]!.mimeType ?? "application/vnd.google-apps.folder" })) }));
+        }
+        const id = /\/files\/([^?/]+)/.exec(url)![1]!;
+        return new Response(JSON.stringify({ id, name: items[id]!.name, mimeType: items[id]!.mimeType ?? "application/vnd.google-apps.folder" }));
+      }
+      const name = String(url).split("/").pop()!;
+      if (name === "index.json") return new Response(JSON.stringify({ decks: [{ id: "tmnt", name: "TMNT", file: "decks/tmnt.json" }, { id: "x-men", name: "X-Men", file: "decks/x-men.json" }] }));
+      return new Response(deckFile(name.replace(/\.json$/, "")));
+    });
+    return listed;
+  }
+  async function paste(link: string) {
+    const input = document.querySelector<HTMLInputElement>("#drive-link")!;
+    await type(input, link);
+    await act(async () => {
+      input.form!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    });
+    for (let i = 0; i < 20; i += 1) await settle(2);
+  }
+  afterEach(() => {
+    delete (window as { PRINTABEE_CONFIG?: unknown }).PRINTABEE_CONFIG;
+  });
+
+  for (const name of ["Partial Foil Map", "PDF Partial Foil Map", "  pdf PARTIAL  foil map "]) {
+    it(`refuses a pasted "${name}" link with the warning in the unlock box, and saves nothing`, async () => {
+      const listed = driveWith({ mapUiFolder01: { name, children: ["maskUiFile01"] }, maskUiFile01: { name: "Sol Ring.png", mimeType: "image/png" } });
+      await mount();
+      expect(warning()).toBeNull();
+      await paste("https://drive.google.com/drive/folders/mapUiFolder01");
+      expect(warning()!.getAttribute("role")).toBe("alert");
+      expect(warning()!.textContent).toBe(MAP_LINK_GENERIC);
+      expect(warning()!.querySelector("svg")).not.toBeNull();
+      expect(listed).toEqual([]);
+      expect(localStorage.getItem(UNLOCK_KEY)).toBeNull();
+      expect(document.body.textContent).not.toContain("Unlocked ");
+      // The page-top alert is for other problems; this warning sits under the link field.
+      expect(document.querySelectorAll("[role=alert]")).toHaveLength(1);
+      expect(button("Get my restore code")!.disabled).toBe(true);
+      // The next paste starts clean: the warning goes, and any other problem shows as before.
+      await paste("not a link");
+      expect(warning()).toBeNull();
+      expect(document.querySelector("[role=alert]")!.textContent).toBe("Paste a Google Drive folder link, the kind on a Ko-fi order page.");
+    });
+  }
+
+  it("drops map unlocks saved by an older BeeLine on load, keeps the rest, and says why", async () => {
+    localStorage.setItem(UNLOCK_KEY, JSON.stringify([mapPack(1, "PDF Partial Foil Map", 100), realPack(), mapPack(2, "Partial Foil Map", 0)]));
+    await mount();
+    expect(warning()!.textContent).toBe(MAP_LINK_GENERIC);
+    const stored = JSON.parse(localStorage.getItem(UNLOCK_KEY)!) as Array<{ catalogue: { name: string } }>;
+    expect(stored.map((item) => item.catalogue.name)).toEqual(["KPDH"]);
+    expect(document.body.textContent).toContain("KPDH");
+    expect(document.body.textContent).not.toContain("PDF Partial Foil Map");
+    expect(document.body.textContent).not.toMatch(/Partial Foil Map(?! folder)/);
+    // Nothing to drop next time: no warning.
+    await remount();
+    expect(warning()).toBeNull();
+  });
+
+  it("shows no warning and rewrites nothing when no saved unlock is a map folder", async () => {
+    const saved = JSON.stringify([realPack()]);
+    localStorage.setItem(UNLOCK_KEY, saved);
+    await mount();
+    expect(warning()).toBeNull();
+    expect(localStorage.getItem(UNLOCK_KEY)).toBe(saved);
+  });
+
+  it("leaves map folders in an older restore code out, shows the same warning, and makes no code with them", async () => {
+    localStorage.setItem(UNLOCK_KEY, JSON.stringify([realPack()]));
+    await mount();
+    const box = document.querySelector<HTMLInputElement>("[data-restore-input]")!;
+    await type(box, olderCode([mapPack(1, "PDF Partial Foil Map", 100), mapPack(4, "Fake Four", 2), mapPack(2, "Partial Foil Map", 0)]));
+    await submit(box.form!);
+    expect(document.querySelector("[data-restore-code] form [role=status]")!.textContent).toBe("Restored 1 unlocked folder on this device. 2 Partial Foil Map folders in the code were left out.");
+    expect(warning()!.textContent).toBe(MAP_LINK_GENERIC);
+    const stored = JSON.parse(localStorage.getItem(UNLOCK_KEY)!) as Array<{ catalogue: { name: string } }>;
+    expect(stored.map((item) => item.catalogue.name)).toEqual(["KPDH", "Fake Four"]);
+    // A code made here now carries only those two.
+    await click(button("Get my restore code"));
+    await untilShown(() => document.querySelector("[data-restore-output]"));
+    const code = document.querySelector<HTMLInputElement>("[data-restore-output]")!.value;
+    const { readRestoreCode } = await import("@/lib/restore-code");
+    expect((await readRestoreCode(code)).map((item) => item.catalogue.name)).toEqual(["KPDH", "Fake Four"]);
+  });
+
+  it("says only the warning when every folder in an older code is a map folder", async () => {
+    await mount();
+    const box = document.querySelector<HTMLInputElement>("[data-restore-input]")!;
+    await type(box, olderCode([mapPack(2, "Partial Foil Map", 0)]));
+    await submit(box.form!);
+    expect(document.querySelector("[data-restore-code] form [role=status]")!.textContent).toBe(MAP_LINK_GENERIC);
+    expect(warning()!.textContent).toBe(MAP_LINK_GENERIC);
+    expect(JSON.parse(localStorage.getItem(UNLOCK_KEY) ?? "[]")).toEqual([]);
+  });
+});
+

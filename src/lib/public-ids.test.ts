@@ -1,5 +1,5 @@
 import { execSync } from "node:child_process";
-import { chmodSync, copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, rmdirSync, symlinkSync, writeFileSync } from "node:fs";
+import { chmodSync, copyFileSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, rmdirSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { crc32, deflateRawSync } from "node:zlib";
 import path from "node:path";
@@ -139,22 +139,30 @@ describe("drive id matching", () => {
     const allowed = loadIdLines(path.join(root, "src/lib/drive-allow-list.txt"));
     const denied = loadIdLines(path.join(root, "src/lib/drive-deny-list.txt"));
     denied.add(sha256(secret));
-    const png = path.join(root, "public", "paid-text.png");
-    const stored = path.join(root, "public", "paid-stored.zip");
-    const deflated = path.join(root, "public", "paid-deflated.zip");
-    const pdf = path.join(root, "public", "paid-zero.pdf");
-    const utf16 = path.join(root, "public", "paid-utf16.txt");
-    const stray = path.join(root, "public", "paid-stray.txt");
-    const large = path.join(root, "public", "paid-large.bin");
-    const nestedPublic = path.join(root, "public", "dist", "tracked.txt");
-    const nestedSrc = path.join(root, "src", "dist", "tracked.txt");
-    const distPng = path.join(root, "dist", "paid-text.png");
-    const distStored = path.join(root, "dist", "paid-stored.zip");
-    const distDeflated = path.join(root, "dist", "paid-deflated.zip");
-    const distNested = path.join(root, "dist", "dist", "tracked.txt");
-    const made = [png, stored, deflated, pdf, utf16, stray, large, nestedPublic, nestedSrc, distPng, distStored, distDeflated, distNested];
+    // Planted in a throwaway git tree with the repo's own .gitignore, never in this repo's public/: the
+    // build tests run vite build, which copies public/, at the same time (v0.1.38).
+    const tree = mkdtempSync(path.join(tmpdir(), "beeline-plant-"));
+    const listing = (dir: string) => (readdirSync(dir, { recursive: true }) as string[]).sort();
+    const publicBefore = listing(path.join(root, "public"));
+    const srcBefore = listing(path.join(root, "src"));
+    execSync("git init -q", { cwd: tree, stdio: "ignore" });
+    copyFileSync(path.join(root, ".gitignore"), path.join(tree, ".gitignore"));
+    const png = path.join(tree, "public", "paid-text.png");
+    const stored = path.join(tree, "public", "paid-stored.zip");
+    const deflated = path.join(tree, "public", "paid-deflated.zip");
+    const pdf = path.join(tree, "public", "paid-zero.pdf");
+    const utf16 = path.join(tree, "public", "paid-utf16.txt");
+    const stray = path.join(tree, "public", "paid-stray.txt");
+    const large = path.join(tree, "public", "paid-large.bin");
+    const nestedPublic = path.join(tree, "public", "dist", "tracked.txt");
+    const nestedSrc = path.join(tree, "src", "dist", "tracked.txt");
+    const distPng = path.join(tree, "dist", "paid-text.png");
+    const distStored = path.join(tree, "dist", "paid-stored.zip");
+    const distDeflated = path.join(tree, "dist", "paid-deflated.zip");
+    const distNested = path.join(tree, "dist", "dist", "tracked.txt");
     const payload = Buffer.from(`note ${secret}\n`);
     try {
+      mkdirSync(path.dirname(png), { recursive: true });
       mkdirSync(path.dirname(nestedPublic), { recursive: true });
       mkdirSync(path.dirname(nestedSrc), { recursive: true });
       mkdirSync(path.dirname(distNested), { recursive: true });
@@ -173,7 +181,10 @@ describe("drive id matching", () => {
       copyFileSync(stored, distStored);
       copyFileSync(deflated, distDeflated);
       writeFileSync(distNested, `prefix${secret}suffix`);
-      const hits = scanRepo(allowed, denied, [path.join(root, "dist")]);
+      // Nothing was planted in this repo's public/ or src/ while the files are in place.
+      expect(listing(path.join(root, "public"))).toEqual(publicBefore);
+      expect(listing(path.join(root, "src"))).toEqual(srcBefore);
+      const hits = scanForForeignDriveIds(tree, allowed, denied, [path.join(tree, "dist")]);
       const flagged = (rel: string) => hits.some((line) => line.replaceAll("\\", "/").includes(rel) && line.includes("matches a paid folder id"));
       expect(flagged("public/paid-text.png")).toBe(true);
       expect(flagged("public/paid-stored.zip")).toBe(true);
@@ -190,14 +201,7 @@ describe("drive id matching", () => {
       expect(flagged("dist/dist/tracked.txt")).toBe(true);
       expect(hits.join("\n")).not.toContain(secret);
     } finally {
-      for (const file of made) rmSync(file, { force: true });
-      for (const dir of [path.dirname(nestedPublic), path.dirname(nestedSrc), path.dirname(distNested)]) {
-        try {
-          rmdirSync(dir);
-        } catch {
-          // The directory still has other files.
-        }
-      }
+      rmSync(tree, { recursive: true, force: true });
     }
   }, 120_000);
 

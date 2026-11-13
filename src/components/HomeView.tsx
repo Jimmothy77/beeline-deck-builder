@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Download, FolderKey, Info, Trash2 } from "lucide-react";
+import { Download, FolderKey, Info, Trash2, TriangleAlert } from "lucide-react";
 import { BeeLineBanner } from "@/components/BeeLineBanner";
 import { RestoreCode } from "@/components/RestoreCode";
 import { UnlockHere } from "@/components/UnlockHere";
@@ -32,6 +32,7 @@ export function HomeView({
   hideFloating,
   keyReady,
   unlockBusy,
+  unlockWarning = null,
   onBuild,
   onContinue,
   onUnlock,
@@ -60,6 +61,8 @@ export function HomeView({
   hideFloating?: boolean;
   keyReady: boolean;
   unlockBusy: boolean;
+  /** The Partial Foil Map warning, in the existing alert style, under the link field. */
+  unlockWarning?: string | null;
   onBuild: (choice: DeckChoice) => void;
   onContinue: () => void;
   onUnlock: (url: string) => void;
@@ -164,6 +167,12 @@ export function HomeView({
             {unlockBusy ? "Opening folder…" : "Unlock folder"}
           </Button>
         </form>
+        {unlockWarning && (
+          <p role="alert" className="mt-3 flex max-w-2xl items-start gap-2 rounded-xl border border-destructive/50 bg-destructive/10 px-3 py-2 text-xs text-foreground" data-unlock-warning="">
+            <TriangleAlert className="mt-0.5 size-4 shrink-0 text-destructive" aria-hidden="true" />
+            <span>{unlockWarning}</span>
+          </p>
+        )}
         <p className="mt-3 text-xs text-muted-foreground">
           The deck list stays on this device. The Drive link is not saved; paste it again to refresh a folder.
         </p>

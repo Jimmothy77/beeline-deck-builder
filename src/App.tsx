@@ -11,6 +11,7 @@ import { assertApiKey, parseDriveFolderId, readConfigKey, readDecklistTexts, rea
 import { downloadText, publicUrl, xmlFilename } from "@/lib/download";
 import { artIdsOf, assignPartialFoilThumbs, catalogueFromTree, pdfIdsInEdition } from "@/lib/group";
 import { preferDeckName } from "@/lib/names";
+import { mapLinkWarning, PartialFoilMapLinkError, purgeMapUnlocks } from "@/lib/pf-map";
 import { selectionToSlots } from "@/lib/selection";
 import {
   exportSavedJson,
@@ -76,6 +77,8 @@ export default function App() {
   /** The deck from an earlier visit (or the newest saved deck), offered by Continue until a deck is opened. */
   const [lastVisit, setLastVisit] = useState<SavedDeck | null>(null);
   const [unlockBusy, setUnlockBusy] = useState(false);
+  /** The Partial Foil Map warning, shown in the unlock box (a pasted map link, or saved map unlocks dropped). */
+  const [unlockWarning, setUnlockWarning] = useState<string | null>(null);
   const [legacyBackup, setLegacyBackup] = useState(false);
   const [offerTour, setOfferTour] = useState(() => shouldOfferTour(localStorage));
   const [touring, setTouring] = useState(false);
@@ -90,7 +93,17 @@ export default function App() {
     let cancel = false;
     (async () => {
       try {
-        setUnlocked(loadUnlocked(localStorage));
+        // Partial Foil Map folders an older BeeLine saved as unlocks are dropped here (v0.1.38).
+        const stored = purgeMapUnlocks(loadUnlocked(localStorage));
+        if (stored.dropped) {
+          setUnlockWarning(mapLinkWarning(null));
+          try {
+            writeUnlocked(localStorage, stored.packs);
+          } catch {
+            // Storage is full: they are left out in memory, and the next successful save drops them.
+          }
+        }
+        setUnlocked(stored.packs);
         const savedDecks = loadSaved(localStorage);
         setSaved(savedDecks);
         setLastVisit(loadLastSession(localStorage, savedDecks));
@@ -284,6 +297,7 @@ export default function App() {
   async function unlock(url: string) {
     setUnlockBusy(true);
     setError(null);
+    setUnlockWarning(null);
     try {
       const apiKey = assertApiKey(readConfigKey());
       const folderId = parseDriveFolderId(url);
@@ -309,7 +323,8 @@ export default function App() {
       const labels = catalogue.editions.map((edition) => `${catalogue.name} ${edition.name}`).join(", ");
       setToast(`Unlocked ${labels}. It stays in this browser.`);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not unlock that folder.");
+      if (caught instanceof PartialFoilMapLinkError) setUnlockWarning(caught.message);
+      else setError(caught instanceof Error ? caught.message : "Could not unlock that folder.");
     } finally {
       setUnlockBusy(false);
     }
@@ -363,11 +378,13 @@ export default function App() {
             writeUnlocked(localStorage, result.packs);
             setUnlocked(result.packs);
             setError(null);
-            return restoredMessage(result.added, result.refreshed, result.kept, result.empty);
+            if (result.maps) setUnlockWarning(mapLinkWarning(null));
+            return restoredMessage(result.added, result.refreshed, result.kept, result.empty, result.maps);
           }}
           hideFloating={touring || splash !== null}
           keyReady={keyReady()}
           unlockBusy={unlockBusy}
+          unlockWarning={unlockWarning}
           onBuild={(choice) => {
             setError(null);
             setSession(freshDraft(choice.deck, choice.edition));

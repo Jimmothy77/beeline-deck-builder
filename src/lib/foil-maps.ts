@@ -51,11 +51,13 @@ function partsOf(key: string): KeyParts {
 /**
  * Whether a mask may stand for a print file it does not name exactly. When both name a variant, the
  * variants must be the same ("Forest (Greenpath)" never takes "Forest (Fog Canyon)"). When the card has
- * more than one art, the art number must be the same too, an unnumbered file counting as art 1
- * ("Sol Ring 2" never takes "Sol Ring").
+ * more than one art, the variant must be exactly the same, "no variant" counting as its own value
+ * (a plain "Forest" never takes "Forest (Greenpath)"), and so must the art number, an unnumbered file
+ * counting as art 1 ("Sol Ring 2" never takes "Sol Ring").
  */
 function sameCard(target: KeyParts, mask: KeyParts, manyArts: boolean): boolean {
   if (target.variant && mask.variant && target.variant !== mask.variant) return false;
+  if (manyArts && target.variant !== mask.variant) return false;
   if (manyArts && (target.art ?? "1") !== (mask.art ?? "1")) return false;
   return true;
 }

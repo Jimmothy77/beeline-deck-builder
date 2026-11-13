@@ -1,3 +1,4 @@
+import { mapLinkWarning, purgeMapUnlocks } from "@/lib/pf-map";
 import { catalogueStamp, findUnlocked, packForStorage, parseUnlocked, sha256Hex, upsertUnlocked, type UnlockedPack } from "@/lib/storage";
 
 /**
@@ -104,8 +105,10 @@ function asRestored(pack: UnlockedPack): UnlockedPack | null {
  * message for the person, so a code a restore would refuse is never shown.
  */
 export async function makeRestoreCode(packs: UnlockedPack[], options?: { compress?: boolean }): Promise<string> {
-  if (!packs.length) throw new RestoreCodeError(RESTORE_ERRORS.nothing);
-  const readable = packs.flatMap((pack) => {
+  // A Partial Foil Map folder saved by an older BeeLine is never carried (v0.1.38).
+  const carried = purgeMapUnlocks(packs).packs;
+  if (!carried.length) throw new RestoreCodeError(RESTORE_ERRORS.nothing);
+  const readable = carried.flatMap((pack) => {
     const parsed = asRestored(pack);
     return parsed ? [parsed] : [];
   });
@@ -184,7 +187,8 @@ function capStamps(pack: UnlockedPack, now: number): UnlockedPack {
 }
 
 /**
- * Adds restored packs to the ones already here. A pack already on this device keeps its place and first
+ * Adds restored packs to the ones already here. A Partial Foil Map folder in the code (saved by an older
+ * BeeLine) is left out and counted in `maps`. A pack already on this device keeps its place and first
  * unlock time, and its deck list is replaced only when the code's copy was read from Drive later
  * (catalogueStamp, capped at this device's clock plus a day) and has cards. An older code never rolls a
  * deck list back, an empty one never empties it, and a restore never removes a pack.
@@ -193,13 +197,14 @@ export function mergeRestored(
   current: UnlockedPack[],
   incoming: UnlockedPack[],
   now = Date.now(),
-): { packs: UnlockedPack[]; added: number; refreshed: number; kept: number; empty: number } {
+): { packs: UnlockedPack[]; added: number; refreshed: number; kept: number; empty: number; maps: number } {
+  const { packs: wanted, dropped: maps } = purgeMapUnlocks(incoming);
   let packs = current;
   let added = 0;
   let refreshed = 0;
   let kept = 0;
   let empty = 0;
-  for (const given of incoming) {
+  for (const given of wanted) {
     const pack = capStamps(given, now);
     const existing = findUnlocked(packs, pack);
     if (existing && catalogueStamp(pack) <= catalogueStamp(existing)) {
@@ -214,10 +219,16 @@ export function mergeRestored(
     if (existing) refreshed += 1;
     else added += 1;
   }
-  return { packs, added, refreshed, kept, empty };
+  return { packs, added, refreshed, kept, empty, maps };
 }
 
-export function restoredMessage(added: number, refreshed: number, kept = 0, empty = 0): string {
+export function restoredMessage(added: number, refreshed: number, kept = 0, empty = 0, maps = 0): string {
+  if (maps && !added && !refreshed && !kept && !empty) return mapLinkWarning(null);
+  const mapNote = maps ? ` ${maps === 1 ? "1 Partial Foil Map folder in the code was" : `${maps} Partial Foil Map folders in the code were`} left out.` : "";
+  return restoredCounts(added, refreshed, kept, empty) + mapNote;
+}
+
+function restoredCounts(added: number, refreshed: number, kept: number, empty: number): string {
   const folders = (n: number) => `${n} unlocked ${n === 1 ? "folder" : "folders"}`;
   const keptNote = kept ? ` ${kept === 1 ? "1 deck list here was" : `${kept} deck lists here were`} as new or newer, so ${kept === 1 ? "it was" : "they were"} kept.` : "";
   const emptyNote = empty ? ` ${empty === 1 ? "1 folder in the code had" : `${empty} folders in the code had`} no cards, so ${empty === 1 ? "its deck list here was" : "their deck lists here were"} kept.` : "";
