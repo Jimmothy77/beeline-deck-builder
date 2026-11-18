@@ -243,9 +243,9 @@ describe("variant and art number in the by-card match (v0.1.37)", () => {
       { id: "m1", name: "Sol Ring.png", group: "main" },
       { id: "m3", name: "Sol Ring 3.png", group: "main" },
     ]);
-    // Art 1 has its own mask, art 2 has none (never art 1's). Art 3 has a variant its mask doesn't name, so
-    // since v0.1.38 it has none either: on a card with more than one art the variant must be the same.
-    expect(masksOf(out!)).toEqual([["p1=m1", "p2=-", "p3=-"]]);
+    // Art 1 has its own mask, art 2 has none (never art 1's). Art 3 has a variant its mask doesn't name, and
+    // no other art on the face is a Sol Ring 3, so it keeps "Sol Ring 3"'s mask (v0.1.39; v0.1.38 dropped it).
+    expect(masksOf(out!)).toEqual([["p1=m1", "p2=-", "p3=m3"]]);
     // With a single art the number is not a different print: "Sol Ring 2" alone still takes "Sol Ring".
     const [single] = attachFoilMaps([edition([oneFace("sol", "Sol Ring", [art("p2", "Sol Ring 2.pdf")])])], [{ id: "m1", name: "Sol Ring.png", group: "main" }]);
     expect(masksOf(single!)).toEqual([["p2=m1"]]);
@@ -279,5 +279,42 @@ describe("no variant is its own variant on a card with more than one art (v0.1.3
   it("still lets a one-art card's plain file take a variant mask", () => {
     const [out] = attachFoilMaps([forest([art("p", "Forest.pdf")])], [{ id: "m-g", name: "Forest (Greenpath).png", group: "main" }]);
     expect(masksOf(out!)).toEqual(["p=m-g"]);
+  });
+});
+
+describe("a variant on one side only loses only to another art that claims the mask (v0.1.39)", () => {
+  const art = (id: string, name: string): ArtFile => ({ id, name, thumbId: id, label: "" });
+  const face = (arts: ArtFile[]): Edition => ({
+    id: "pf",
+    name: "Partial Foil",
+    printType: "partial_foil",
+    backs: [],
+    notes: [],
+    cards: [{ id: "c", name: "Sol Ring", role: "main", defaultQty: 1, faces: [{ id: "c:f", name: "Sol Ring", defaultArt: arts[0]!, alternates: arts.slice(1) }] }],
+  });
+  const masksOf = (out: Edition) => [out.cards[0]!.faces[0]!.defaultArt!, ...out.cards[0]!.faces[0]!.alternates].map((file) => `${file.id}=${file.maskId ?? "-"}`);
+  const run = (arts: ArtFile[], masks: { id: string; name: string }[]) => masksOf(attachFoilMaps([face(arts)], masks.map((mask) => ({ ...mask, group: "main" as const })))[0]!);
+
+  it("lets Sol Ring 3 (Foil) keep the Sol Ring 3 mask when no other art is a Sol Ring 3", () => {
+    expect(run([art("p1", "Sol Ring.pdf"), art("p3", "Sol Ring 3 (Foil).pdf")], [{ id: "m3", name: "Sol Ring 3.png" }])).toEqual(["p1=-", "p3=m3"]);
+    // The other way round: a plain print takes a variant mask when no art on the face has that variant.
+    expect(run([art("p1", "Sol Ring.pdf"), art("p3", "Sol Ring 3.pdf")], [{ id: "m3", name: "Sol Ring 3 (Foil).png" }])).toEqual(["p1=-", "p3=m3"]);
+  });
+
+  it("gives the mask to the art that names it exactly when another art on the face claims it", () => {
+    // A plain Sol Ring 3 is on the face: the plain mask is its, not the foil one's.
+    expect(run([art("p3", "Sol Ring 3.pdf"), art("p3f", "Sol Ring 3 (Foil).pdf")], [{ id: "m3", name: "Sol Ring 3.png" }])).toEqual(["p3=m3", "p3f=-"]);
+    // A Sol Ring 3 (Foil) is on the face: the foil mask is its, not the plain one's.
+    expect(run([art("p3", "Sol Ring 3.pdf"), art("p3f", "Sol Ring 3 (Foil).pdf")], [{ id: "m3f", name: "Sol Ring 3 (Foil).png" }])).toEqual(["p3=-", "p3f=m3f"]);
+  });
+
+  it("never lets two variant arts share one plain mask, nor two plain arts one variant mask", () => {
+    expect(run([art("p3e", "Sol Ring 3 (Etched).pdf"), art("p3f", "Sol Ring 3 (Foil).pdf")], [{ id: "m3", name: "Sol Ring 3.png" }])).toEqual(["p3e=-", "p3f=-"]);
+    expect(run([art("p3", "Sol Ring 3.pdf"), art("p3b", "Sol Ring (Foil) 3.pdf"), art("p3c", "1_1_Sol Ring 3.pdf")], [{ id: "m3", name: "Sol Ring 3 (Etched).png" }])).toEqual(["p3=m3", "p3b=-", "p3c=-"]);
+  });
+
+  it("does not count an art with another art number as a claimant", () => {
+    expect(run([art("p2", "Sol Ring 2.pdf"), art("p3f", "Sol Ring 3 (Foil).pdf")], [{ id: "m3", name: "Sol Ring 3.png" }])).toEqual(["p2=-", "p3f=m3"]);
+    expect(run([art("p2", "Sol Ring 2.pdf"), art("p3f", "Sol Ring 3 (Foil).pdf")], [{ id: "m2", name: "Sol Ring 2 (Foil).png" }])).toEqual(["p2=m2", "p3f=-"]);
   });
 });

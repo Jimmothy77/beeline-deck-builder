@@ -68,7 +68,7 @@ describe("a pasted Partial Foil edition root unlocks exactly as v0.1.37 did (v0.
 
   it("never purges an edition stored under its own folder's name, whatever the case and spacing", () => {
     const [pack] = loadUnlocked(memory(golden.cases["3_KPDH Partial Foil Edition"]!.stored));
-    for (const name of ["KPDH Partial Foil Edition", "3_Nier Partial Foil Edition", "  nier   partial foil EDITION ", "Partial Foil Edition", "PDF Partial Foil", "Partial Foil Maps"]) {
+    for (const name of ["KPDH Partial Foil Edition", "3_Nier Partial Foil Edition", "  nier   partial foil EDITION ", "Partial Foil Edition", "PDF Partial Foil", "Treasure Map Partial Foil Edition"]) {
       expect(isPartialFoilMapName(name)).toBe(false);
       const renamed = { ...pack!, catalogue: { ...pack!.catalogue, name } };
       expect(purgeMapUnlocks([renamed]).dropped).toBe(0);

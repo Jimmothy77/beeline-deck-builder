@@ -3094,7 +3094,7 @@ const mutations: Mutation[] = [
     file: "src/lib/foil-maps.ts",
     test: "but never guesses between two",
     edits: [
-      { from: "            byCardPick(artParts, manyArts, group) ??\n            (artParts.face ? undefined : byCardPick(asName(face.name), manyArts, group)) ??\n            (card.faces.length === 1 && index === 0 ? byCardPick(asName(card.name), manyArts, group) : undefined);", to: "            undefined;\n          void asName;\n          void index;" },
+      { from: "            byCardPick(artParts, manyArts, group, others) ??\n            (artParts.face ? undefined : byCardPick(asName(face.name), manyArts, group, others)) ??\n            (card.faces.length === 1 && index === 0 ? byCardPick(asName(card.name), manyArts, group, others) : undefined);", to: "            undefined;\n          void asName;\n          void index;\n          void others;" },
     ],
   },
   {
@@ -3849,7 +3849,7 @@ const mutations: Mutation[] = [
     file: "src/lib/foil-maps.ts",
     test: "keeps the art number when a card has more than one art",
     edits: [
-      { from: "const manyArts = (face.defaultArt ? 1 : 0) + face.alternates.length > 1;", to: "const manyArts = card.faces.length > 1;" },
+      { from: "const manyArts = arts.length > 1;", to: "const manyArts = card.faces.length > 1;" },
     ],
   },
   {
@@ -3883,7 +3883,7 @@ const mutations: Mutation[] = [
     file: "src/lib/pf-map.ts",
     test: "knows both map folders, whatever the case and spacing",
     edits: [
-      { from: "const MAP_NAMES = new Set([\"partialfoilmap\", \"pdfpartialfoilmap\"]);", to: "const MAP_NAMES = new Set([\"partialfoilmap\"]);" },
+      { from: "  return isFoilMaskFolderName(normal) || nameIsPdfPartialMap(normal);", to: "  return isFoilMaskFolderName(normal);" },
     ],
   },
   {
@@ -3891,7 +3891,7 @@ const mutations: Mutation[] = [
     file: "src/lib/pf-map.ts",
     test: "refuses the Partial Foil Map folder and lists nothing",
     edits: [
-      { from: "const MAP_NAMES = new Set([\"partialfoilmap\", \"pdfpartialfoilmap\"]);", to: "const MAP_NAMES = new Set([\"pdfpartialfoilmap\"]);" },
+      { from: "  return isFoilMaskFolderName(normal) || nameIsPdfPartialMap(normal);", to: "  return nameIsPdfPartialMap(normal);" },
     ],
   },
   {
@@ -3899,7 +3899,7 @@ const mutations: Mutation[] = [
     file: "src/lib/pf-map.ts",
     test: "knows both map folders, whatever the case and spacing",
     edits: [
-      { from: "return MAP_NAMES.has(name.normalize(\"NFKC\").toLowerCase().replace(/\\s+/g, \"\"));", to: "return MAP_NAMES.has(name.normalize(\"NFKC\").replace(/\\s+/g, \"\"));" },
+      { from: "  const plain = plainEditionName(name);\n  return plain.includes(\"pdf\")", to: "  const plain = name.replace(/[^a-z0-9]+/g, \"\");\n  return plain.includes(\"pdf\")" },
     ],
   },
   {
@@ -3907,31 +3907,15 @@ const mutations: Mutation[] = [
     file: "src/lib/pf-map.ts",
     test: "knows both map folders, whatever the case and spacing",
     edits: [
-      { from: "return MAP_NAMES.has(name.normalize(\"NFKC\").toLowerCase().replace(/\\s+/g, \"\"));", to: "return MAP_NAMES.has(name.normalize(\"NFKC\").toLowerCase().trim().replace(/ /g, \"\"));" },
+      { from: "  const plain = plainEditionName(name);\n  return plain.includes(\"pdf\")", to: "  const plain = name.toLowerCase().replace(/[^a-z0-9 ]+/g, \"\");\n  return plain.includes(\"pdf\")" },
     ],
   },
   {
     name: "v38-pm no NFKC",
     file: "src/lib/pf-map.ts",
-    test: "knows both map folders, whatever the case and spacing",
+    test: "counts fuzzy map names, mask or print",
     edits: [
-      { from: "return MAP_NAMES.has(name.normalize(\"NFKC\").toLowerCase().replace(/\\s+/g, \"\"));", to: "return MAP_NAMES.has(name.toLowerCase().replace(/\\s+/g, \"\"));" },
-    ],
-  },
-  {
-    name: "v38-pm any name holding the words",
-    file: "src/lib/pf-map.ts",
-    test: "leaves every other folder alone",
-    edits: [
-      { from: "return MAP_NAMES.has(name.normalize(\"NFKC\").toLowerCase().replace(/\\s+/g, \"\"));", to: "return [...MAP_NAMES].some((map) => name.normalize(\"NFKC\").toLowerCase().replace(/\\s+/g, \"\").includes(map));" },
-    ],
-  },
-  {
-    name: "v38-pm punctuation ignored too",
-    file: "src/lib/pf-map.ts",
-    test: "leaves every other folder alone",
-    edits: [
-      { from: "return MAP_NAMES.has(name.normalize(\"NFKC\").toLowerCase().replace(/\\s+/g, \"\"));", to: "return MAP_NAMES.has(name.normalize(\"NFKC\").toLowerCase().replace(/[^a-z0-9]+/g, \"\"));" },
+      { from: "  const normal = name.normalize(\"NFKC\");\n  if (plainEditionName(normal)", to: "  const normal = name;\n  if (plainEditionName(normal)" },
     ],
   },
   {
@@ -4051,7 +4035,7 @@ const mutations: Mutation[] = [
     file: "src/lib/drive.ts",
     test: "refuses the Partial Foil Map folder and lists nothing",
     edits: [
-      { from: "      const map = mapFolderInChain(rootChain);\n      if (map) throw new PartialFoilMapLinkError(map.deck);\n    }", to: "    }" },
+      { from: "      const map = mapFolderInChain(rootChain);\n      if (map) throw new PartialFoilMapLinkError(map.deck);\n      // A bare", to: "      // A bare" },
       { from: "    const files = await listChildren(id, apiKey, fetchImpl, here);\n", to: "    const files = await listChildren(id, apiKey, fetchImpl, here);\n    if (depth === 0) {\n      const map = mapFolderInChain(rootChain);\n      if (map) throw new PartialFoilMapLinkError(map.deck);\n    }\n" },
     ],
   },
@@ -4100,7 +4084,7 @@ const mutations: Mutation[] = [
     file: "src/lib/pf-map.ts",
     test: "drops unlocks named for a map folder",
     edits: [
-      { from: "  const kept = packs.filter((pack) => !isPartialFoilMapName(pack.catalogue.name));", to: "  const kept = [...packs];" },
+      { from: "  const kept = packs.filter((pack) => !isMapUnlock(pack));", to: "  const kept = [...packs];" },
     ],
   },
   {
@@ -4108,7 +4092,7 @@ const mutations: Mutation[] = [
     file: "src/lib/pf-map.ts",
     test: "drops unlocks named for a map folder",
     edits: [
-      { from: "  const kept = packs.filter((pack) => !isPartialFoilMapName(pack.catalogue.name));", to: "  const kept = packs.filter((pack) => !pack.catalogue.editions.some((edition) => isPartialFoilMapName(edition.name)));" },
+      { from: "  const kept = packs.filter((pack) => !isMapUnlock(pack));", to: "  const kept = packs.filter((pack) => !pack.catalogue.editions.some((edition) => isPartialFoilMapName(edition.name)));" },
     ],
   },
   {
@@ -4228,7 +4212,7 @@ const mutations: Mutation[] = [
     file: "src/lib/foil-maps.ts",
     test: "never gives a plain Forest the Forest",
     edits: [
-      { from: "  if (manyArts && target.variant !== mask.variant) return false;\n", to: "" },
+      { from: "    if (claimed) return false;\n", to: "" },
     ],
   },
   {
@@ -4236,15 +4220,15 @@ const mutations: Mutation[] = [
     file: "src/lib/foil-maps.ts",
     test: "still lets a one-art card's plain file take a variant mask",
     edits: [
-      { from: "  if (manyArts && target.variant !== mask.variant) return false;", to: "  if (target.variant !== mask.variant) return false;" },
+      { from: "  if (manyArts && target.variant !== mask.variant) {", to: "  if (target.variant !== mask.variant) {\n    if (!manyArts) return false;" },
     ],
   },
   {
     name: "v38-fm only the print's missing variant checked",
     file: "src/lib/foil-maps.ts",
-    test: "never gives a plain Forest the Forest",
+    test: "never lets two variant arts share one plain mask",
     edits: [
-      { from: "  if (manyArts && target.variant !== mask.variant) return false;", to: "  if (manyArts && !target.variant && mask.variant) return false;" },
+      { from: "(other.variant === mask.variant || !other.variant || !mask.variant)", to: "(other.variant === mask.variant)" },
     ],
   },
   {
@@ -4270,7 +4254,6 @@ const mutations: Mutation[] = [
     file: "src/lib/drive.ts",
     test: "reads its PDFs from PDF Partial Foil Map",
     edits: [
-      { from: 'import { mapFolderInChain, PartialFoilMapLinkError } from "@/lib/pf-map";', to: 'import { isPartialFoilMapName, mapFolderInChain, PartialFoilMapLinkError } from "@/lib/pf-map";' },
       { from: "      if (LINK_FILE.test(file.name)) continue;\n", to: "      if (LINK_FILE.test(file.name)) continue;\n      if (isPartialFoilMapName(file.name)) continue;\n" },
     ],
   },
@@ -4287,7 +4270,7 @@ const mutations: Mutation[] = [
     file: "src/lib/pf-map.ts",
     test: "survives the load and restore purge",
     edits: [
-      { from: "  const kept = packs.filter((pack) => !isPartialFoilMapName(pack.catalogue.name));", to: "  const kept = packs.filter((pack) => !isPartialFoilMapName(pack.catalogue.name) && !pack.catalogue.editions.some((edition) => edition.notes.some((note) => /^(pdf )?partial foil map\\//i.test(note.path))));" },
+      { from: "  const kept = packs.filter((pack) => !isMapUnlock(pack));", to: "  const kept = packs.filter((pack) => !isMapUnlock(pack) && !pack.catalogue.editions.some((edition) => edition.notes.some((note) => /^(pdf )?partial foil map\\//i.test(note.path))));" },
     ],
   },
   {
@@ -4295,7 +4278,291 @@ const mutations: Mutation[] = [
     file: "src/lib/pf-map.ts",
     test: "never purges an edition stored under its own folder's name",
     edits: [
-      { from: "  const kept = packs.filter((pack) => !isPartialFoilMapName(pack.catalogue.name));", to: "  const kept = packs.filter((pack) => !isPartialFoilMapName(pack.catalogue.name) && !/partial\\s*foil/i.test(pack.catalogue.name));" },
+      { from: "  const kept = packs.filter((pack) => !isMapUnlock(pack));", to: "  const kept = packs.filter((pack) => !isMapUnlock(pack) && !/partial\\s*foil/i.test(pack.catalogue.name));" },
+    ],
+  },
+  // v0.1.39: a pasted bare Extras or Tokens folder refused by its one parent's name, failing open (1), map
+  // names matched fuzzily for the refusal and the purge (2), and a one-sided variant match refused only
+  // when another art on the face claims the mask (3).
+  {
+    name: "v39-pm an edition name can be a map",
+    file: "src/lib/pf-map.ts",
+    test: "never an edition or other folder",
+    edits: [
+      { from: "  if (plainEditionName(normal).includes(\"edition\")) return false;\n", to: "" },
+    ],
+  },
+  {
+    name: "v39-pm edition told by its raw name",
+    file: "src/lib/pf-map.ts",
+    test: "never an edition or other folder",
+    edits: [
+      { from: "  if (plainEditionName(normal).includes(\"edition\")) return false;", to: "  if (normal.includes(\" Edition\")) return false;" },
+    ],
+  },
+  {
+    name: "v39-pm chain deck not taken from the map's name",
+    file: "src/lib/pf-map.ts",
+    test: "refuses a pasted fuzzy-named map folder before listing it",
+    edits: [
+      { from: "  return { deck: deckFromMapName(names[at]!) };", to: "  return { deck: null };" },
+    ],
+  },
+  {
+    name: "v39-pm map deck keeps zero-width characters",
+    file: "src/lib/pf-map.ts",
+    test: "takes the deck from a map's own name",
+    edits: [
+      { from: ".replace(/[\\u200b-\\u200d\\u2060\\ufeff]/g, \"\").trim();\n  if (!/[\\p{L}\\p{N}]/u.test(deck)", to: ".trim();\n  if (!/[\\p{L}\\p{N}]/u.test(deck)" },
+    ],
+  },
+  {
+    name: "v39-pm map deck may be Partial Foil",
+    file: "src/lib/pf-map.ts",
+    test: "takes the deck from a map's own name",
+    edits: [
+      { from: " || plainEditionName(deck).includes(\"partialfoil\")) return null;", to: ") return null;" },
+    ],
+  },
+  {
+    name: "v39-pm map deck with no letter kept",
+    file: "src/lib/pf-map.ts",
+    test: "takes the deck from a map's own name",
+    edits: [
+      { from: "  if (!/[\\p{L}\\p{N}]/u.test(deck) || ", to: "  if (!deck || " },
+    ],
+  },
+  {
+    name: "v39-pm purge ignores the stored name",
+    file: "src/lib/pf-map.ts",
+    test: "purges unlocks an older BeeLine stored",
+    edits: [
+      { from: "  if (isPartialFoilMapName(name)) return true;\n", to: "" },
+    ],
+  },
+  {
+    name: "v39-pm purge ignores root notes",
+    file: "src/lib/pf-map.ts",
+    test: "purges unlocks an older BeeLine stored",
+    edits: [
+      { from: "  if (editions.some((edition) => edition.notes.some((note) => !note.path.includes(\"/\") && isPartialFoilMapName(note.path)))) return true;\n", to: "" },
+    ],
+  },
+  {
+    name: "v39-pm purge reads every note path",
+    file: "src/lib/pf-map.ts",
+    test: "never purges an edition stored under its own folder's name",
+    edits: [
+      { from: "!note.path.includes(\"/\") && isPartialFoilMapName(note.path)", to: "isPartialFoilMapName(note.path)" },
+    ],
+  },
+  {
+    name: "v39-pm purge ignores empty names",
+    file: "src/lib/pf-map.ts",
+    test: "purges unlocks an older BeeLine stored",
+    edits: [
+      { from: "  return !/[\\p{L}\\p{N}]/u.test(visible) && editions.some((edition) => edition.printType === \"partial_foil\");", to: "  return false && visible === name;" },
+    ],
+  },
+  {
+    name: "v39-pm empty name dropped from any edition",
+    file: "src/lib/pf-map.ts",
+    test: "keeps real editions",
+    edits: [
+      { from: "  return !/[\\p{L}\\p{N}]/u.test(visible) && editions.some((edition) => edition.printType === \"partial_foil\");", to: "  return !/[\\p{L}\\p{N}]/u.test(visible);" },
+    ],
+  },
+  {
+    name: "v39-golden fuzzy map unlocks kept",
+    file: "src/lib/pf-map.ts",
+    test: "drops the fuzzy-named map unlocks v0.1.38 stored",
+    edits: [
+      { from: "  return !/[\\p{L}\\p{N}]/u.test(visible) && editions.some((edition) => edition.printType === \"partial_foil\");", to: "  return false && visible === name;" },
+    ],
+  },
+  {
+    name: "v39-drive parent never asked",
+    file: "src/lib/drive.ts",
+    test: "refuses a bare Extras folder whose parent is the Partial Foil Map",
+    edits: [
+      { from: "        const parent = await parentFolderName(id, apiKey, fetchImpl);", to: "        const parent = null as string | null;" },
+    ],
+  },
+  {
+    name: "v39-drive parent asked for every pasted folder",
+    file: "src/lib/drive.ts",
+    test: "never asks for a parent for any other pasted folder",
+    edits: [
+      { from: "      if (isBareExtrasOrTokens(folderName)) {", to: "      if (folderName) {" },
+    ],
+  },
+  {
+    name: "v39-drive parent asked at every depth",
+    file: "src/lib/drive.ts",
+    test: "never asks for a parent for any other pasted folder",
+    edits: [
+      { from: "    if (depth === 0) {\n      // A Partial Foil Map folder", to: "    if (depth >= 0) {\n      // A Partial Foil Map folder" },
+    ],
+  },
+  {
+    name: "v39-drive any parent name refuses",
+    file: "src/lib/drive.ts",
+    test: "accepts a bare Extras folder whose parent is not a map folder",
+    edits: [
+      { from: "        if (parent && isPartialFoilMapName(parent)) throw", to: "        if (parent) throw" },
+    ],
+  },
+  {
+    name: "v39-drive refusal names no deck",
+    file: "src/lib/drive.ts",
+    test: "naming the deck the map's name carries",
+    edits: [
+      { from: "throw new PartialFoilMapLinkError(deckFromMapName(parent));", to: "throw new PartialFoilMapLinkError(null);" },
+    ],
+  },
+  {
+    name: "v39-drive Tokens not bare",
+    file: "src/lib/drive.ts",
+    test: "knows a bare Extras or Tokens folder name",
+    edits: [
+      { from: "[\"extras\", \"extra\", \"tokens\", \"token\"]", to: "[\"extras\", \"extra\"]" },
+    ],
+  },
+  {
+    name: "v39-drive Extras not bare",
+    file: "src/lib/drive.ts",
+    test: "refuses a bare Extras folder whose parent is the Partial Foil Map",
+    edits: [
+      { from: "[\"extras\", \"extra\", \"tokens\", \"token\"]", to: "[\"tokens\", \"token\"]" },
+    ],
+  },
+  {
+    name: "v39-drive bare name matched by words",
+    file: "src/lib/drive.ts",
+    test: "knows a bare Extras or Tokens folder name",
+    edits: [
+      { from: "[\"extras\", \"extra\", \"tokens\", \"token\"].includes(plainEditionName(name.normalize(\"NFKC\")))", to: "[\"extras\", \"extra\", \"tokens\", \"token\"].some((word) => plainEditionName(name.normalize(\"NFKC\")).includes(word))" },
+    ],
+  },
+  {
+    name: "v39-drive fails closed on a failed parent request",
+    file: "src/lib/drive.ts",
+    test: "fails open when the parent lookup fails \\(403\\)",
+    edits: [
+      { from: "    if (!up.ok) return null;", to: "    if (!up.ok) return \"Partial Foil Map\";" },
+    ],
+  },
+  {
+    name: "v39-drive fails closed with no parent given",
+    file: "src/lib/drive.ts",
+    test: "fails open when the parent lookup fails \\(empty\\)",
+    edits: [
+      { from: "    if (!parent) return null;", to: "    if (!parent) return \"Partial Foil Map\";" },
+    ],
+  },
+  {
+    name: "v39-drive fails closed on a failed name request",
+    file: "src/lib/drive.ts",
+    test: "fails open when the parent lookup fails \\(name-403\\)",
+    edits: [
+      { from: "    if (!meta.ok) return null;", to: "    if (!meta.ok) return \"Partial Foil Map\";" },
+    ],
+  },
+  {
+    name: "v39-drive fails closed on a thrown request",
+    file: "src/lib/drive.ts",
+    test: "fails open when the parent lookup fails \\(throw\\)",
+    edits: [
+      { from: "  } catch {\n    return null;\n  }\n}\n\nexport async function downloadText", to: "  } catch {\n    return \"Partial Foil Map\";\n  }\n}\n\nexport async function downloadText" },
+    ],
+  },
+  {
+    name: "v39-drive throws on a thrown request",
+    file: "src/lib/drive.ts",
+    test: "fails open when the parent lookup fails \\(throw\\)",
+    edits: [
+      { from: "  } catch {\n    return null;\n  }\n}\n\nexport async function downloadText", to: "  } catch (error) {\n    throw error;\n  }\n}\n\nexport async function downloadText" },
+    ],
+  },
+  {
+    name: "v39-drive fails closed with no parent name",
+    file: "src/lib/drive.ts",
+    test: "fails open when the parent lookup fails \\(name-missing\\)",
+    edits: [
+      { from: "    return typeof name === \"string\" && name ? name : null;", to: "    return typeof name === \"string\" && name ? name : \"Partial Foil Map\";" },
+    ],
+  },
+  {
+    name: "v39-drive first of two parents taken",
+    file: "src/lib/drive.ts",
+    test: "fails open when the parent lookup fails \\(two\\)",
+    edits: [
+      { from: "\"([A-Za-z0-9_-]{10,})\"\\s*\\]\\s*\\}\\s*$/", to: "\"([A-Za-z0-9_-]{10,})\"/" },
+    ],
+  },
+  {
+    name: "v39-drive grandparent asked too",
+    file: "src/lib/drive.ts",
+    test: "the Drive API is asked for parents in one place only",
+    edits: [
+      { from: "?fields=name&supportsAllDrives=true&key=${keyOf(apiKey)}`);", to: "?fields=name,parents&supportsAllDrives=true&key=${keyOf(apiKey)}`);" },
+    ],
+  },
+  {
+    name: "v39-drive parent's id taken as its name",
+    file: "src/lib/drive.ts",
+    test: "refuses a bare Extras folder whose parent is the Partial Foil Map",
+    edits: [
+      { from: "    return typeof name === \"string\" && name ? name : null;", to: "    return typeof name === \"string\" && name ? parent : null;" },
+    ],
+  },
+  {
+    name: "v39-fm claimant of another card counted",
+    file: "src/lib/foil-maps.ts",
+    test: "a variant on one side only loses only to another art",
+    edits: [
+      { from: "        other.face + other.base === mask.face + mask.base &&\n", to: "" },
+    ],
+  },
+  {
+    name: "v39-fm claimant of another art number counted",
+    file: "src/lib/foil-maps.ts",
+    test: "does not count an art with another art number as a claimant",
+    edits: [
+      { from: "        (other.art ?? \"1\") === (mask.art ?? \"1\") &&\n", to: "" },
+    ],
+  },
+  {
+    name: "v39-fm the art claims against itself",
+    file: "src/lib/foil-maps.ts",
+    test: "lets Sol Ring 3 \\(Foil\\) keep the Sol Ring 3 mask",
+    edits: [
+      { from: "arts.filter((item) => item !== art).map(", to: "arts.map(" },
+    ],
+  },
+  {
+    name: "v39-fm plain claimant of a variant mask ignored",
+    file: "src/lib/foil-maps.ts",
+    test: "never lets two variant arts share one plain mask, nor two plain arts one variant mask",
+    edits: [
+      { from: "(other.variant === mask.variant || !other.variant || !mask.variant)", to: "(other.variant === mask.variant || !mask.variant)" },
+    ],
+  },
+  {
+    name: "v39-fm one-sided match refused again",
+    file: "src/lib/foil-maps.ts",
+    test: "lets Sol Ring 3 \\(Foil\\) keep the Sol Ring 3 mask",
+    edits: [
+      { from: "    if (claimed) return false;", to: "    if (claimed || !claimed) return false;" },
+    ],
+  },
+  {
+    name: "v39-fm face-name fallback ignores claimants",
+    file: "src/lib/foil-maps.ts",
+    test: "a variant on one side only loses only to another art",
+    edits: [
+      { from: "byCardPick(asName(face.name), manyArts, group, others)", to: "byCardPick(asName(face.name), manyArts, group)" },
+      { from: "byCardPick(asName(card.name), manyArts, group, others)", to: "byCardPick(asName(card.name), manyArts, group)" },
     ],
   },
 ];

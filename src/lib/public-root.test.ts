@@ -777,7 +777,7 @@ export function parentsFieldUses(text: string, source: boolean): string[] {
   return hits;
 }
 
-describe("the Drive API is never asked for parents", () => {
+describe("the Drive API is asked for parents in one place only (v0.1.39)", () => {
   it("finds a parents field in every form it could take", () => {
     expect(parentsFieldUses("url.searchParams.set(\"q\", `'${folderId}' in parents and trashed = false`);", true)).toEqual([]);
     expect(parentsFieldUses("  * never `parents`, so a folder's Restricted deck parent", true)).toEqual([]);
@@ -787,7 +787,7 @@ describe("the Drive API is never asked for parents", () => {
     expect(parentsFieldUses('e.searchParams.set("q",`\'${t}\' in parents and trashed = false`)', false)).toEqual([]);
   });
 
-  it("has no parents field in src, scripts or dist", async () => {
+  it("has no parents field in src, scripts or dist except the one-up name lookup for a pasted Extras or Tokens folder", async () => {
     const { execSync } = await import("node:child_process");
     const { existsSync, readdirSync } = await import("node:fs");
     const walk = (dir: string): string[] =>
@@ -818,7 +818,14 @@ describe("the Drive API is never asked for parents", () => {
       queries += (text.match(/'\s+in\s+parents/g) ?? []).length;
       for (const hit of parentsFieldUses(text, false)) found.push(`dist/${path.basename(file)}:${hit}`);
     }
-    expect(found).toEqual([]);
+    // The one allowed use: parentFolderName's single request, one folder up from a pasted bare Extras or
+    // Tokens folder, for its parent's id only (then that parent's name). No other field list, listing or
+    // metadata request carries parents, in the source or the build.
+    const oneUp = (hit: string) => hit.includes("fields=parents&supportsAllD");
+    expect(found.filter((hit) => !oneUp(hit))).toEqual([]);
+    expect(found.filter((hit) => oneUp(hit) && hit.startsWith(path.join("src", "lib", "drive.ts") + ":"))).toHaveLength(1);
+    expect(found.filter((hit) => oneUp(hit) && hit.startsWith("dist/"))).toHaveLength(1);
+    expect(found).toHaveLength(2);
     // The scan saw the real bundle: the one folder-listing query is in it.
     expect(queries).toBeGreaterThan(0);
     expect(sources.some((file) => file.endsWith(path.join("lib", "drive.ts")))).toBe(true);

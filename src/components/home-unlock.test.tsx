@@ -496,7 +496,7 @@ describe("Partial Foil Map links and unlocks (v0.1.38)", () => {
     return `BEELINE-RESTORE-1.j${body}.${sha256Hex(text).slice(0, 8)}`;
   };
 
-  function driveWith(items: Record<string, { name: string; children?: string[]; mimeType?: string }>) {
+  function driveWith(items: Record<string, { name: string; children?: string[]; mimeType?: string; parent?: string }>) {
     const listed: string[] = [];
     window.PRINTABEE_CONFIG = { googleApiKey: "test-key-made-up" } as typeof window.PRINTABEE_CONFIG;
     vi.stubGlobal("fetch", async (input: string) => {
@@ -508,6 +508,9 @@ describe("Partial Foil Map links and unlocks (v0.1.38)", () => {
           return new Response(JSON.stringify({ files: (items[parent]?.children ?? []).map((id) => ({ id, name: items[id]!.name, mimeType: items[id]!.mimeType ?? "application/vnd.google-apps.folder" })) }));
         }
         const id = /\/files\/([^?/]+)/.exec(url)![1]!;
+        // The one parent request (v0.1.39): answered when the folder has a parent here, as Drive does.
+        if (url.includes("fields=parents&")) return new Response(JSON.stringify(items[id]!.parent ? { parents: [items[id]!.parent] } : {}));
+        if (url.includes("fields=name&")) return new Response(JSON.stringify({ name: items[id]!.name }));
         return new Response(JSON.stringify({ id, name: items[id]!.name, mimeType: items[id]!.mimeType ?? "application/vnd.google-apps.folder" }));
       }
       const name = String(url).split("/").pop()!;
@@ -549,6 +552,31 @@ describe("Partial Foil Map links and unlocks (v0.1.38)", () => {
       expect(document.querySelector("[role=alert]")!.textContent).toBe("Paste a Google Drive folder link, the kind on a Ko-fi order page.");
     });
   }
+
+  it("refuses a pasted bare Tokens folder whose parent is a Partial Foil Map, naming the deck the map carries (v0.1.39)", async () => {
+    const listed = driveWith({
+      mapUiFolder01: { name: "P5 Partial Foil Map", children: ["tokUiFolder01"] },
+      tokUiFolder01: { name: "Tokens", children: ["maskUiFile01"], parent: "mapUiFolder01" },
+      maskUiFile01: { name: "Token 1.png", mimeType: "image/png" },
+    });
+    await mount();
+    await paste("https://drive.google.com/drive/folders/tokUiFolder01");
+    expect(warning()!.getAttribute("role")).toBe("alert");
+    expect(warning()!.textContent).toBe("That's the Partial Foil Map folder. Paste the link for the folder labeled P5 Partial Foil Edition instead.");
+    expect(listed).toEqual([]);
+    expect(localStorage.getItem(UNLOCK_KEY)).toBeNull();
+  });
+
+  it("accepts a pasted bare Tokens folder when its parent can't be told (v0.1.39: fails open)", async () => {
+    const listed = driveWith({
+      tokUiFolder01: { name: "Tokens", children: ["maskUiFile01"] },
+      maskUiFile01: { name: "Token 1.png", mimeType: "image/png" },
+    });
+    await mount();
+    await paste("https://drive.google.com/drive/folders/tokUiFolder01");
+    expect(warning()).toBeNull();
+    expect(listed).toEqual(["tokUiFolder01"]);
+  });
 
   it("drops map unlocks saved by an older BeeLine on load, keeps the rest, and says why", async () => {
     localStorage.setItem(UNLOCK_KEY, JSON.stringify([mapPack(1, "PDF Partial Foil Map", 100), realPack(), mapPack(2, "Partial Foil Map", 0)]));

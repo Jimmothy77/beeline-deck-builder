@@ -58,7 +58,8 @@ describe("Partial Foil Map folder names (v0.1.38)", () => {
   });
 
   it("leaves every other folder alone, edition roots and print folders included", () => {
-    for (const name of ["3_KPDH Partial Foil Edition", "Partial Foil Edition", "Partial Foil", "Color Partial Foil Map", "Partial Foil Maps", "Partial Foil Map 2", "Partial-Foil-Map", "PDF Print Map", "Partial Foil Templates", "Extras", "Tokens", "Deluxe Edition", ""]) {
+    // v0.1.39: fuzzy names such as "Partial Foil Maps" or "Partial-Foil-Map" are map folders now (see the v0.1.39 tests).
+    for (const name of ["3_KPDH Partial Foil Edition", "Partial Foil Edition", "Partial Foil", "Treasure Map Partial Foil Edition", "PDF Print Map", "Partial Foil Templates", "Extras", "Tokens", "Deluxe Edition", ""]) {
       expect(isPartialFoilMapName(name), name).toBe(false);
     }
   });

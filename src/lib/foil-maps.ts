@@ -51,14 +51,25 @@ function partsOf(key: string): KeyParts {
 /**
  * Whether a mask may stand for a print file it does not name exactly. When both name a variant, the
  * variants must be the same ("Forest (Greenpath)" never takes "Forest (Fog Canyon)"). When the card has
- * more than one art, the variant must be exactly the same, "no variant" counting as its own value
- * (a plain "Forest" never takes "Forest (Greenpath)"), and so must the art number, an unnumbered file
- * counting as art 1 ("Sol Ring 2" never takes "Sol Ring").
+ * more than one art, the art number must be the same, an unnumbered file counting as art 1 ("Sol Ring 2"
+ * never takes "Sol Ring"). A variant on one side only ("Sol Ring 3 (Foil)" and the mask "Sol Ring 3") still
+ * matches, unless another art on the same face (same card and art number) claims that mask as well: one
+ * that has the mask's variant, or no variant when the mask has none (a plain "Forest" never takes "Forest
+ * (Greenpath)" while the face has a Forest (Greenpath) art), or one that would match it one-sidedly too
+ * (two variant arts never share one plain mask).
  */
-function sameCard(target: KeyParts, mask: KeyParts, manyArts: boolean): boolean {
+function sameCard(target: KeyParts, mask: KeyParts, manyArts: boolean, others: readonly KeyParts[] = []): boolean {
   if (target.variant && mask.variant && target.variant !== mask.variant) return false;
-  if (manyArts && target.variant !== mask.variant) return false;
   if (manyArts && (target.art ?? "1") !== (mask.art ?? "1")) return false;
+  if (manyArts && target.variant !== mask.variant) {
+    const claimed = others.some(
+      (other) =>
+        other.face + other.base === mask.face + mask.base &&
+        (other.art ?? "1") === (mask.art ?? "1") &&
+        (other.variant === mask.variant || !other.variant || !mask.variant),
+    );
+    if (claimed) return false;
+  }
   return true;
 }
 
@@ -134,9 +145,9 @@ export function attachFoilMaps(editions: Edition[], masks: FoilMask[]): Edition[
     if (unique && pool.length !== 1) return undefined;
     return pool[0];
   };
-  const byCardPick = (target: KeyParts, manyArts: boolean, group: FoilMask["group"]): FoilMask | undefined => {
+  const byCardPick = (target: KeyParts, manyArts: boolean, group: FoilMask["group"], others: readonly KeyParts[] = []): FoilMask | undefined => {
     if (!target.base) return undefined;
-    const list = byCard.get(target.face + target.base)?.filter((item) => sameCard(target, item.parts, manyArts));
+    const list = byCard.get(target.face + target.base)?.filter((item) => sameCard(target, item.parts, manyArts, others));
     return pick(list?.map((item) => item.mask), group, true);
   };
   return editions.map((edition) => {
@@ -150,7 +161,10 @@ export function attachFoilMaps(editions: Edition[], masks: FoilMask[]): Edition[
           total += 1;
           const key = maskKey(art.name);
           const artParts = partsOf(key);
-          const manyArts = (face.defaultArt ? 1 : 0) + face.alternates.length > 1;
+          const arts = [face.defaultArt, ...face.alternates].filter((item): item is ArtFile => Boolean(item));
+          const manyArts = arts.length > 1;
+          // The face's other arts, which may claim a mask that names a variant on one side only.
+          const others = arts.filter((item) => item !== art).map((item) => partsOf(maskKey(item.name)));
           // A face or card name stands in for the file's name, keeping the file's own variant and art number.
           const asName = (name: string): KeyParts => {
             const parts = partsOf(maskKey(name));
@@ -158,9 +172,9 @@ export function attachFoilMaps(editions: Edition[], masks: FoilMask[]): Edition[
           };
           const mask =
             pick(exact.get(key), group, false) ??
-            byCardPick(artParts, manyArts, group) ??
-            (artParts.face ? undefined : byCardPick(asName(face.name), manyArts, group)) ??
-            (card.faces.length === 1 && index === 0 ? byCardPick(asName(card.name), manyArts, group) : undefined);
+            byCardPick(artParts, manyArts, group, others) ??
+            (artParts.face ? undefined : byCardPick(asName(face.name), manyArts, group, others)) ??
+            (card.faces.length === 1 && index === 0 ? byCardPick(asName(card.name), manyArts, group, others) : undefined);
           const { maskId: _old, ...plain } = art;
           void _old;
           if (!mask) return plain;

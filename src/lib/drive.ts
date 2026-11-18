@@ -1,7 +1,7 @@
 import { isStandardEditionFolder, isTemplateOrFontFolder, looksLikePaidName, plainEditionName, productEditionKind } from "@/lib/group";
 import { isDecklistFile } from "@/lib/decklist";
 import { isFoilMaskFolderName } from "@/lib/foil-maps";
-import { mapFolderInChain, PartialFoilMapLinkError } from "@/lib/pf-map";
+import { deckFromMapName, isPartialFoilMapName, mapFolderInChain, nameIsPdfPartialMap, PartialFoilMapLinkError } from "@/lib/pf-map";
 import type { RawNode } from "@/lib/types";
 
 const FOLDER = "application/vnd.google-apps.folder";
@@ -177,12 +177,41 @@ export async function listChildren(folderId: string, apiKey: string, fetchImpl: 
 /**
  * One file's id, name and type, and a shortcut's target. Only these fields are asked for: never
  * `parents`, so a folder's Restricted deck parent (and the paid editions beside it) is never revealed.
+ * (The one parent request is parentFolderName's, for a pasted bare Extras or Tokens folder only.)
  */
 export async function getFileMeta(fileId: string, apiKey: string, fetchImpl: FetchLike = fetch, item: DriveItem = PASTED): Promise<DriveFile> {
   const url = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?fields=id,name,mimeType,shortcutDetails&supportsAllDrives=true&key=${keyOf(apiKey)}`;
   const response = await fetchImpl(url);
   if (!response.ok) throw await failure(response, item);
   return (await response.json()) as DriveFile;
+}
+
+/** A bare "Extras" or "Tokens" folder name: the subfolders a Partial Foil Map holds. */
+export function isBareExtrasOrTokens(name: string): boolean {
+  return ["extras", "extra", "tokens", "token"].includes(plainEditionName(name.normalize("NFKC")));
+}
+
+/**
+ * The name of a pasted bare Extras or Tokens folder's one parent folder, or null. The only place BeeLine
+ * asks Drive for a parent: one folder up from the pasted folder, for its name only, so a pasted map
+ * subfolder can be refused. Never higher (an edition's deck parent is Restricted), never listed, and the
+ * parent's id is never kept, shown or stored. Any failure (network, 403, quota, no parent given, more than
+ * one) gives null, and the paste goes on exactly as before: this never blocks a link.
+ */
+export async function parentFolderName(folderId: string, apiKey: string, fetchImpl: FetchLike = fetch): Promise<string | null> {
+  try {
+    const up = await fetchImpl(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(folderId)}?fields=parents&supportsAllDrives=true&key=${keyOf(apiKey)}`);
+    if (!up.ok) return null;
+    // The answer holds only the field asked for: a list with exactly one folder id, or nothing to go on.
+    const parent = /^\s*\{\s*"\w+"\s*:\s*\[\s*"([A-Za-z0-9_-]{10,})"\s*\]\s*\}\s*$/.exec(await up.text())?.[1];
+    if (!parent) return null;
+    const meta = await fetchImpl(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(parent)}?fields=name&supportsAllDrives=true&key=${keyOf(apiKey)}`);
+    if (!meta.ok) return null;
+    const { name } = ((await meta.json()) ?? {}) as { name?: unknown };
+    return typeof name === "string" && name ? name : null;
+  } catch {
+    return null;
+  }
 }
 
 export async function downloadText(fileId: string, apiKey: string, fetchImpl: FetchLike = fetch, item: DriveItem = PASTED): Promise<string> {
@@ -230,11 +259,6 @@ async function failure(response: Response, item: DriveItem): Promise<DriveError>
 }
 
 const LINK_FILE = /^new drive link\.txt$/i;
-
-function nameIsPdfPartialMap(name: string): boolean {
-  const plain = plainEditionName(name);
-  return plain.includes("pdf") && plain.includes("partialfoil") && plain.includes("map");
-}
 
 /**
  * A Partial Foil paste keeps the Deluxe shortcut and the PDF map.
@@ -338,6 +362,11 @@ export async function readDriveTree(folderId: string, apiKey: string, fetchImpl:
       rootChain.push(folderName);
       const map = mapFolderInChain(rootChain);
       if (map) throw new PartialFoilMapLinkError(map.deck);
+      // A bare Extras or Tokens folder: refused when its parent is a map folder; accepted if that can't be told.
+      if (isBareExtrasOrTokens(folderName)) {
+        const parent = await parentFolderName(id, apiKey, fetchImpl);
+        if (parent && isPartialFoilMapName(parent)) throw new PartialFoilMapLinkError(deckFromMapName(parent));
+      }
     }
     if (hops === 0 && depth === 0 && !rootDecided) {
       rootDecided = true;

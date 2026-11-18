@@ -304,8 +304,8 @@ export default function App() {
       if (!folderId) throw new Error("Paste a Google Drive folder link, the kind on a Ko-fi order page.");
       const tree = await readDriveTree(folderId, apiKey);
       const decklistTexts = await readDecklistTexts(tree, apiKey);
-      // The folder's own name decides the deck ("2_P5 Deluxe Edition" → P5). Its parent is never asked
-      // for: the deck parents are Restricted, and asking would name the paid folders beside it.
+      // The folder's own name decides the deck ("2_P5 Deluxe Edition" → P5). An edition's parent is never
+      // asked for: the deck parents are Restricted, and asking would name the paid folders beside it.
       const deckName = preferDeckName(tree.name);
       const catalogue = assignPartialFoilThumbs(
         catalogueFromTree(tree, deckName, [], { decklistTexts, bundledDecklists: bundledDecklistsFor(shipped, deckName) }),
